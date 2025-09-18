@@ -25,7 +25,8 @@ const WalletTab: React.FC<{ user: User }> = ({ user }) => {
         const fetchSales = async () => {
             setIsLoading(true);
             try {
-                const salesData = await apiService.getSalesBySellerId(user.id);
+                // FIX: Removed user.id argument as the backend gets the user from the JWT token.
+                const salesData = await apiService.getSalesBySellerId();
                 setOrders(salesData.sort((a, b) => b.orderDate - a.orderDate)); // Sort by most recent
 
                 const newStats: WalletStats = {

@@ -37,7 +37,7 @@ const PurchasesTab: React.FC = () => {
     const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
     useEffect(() => {
-        apiService.getPurchasesByBuyerId(user.id)
+        apiService.getPurchasesByBuyerId()
             .then(data => setPurchases(data.sort((a,b) => b.orderDate - a.orderDate)))
             .finally(() => setIsLoading(false));
     }, [user.id]);
@@ -179,7 +179,7 @@ const SalesTab: React.FC = () => {
     const [generatingWaybill, setGeneratingWaybill] = useState<string | null>(null);
 
     useEffect(() => {
-        apiService.getSalesBySellerId(user.id)
+        apiService.getSalesBySellerId()
             .then(data => setSales(data.sort((a, b) => b.orderDate - a.orderDate)))
             .finally(() => setIsLoading(false));
     }, [user.id]);

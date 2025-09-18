@@ -68,7 +68,6 @@ const products: Product[] = [
   { id: 'prod-2', title: 'Silver Necklace with Moonstone', description: 'Elegant sterling silver necklace featuring a mesmerizing moonstone pendant. A timeless piece.', price: 120, salePrice: 99, imageUrls: ['https://picsum.photos/seed/prod2/600/400'], category: 'Ювелирные изделия', seller: users[1], dynamicAttributes: {'Металл': 'Серебро 925', 'Камень': 'Лунный камень'}, isPromoted: true, purchaseCost: 60, weight: 150, productType: 'PHYSICAL' },
 ];
 
-let orders: Order[] = [];
 let reviews: Review[] = [];
 let chats: Chat[] = [];
 let notifications: Notification[] = [];
@@ -95,14 +94,16 @@ export const apiService = {
 
   // Products
   getProducts: async (filters: any): Promise<Product[]> => {
-    // TODO: Backend filtering is not implemented. Fetching all and filtering on client.
-    const allProducts = await apiFetch('/products');
-
-    const soldProductIds = new Set(orders.flatMap(o => o.items.map(i => i.product.id)));
+    // TODO: Backend filtering is not fully implemented yet for dynamic attributes etc.
+    // Fetching all and filtering on client for now.
+    const allProducts: Product[] = await apiFetch('/products');
+    
+    // Fetch real orders to determine sold products
+    const realOrders: Order[] = await apiFetch('/orders/purchases');
+    const soldProductIds = new Set(realOrders.flatMap(o => o.items.map(i => i.product.id)));
     
     let baseProducts: Product[];
     if (filters.specialFilter === 'sold') {
-        // This is still mocked as there's no orders backend yet
         baseProducts = allProducts.filter(p => soldProductIds.has(p.id));
     } else {
         baseProducts = allProducts.filter(p => !soldProductIds.has(p.id));
@@ -134,7 +135,7 @@ export const apiService = {
         const priceB = b.salePrice ?? b.price ?? 0;
         switch (filters.sortBy) {
             case 'priceAsc': return priceA - priceB;
-            case 'priceDesc': return priceB - priceA;
+            case 'priceDesc': return priceB - a.price;
             case 'rating': return b.seller.rating - a.seller.rating;
             default: return 0; // Backend returns sorted by creation date
         }
@@ -211,6 +212,49 @@ export const apiService = {
     return response.json();
   },
 
+  // Orders - REAL IMPLEMENTATION
+// FIX: Update function signature to accept all 8 arguments passed from CheckoutPage.tsx.
+  createOrdersFromCart: async (cartItems: CartItem[], user: User, paymentMethod: 'ESCROW' | 'DIRECT', shippingMethod: 'NOVA_POSHTA' | 'UKRPOSHTA', shippingAddress: ShippingAddress, requestAuthentication: boolean, appliedPromos: any, shippingCosts: any) => {
+    const payload = {
+      cartItems: cartItems.map(item => ({
+        product: {
+          id: item.product.id,
+          seller: { id: item.product.seller.id },
+        },
+        quantity: item.quantity,
+        priceAtTimeOfAddition: item.priceAtTimeOfAddition,
+        variant: item.variant,
+        purchaseType: item.purchaseType,
+      })),
+      paymentMethod,
+      shippingMethod,
+      shippingAddress,
+      requestAuthentication,
+      appliedPromos,
+      shippingCosts,
+    };
+    return apiFetch('/orders', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+  getPurchasesByBuyerId: async (): Promise<Order[]> => {
+    return apiFetch('/orders/purchases');
+  },
+  getSalesBySellerId: async (): Promise<Order[]> => {
+    return apiFetch('/orders/sales');
+  },
+  updateOrder: async (orderId: string, updates: Partial<Order>): Promise<Order> => {
+    return apiFetch(`/orders/${orderId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates),
+    });
+  },
+  generateWaybill: async (orderId: string): Promise<Order> => {
+    return apiFetch(`/orders/${orderId}/generate-waybill`, {
+        method: 'POST'
+    });
+  },
 
   // --- MOCKED API METHODS (for remaining features) ---
   
@@ -469,10 +513,6 @@ export const apiService = {
         throw new Error("Промокод не найден");
       }
   },
-  getSalesBySellerId: async (sellerId: string): Promise<Order[]> => {
-      await new Promise(res => setTimeout(res, 500));
-      return orders.filter(o => o.seller.id === sellerId);
-  },
   getSellerDashboardData: async (sellerId: string): Promise<SellerDashboardData> => {
       await new Promise(res => setTimeout(res, 600));
       return {
@@ -487,7 +527,7 @@ export const apiService = {
       };
   },
 
-  // Checkout & Orders
+  // Checkout & Orders (Mocks)
   validatePromoCode: async (code: string, sellerId: string, cartItems: CartItem[]): Promise<{ discountValue: number, discountType: 'PERCENTAGE' | 'FIXED_AMOUNT', codeId: string }> => {
       await new Promise(res => setTimeout(res, 500));
       const promo = promoCodes.find(p => p.code.toUpperCase() === code.toUpperCase() && p.sellerId === sellerId && p.isActive);
@@ -498,32 +538,9 @@ export const apiService = {
     await new Promise(res => setTimeout(res, 700)); // Simulate network latency
     return { success: true, failedItems: [] }; // Mock success
   },
-  createOrdersFromCart: async (cartItems: CartItem[], user: User, paymentMethod: 'ESCROW' | 'DIRECT', shippingMethod: 'NOVA_POSHTA' | 'UKRPOSHTA', shippingAddress: ShippingAddress, requestAuthentication: boolean, appliedPromos: any, shippingCosts: Record<string, number>) => {
-      await new Promise(res => setTimeout(res, 1500));
-      return { success: true };
-  },
-  getPurchasesByBuyerId: async (buyerId: string): Promise<Order[]> => {
-    await new Promise(res => setTimeout(res, 500));
-    return orders.filter(o => o.buyer.id === buyerId);
-  },
-  updateOrder: async (orderId: string, updates: Partial<Order>): Promise<Order> => {
-    await new Promise(res => setTimeout(res, 500));
-    const order = orders.find(o => o.id === orderId);
-    if (!order) throw new Error("Order not found");
-    Object.assign(order, updates);
-    return order;
-  },
   calculateShippingCost: async (cartItems: CartItem[], shippingMethod: 'NOVA_POSHTA' | 'UKRPOSHTA'): Promise<{ cost: number }> => {
     await new Promise(res => setTimeout(res, 600)); // Simulate API call
     return { cost: 2.5 };
-  },
-  generateWaybill: async (orderId: string): Promise<Order> => {
-    await new Promise(res => setTimeout(res, 1200));
-    const order = orders.find(o => o.id === orderId);
-    if (!order) throw new Error("Order not found");
-    order.status = 'SHIPPED';
-    order.trackingNumber = '59000123456789';
-    return order;
   },
   getTrackingHistory: async (orderId: string): Promise<TrackingEvent[] | null> => {
     await new Promise(res => setTimeout(res, 500));
@@ -538,7 +555,8 @@ export const apiService = {
   },
   getAuthenticationOrders: async (userId: string): Promise<Order[]> => {
       await new Promise(res => setTimeout(res, 500));
-      return orders.filter(o => o.authenticationRequested && (o.buyer.id === userId || o.seller.id === userId));
+      const allOrders: Order[] = await apiFetch('/orders/purchases');
+      return allOrders.filter(o => o.authenticationRequested && (o.buyer.id === userId || o.seller.id === userId));
   },
   getDisputeById: async (orderId: string): Promise<Dispute | null> => {
       await new Promise(res => setTimeout(res, 500));
