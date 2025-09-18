@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CryptoCraft Marketplace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'brand-primary': '#F97316', // Orange-500
+              'brand-primary-hover': '#EA580C', // Orange-600
+              'brand-secondary': '#FB923C', // Orange-400
+              'brand-background': '#1C1917', // Stone-900
+              'brand-surface': '#292524', // Stone-800
+              'brand-border': '#44403C', // Stone-700
+              'brand-text-primary': '#F5F5F4', // Stone-100
+              'brand-text-secondary': '#A8A29E', // Stone-400
+            },
+          },
+        },
+      }
+    </script>
+    <style>
+      @keyframes fly-up {
+        from {
+          transform: translateY(0) scale(1);
+          opacity: 1;
+        }
+        to {
+          transform: translateY(-80px) scale(1.5);
+          opacity: 0;
+        }
+      }
+      .animate-fly-up {
+        animation: fly-up 2s ease-out forwards;
+        pointer-events: none;
+      }
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      @keyframes fade-in-down {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+      }
+      .animate-fade-in-down {
+          animation: fade-in-down 0.5s ease-out forwards;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.1",
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.19.0",
+    "@nestjs/core": "https://aistudiocdn.com/@nestjs/core@^11.1.6",
+    "@nestjs/common": "https://aistudiocdn.com/@nestjs/common@^11.1.6",
+    "typeorm": "https://aistudiocdn.com/typeorm@^0.3.26",
+    "@nestjs/config": "https://aistudiocdn.com/@nestjs/config@^4.0.2",
+    "@nestjs/typeorm": "https://aistudiocdn.com/@nestjs/typeorm@^11.0.0",
+    "class-transformer": "https://aistudiocdn.com/class-transformer@^0.5.1",
+    "class-validator": "https://aistudiocdn.com/class-validator@^0.14.2",
+    "@nestjs/mapped-types": "https://aistudiocdn.com/@nestjs/mapped-types@^2.1.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

@@ -1,0 +1,585 @@
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { apiService } from '../services/apiService';
+import { useAuth } from '../hooks/useAuth';
+import type { Product, VariantAttribute, ProductVariant } from '../types';
+import type { CategoryField } from '../constants';
+import Spinner from '../components/Spinner';
+import { CATEGORIES, getCategoryNames } from '../constants';
+import { cloudinaryService } from '../services/cloudinaryService';
+
+const DynamicField: React.FC<{ field: CategoryField, value: any, onChange: (name: string, value: any) => void }> = ({ field, value, onChange }) => {
+    const commonProps = {
+        name: field.name,
+        id: field.name,
+        value: value || '',
+        onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => onChange(field.name, e.target.value),
+        className: "mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3",
+        required: field.required,
+    };
+
+    switch (field.type) {
+        case 'text':
+            return <input type="text" {...commonProps} />;
+        case 'number':
+            return <input type="number" {...commonProps} />;
+        case 'select':
+            return (
+                <select {...commonProps}>
+                    <option value="">Выберите...</option>
+                    {field.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
+            );
+        default:
+            return null;
+    }
+};
+
+
+type FormData = Omit<Product, 'id' | 'seller' | 'imageUrls'> & { saleType: 'FIXED_PRICE' | 'AUCTION', auctionDurationDays?: 1 | 3 | 7, hasVariants: boolean };
+
+
+const VariantEditor: React.FC<{
+    attributes: VariantAttribute[];
+    variants: ProductVariant[];
+    onAttributesChange: (attributes: VariantAttribute[]) => void;
+    onVariantsChange: (variants: ProductVariant[]) => void;
+}> = ({ attributes, variants, onAttributesChange, onVariantsChange }) => {
+    
+    const [newAttributeName, setNewAttributeName] = useState('');
+    const [newOptionInputs, setNewOptionInputs] = useState<Record<string, string>>({});
+
+    const addAttribute = () => {
+        if (newAttributeName.trim() && !attributes.find(a => a.name === newAttributeName.trim())) {
+            onAttributesChange([...attributes, { name: newAttributeName.trim(), options: [] }]);
+            setNewAttributeName('');
+        }
+    };
+
+    const removeAttribute = (attrNameToRemove: string) => {
+        onAttributesChange(attributes.filter(a => a.name !== attrNameToRemove));
+    };
+
+    const addOption = (attrName: string) => {
+        const option = newOptionInputs[attrName]?.trim();
+        if (!option) return;
+        
+        const newAttributes = attributes.map(attr => {
+            if (attr.name === attrName && !attr.options.includes(option)) {
+                return { ...attr, options: [...attr.options, option] };
+            }
+            return attr;
+        });
+        onAttributesChange(newAttributes);
+        setNewOptionInputs(prev => ({ ...prev, [attrName]: '' }));
+    };
+
+    const removeOption = (attrName: string, optionToRemove: string) => {
+        const newAttributes = attributes.map(attr => {
+             if (attr.name === attrName) {
+                return { ...attr, options: attr.options.filter(o => o !== optionToRemove) };
+            }
+            return attr;
+        });
+        onAttributesChange(newAttributes);
+    };
+
+    const handleVariantChange = (variantId: string, field: keyof ProductVariant, value: any) => {
+        const newVariants = variants.map(v => {
+            if (v.id === variantId) {
+                const updatedValue = (field === 'price' || field === 'stock') ? (value === '' ? 0 : parseFloat(value)) : value;
+                return { ...v, [field]: updatedValue };
+            }
+            return v;
+        });
+        onVariantsChange(newVariants);
+    };
+
+    // Auto-generate variants whenever attributes change
+    useEffect(() => {
+        const generateCombinations = (attrs: VariantAttribute[]): Record<string, string>[] => {
+            if (attrs.length === 0 || attrs.some(a => a.options.length === 0)) {
+                return [];
+            }
+        
+            let combinations: Record<string, string>[] = [{}];
+        
+            for (const attr of attrs) {
+                const newCombinations: Record<string, string>[] = [];
+                for (const combination of combinations) {
+                    for (const option of attr.options) {
+                        newCombinations.push({ ...combination, [attr.name]: option });
+                    }
+                }
+                combinations = newCombinations;
+            }
+            return combinations;
+        };
+
+        const combinations = generateCombinations(attributes);
+        
+        const newVariants = combinations.map((combo, index) => {
+            // Try to find an existing variant to preserve its data
+            const existingVariant = variants.find(v => {
+                return Object.entries(combo).every(([key, value]) => v.attributes[key] === value);
+            });
+            return {
+                id: existingVariant?.id || `variant-${Date.now()}-${index}`,
+                attributes: combo,
+                price: existingVariant?.price || 0,
+                stock: existingVariant?.stock || 0,
+                sku: existingVariant?.sku || '',
+            };
+        });
+        
+        onVariantsChange(newVariants);
+
+    }, [attributes]);
+
+
+    return (
+        <div className="space-y-6">
+            <div>
+                <h4 className="font-semibold text-white mb-2">1. Определите атрибуты</h4>
+                <div className="space-y-4">
+                    {attributes.map(attr => (
+                        <div key={attr.name} className="bg-brand-background/50 p-3 rounded-md">
+                            <div className="flex justify-between items-center mb-2">
+                                <h5 className="font-medium text-brand-text-primary">{attr.name}</h5>
+                                <button type="button" onClick={() => removeAttribute(attr.name)} className="text-red-500 hover:text-red-400 text-xs font-bold">Удалить</button>
+                            </div>
+                            <div className="flex flex-wrap gap-2 mb-2">
+                                {attr.options.map(opt => (
+                                    <span key={opt} className="bg-brand-secondary/80 text-white text-sm px-2 py-1 rounded-md flex items-center gap-1">
+                                        {opt}
+                                        <button type="button" onClick={() => removeOption(attr.name, opt)} className="font-bold text-white/70 hover:text-white">&times;</button>
+                                    </span>
+                                ))}
+                            </div>
+                             <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    placeholder="Новая опция (напр., Синий)"
+                                    value={newOptionInputs[attr.name] || ''}
+                                    onChange={(e) => setNewOptionInputs(prev => ({...prev, [attr.name]: e.target.value}))}
+                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addOption(attr.name); } }}
+                                    className="flex-grow bg-brand-surface border border-brand-border rounded-md p-1.5 text-sm"
+                                />
+                                <button type="button" onClick={() => addOption(attr.name)} className="bg-brand-secondary text-white px-3 text-sm rounded-md">+</button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                 <div className="flex gap-2 mt-4">
+                    <input
+                        type="text"
+                        placeholder="Новый атрибут (напр., Размер)"
+                        value={newAttributeName}
+                        onChange={(e) => setNewAttributeName(e.target.value)}
+                         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAttribute(); } }}
+                        className="flex-grow bg-brand-surface border border-brand-border rounded-md p-2"
+                    />
+                    <button type="button" onClick={addAttribute} className="bg-brand-primary hover:bg-brand-primary-hover text-white font-bold py-2 px-4 rounded-lg">Добавить атрибут</button>
+                </div>
+            </div>
+
+            {variants.length > 0 && (
+                <div>
+                    <h4 className="font-semibold text-white mb-2">2. Настройте варианты</h4>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-left">
+                            <thead className="bg-brand-background text-xs text-brand-text-secondary uppercase">
+                                <tr>
+                                    <th scope="col" className="px-4 py-3">Вариант</th>
+                                    <th scope="col" className="px-4 py-3">Цена (USDT)</th>
+                                    <th scope="col" className="px-4 py-3">Кол-во</th>
+                                    <th scope="col" className="px-4 py-3">SKU</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {variants.map(variant => (
+                                    <tr key={variant.id} className="border-b border-brand-border">
+                                        <td className="px-4 py-3 font-medium text-white whitespace-nowrap">{Object.values(variant.attributes).join(' / ')}</td>
+                                        <td className="px-4 py-3">
+                                            <input type="number" value={variant.price} onChange={e => handleVariantChange(variant.id, 'price', e.target.value)} className="w-24 bg-brand-surface border border-brand-border rounded-md p-1.5" />
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <input type="number" value={variant.stock} onChange={e => handleVariantChange(variant.id, 'stock', e.target.value)} className="w-20 bg-brand-surface border border-brand-border rounded-md p-1.5" />
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            <input type="text" value={variant.sku} onChange={e => handleVariantChange(variant.id, 'sku', e.target.value)} className="w-28 bg-brand-surface border border-brand-border rounded-md p-1.5" />
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+};
+
+
+const EditListingPage: React.FC = () => {
+    const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    const [product, setProduct] = useState<Product | null>(null);
+    const [formData, setFormData] = useState<Partial<FormData> | null>(null);
+    const [videoFile, setVideoFile] = useState<File | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isUpdating, setIsUpdating] = useState(false);
+
+    const categorySchema = useMemo(() => {
+        if (!formData?.category) return null;
+        return CATEGORIES.find(c => c.name === formData.category);
+    }, [formData?.category]);
+
+    useEffect(() => {
+        if (!id) {
+            navigate('/profile');
+            return;
+        }
+        const fetchProduct = async () => {
+            setIsLoading(true);
+            const data = await apiService.getProductById(id);
+            if (data && data.seller.id === user.id) {
+                setProduct(data);
+                setFormData({
+                    title: data.title,
+                    description: data.description,
+                    price: data.price,
+                    salePrice: data.salePrice,
+                    category: data.category,
+                    videoUrl: data.videoUrl,
+                    dynamicAttributes: data.dynamicAttributes,
+                    giftWrapAvailable: data.giftWrapAvailable,
+                    giftWrapPrice: data.giftWrapPrice,
+                    productType: data.productType || 'PHYSICAL',
+                    saleType: data.isAuction ? 'AUCTION' : 'FIXED_PRICE',
+                    startingBid: data.startingBid,
+                    purchaseCost: data.purchaseCost,
+                    weight: data.weight,
+                    isAuthenticationAvailable: data.isAuthenticationAvailable,
+                    hasVariants: !!data.variants && data.variants.length > 0,
+                    variantAttributes: data.variantAttributes || [],
+                    variants: data.variants || [],
+                    isB2BEnabled: data.isB2BEnabled,
+                    b2bMinQuantity: data.b2bMinQuantity,
+                    b2bPrice: data.b2bPrice,
+                });
+            } else {
+                alert("Товар не найден или у вас нет прав на его редактирование.");
+                navigate('/profile');
+            }
+            setIsLoading(false);
+        };
+        fetchProduct();
+    }, [id, user.id, navigate]);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        if (!formData) return;
+        const { name, value, type } = e.target;
+        
+        if (type === 'checkbox') {
+            const { checked } = e.target as HTMLInputElement;
+            let newFormData: Partial<FormData> = { ...formData, [name]: checked };
+            if(name === 'giftWrapAvailable' && !checked) {
+               newFormData.giftWrapPrice = undefined;
+            }
+            if (name === 'hasVariants' && !checked) {
+                newFormData.variants = [];
+                newFormData.variantAttributes = [];
+            }
+            if (name === 'isB2BEnabled' && !checked) {
+                newFormData.b2bMinQuantity = undefined;
+                newFormData.b2bPrice = undefined;
+            }
+            setFormData(newFormData);
+
+        } else if (name === 'productType' || name === 'saleType') {
+             const newFormData = { ...formData, [name]: value };
+            if (name === 'saleType') {
+                if (value === 'AUCTION') {
+                    newFormData.salePrice = undefined;
+                    if (!newFormData.auctionDurationDays) newFormData.auctionDurationDays = 3;
+                } else {
+                    newFormData.startingBid = undefined;
+                    newFormData.auctionDurationDays = undefined;
+                }
+            }
+            setFormData(newFormData);
+        } else if (name === 'auctionDurationDays') {
+            setFormData({ ...formData, [name]: parseInt(value) as 1 | 3 | 7 });
+        } else {
+            setFormData({ 
+                ...formData, 
+                [name]: (name === 'price' || name === 'salePrice' || name === 'giftWrapPrice' || name === 'startingBid' || name === 'purchaseCost' || name === 'weight' || name === 'b2bMinQuantity' || name === 'b2bPrice') 
+                        ? (value === '' ? undefined : parseFloat(value)) 
+                        : value 
+            });
+        }
+    };
+
+     const handleDynamicAttrChange = (name: string, value: any) => {
+        setFormData(prev => ({
+            ...prev!,
+            dynamicAttributes: {
+                ...prev!.dynamicAttributes,
+                [name]: value,
+            }
+        }));
+    };
+
+    const handleUpdate = async () => {
+        if (!formData || !id) return;
+        setIsUpdating(true);
+        try {
+            const dataToUpdate: Partial<Product> = { ...formData };
+            if (videoFile) {
+                dataToUpdate.videoUrl = await cloudinaryService.uploadVideo(videoFile);
+            }
+
+            if (!formData.hasVariants) {
+                dataToUpdate.variants = [];
+                dataToUpdate.variantAttributes = [];
+            }
+            delete (dataToUpdate as any).hasVariants;
+            
+            await apiService.updateListing(id, dataToUpdate);
+            alert("Объявление успешно обновлено!");
+            navigate(`/product/${id}`);
+        } catch (error) {
+            console.error(error);
+            alert("Не удалось обновить объявление.");
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    if (isLoading) {
+        return <div className="flex justify-center items-center h-96"><Spinner /></div>;
+    }
+
+    if (!product || !formData) {
+        return null; 
+    }
+
+    return (
+        <div className="max-w-4xl mx-auto bg-brand-surface p-6 sm:p-8 rounded-lg shadow-xl">
+            <h1 className="text-3xl font-bold text-center mb-2 text-white">Редактировать объявление</h1>
+            <div className="space-y-6 mt-8">
+                <div className="relative group">
+                    <img src={product.imageUrls[0]} alt={product.title} className="w-full h-auto object-cover rounded-lg shadow-md mb-6 max-h-80" />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
+                        <Link to={`/studio/${product.id}`} className="bg-brand-primary hover:bg-brand-primary-hover text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2">
+                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+                            Улучшить в студии
+                        </Link>
+                    </div>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-brand-text-secondary">Заголовок</label>
+                    <input type="text" name="title" value={formData.title} onChange={handleChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3"/>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-brand-text-secondary">Описание</label>
+                    <textarea name="description" value={formData.description} onChange={handleChange} rows={6} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3"/>
+                </div>
+
+                <div className="border-t border-b border-brand-border/50 py-6 space-y-4">
+                    <label className="block text-sm font-medium text-brand-text-secondary mb-2">Тип продажи</label>
+                    <div className="flex gap-2 p-1 bg-brand-background rounded-lg">
+                        <label className={`flex-1 text-center cursor-pointer p-2 rounded-md transition-colors ${formData.saleType === 'FIXED_PRICE' ? 'bg-brand-primary text-white' : 'hover:bg-brand-surface'}`}>
+                            <input type="radio" name="saleType" value="FIXED_PRICE" checked={formData.saleType === 'FIXED_PRICE'} onChange={handleChange} className="hidden"/>
+                            <span>Фиксированная цена</span>
+                        </label>
+                        <label className={`flex-1 text-center cursor-pointer p-2 rounded-md transition-colors ${formData.saleType === 'AUCTION' ? 'bg-brand-primary text-white' : 'hover:bg-brand-surface'}`}>
+                            <input type="radio" name="saleType" value="AUCTION" checked={formData.saleType === 'AUCTION'} onChange={handleChange} className="hidden"/>
+                            <span>Аукцион</span>
+                        </label>
+                    </div>
+
+                    {formData.saleType === 'AUCTION' ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-fade-in-down">
+                            <div>
+                                <label className="block text-sm font-medium text-brand-text-secondary">Стартовая цена (USDT)</label>
+                                <input type="number" name="startingBid" value={formData.startingBid || ''} onChange={handleChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3"/>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-brand-text-secondary">Длительность аукциона</label>
+                                <p className="text-xs text-brand-text-secondary">Изменение сбросит таймер</p>
+                                <select name="auctionDurationDays" value={formData.auctionDurationDays || ''} onChange={handleChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3">
+                                    <option value="" disabled>Выберите длительность</option>
+                                    <option value={1}>1 день</option>
+                                    <option value={3}>3 дня</option>
+                                    <option value={7}>7 дней</option>
+                                </select>
+                            </div>
+                        </div>
+                    ) : (
+                         <div className={`grid grid-cols-1 sm:grid-cols-2 gap-6 animate-fade-in-down ${formData.hasVariants ? 'opacity-50' : ''}`}>
+                            <div>
+                                <label className="block text-sm font-medium text-brand-text-secondary">Цена (USDT)</label>
+                                <input type="number" name="price" value={formData.price || ''} onChange={handleChange} disabled={formData.hasVariants} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3 disabled:cursor-not-allowed"/>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-brand-text-secondary">Цена со скидкой (USDT)</label>
+                                <input type="number" name="salePrice" placeholder="Не обязательно" value={formData.salePrice || ''} onChange={handleChange} disabled={formData.hasVariants} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3 disabled:cursor-not-allowed"/>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                 <div className="bg-brand-background/50 p-4 rounded-lg">
+                    <label htmlFor="video-upload" className="block text-sm font-medium text-brand-text-secondary mb-2">Видеообзор (необязательно)</label>
+                    {formData.videoUrl && !videoFile && (
+                        <div className="mb-2 text-sm">
+                            <span className="text-brand-text-secondary">Текущее видео: </span>
+                            <a href={formData.videoUrl} target="_blank" rel="noopener noreferrer" className="text-brand-primary hover:underline truncate">{formData.videoUrl}</a>
+                        </div>
+                    )}
+                    <input 
+                        id="video-upload" 
+                        type="file" 
+                        onChange={(e) => setVideoFile(e.target.files ? e.target.files[0] : null)}
+                        className="block w-full text-sm text-brand-text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-primary/20 file:text-brand-primary hover:file:bg-brand-primary/30"
+                        accept="video/*"
+                    />
+                    <p className="text-xs text-brand-text-secondary mt-1">Загрузите новое видео, чтобы заменить текущее.</p>
+                </div>
+
+                {/* Variant Section */}
+                <div className="border-t border-brand-border/50 pt-6 space-y-4">
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                        <input type="checkbox" name="hasVariants" checked={!!formData.hasVariants} onChange={handleChange} className="h-5 w-5 rounded bg-brand-background border-brand-border text-brand-primary focus:ring-brand-primary"/>
+                        <span className="font-semibold text-lg text-white">У товара есть несколько вариантов (размер, цвет и т.д.)</span>
+                    </label>
+                    {formData.hasVariants && (
+                        <div className="p-4 bg-brand-background rounded-lg animate-fade-in-down">
+                            <VariantEditor
+                                attributes={formData.variantAttributes || []}
+                                variants={formData.variants || []}
+                                onAttributesChange={(attrs) => setFormData(prev => ({...prev!, variantAttributes: attrs}))}
+                                onVariantsChange={(vars) => setFormData(prev => ({...prev!, variants: vars}))}
+                            />
+                        </div>
+                    )}
+                </div>
+                
+                {/* B2B Section */}
+                <div className="border-t border-brand-border/50 pt-6 space-y-4">
+                    <label className="flex items-center space-x-3 cursor-pointer">
+                        <input type="checkbox" name="isB2BEnabled" checked={!!formData.isB2BEnabled} onChange={handleChange} className="h-5 w-5 rounded bg-brand-background border-brand-border text-brand-primary focus:ring-brand-primary"/>
+                        <span className="font-semibold text-lg text-white">Включить оптовые продажи (B2B)</span>
+                    </label>
+                    {formData.isB2BEnabled && (
+                        <div className="p-4 bg-brand-background rounded-lg animate-fade-in-down grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium text-brand-text-secondary">Минимальное кол-во для опта</label>
+                                <input type="number" name="b2bMinQuantity" value={formData.b2bMinQuantity || ''} onChange={handleChange} placeholder="Например: 10" className="mt-1 block w-full bg-brand-surface border border-brand-border rounded-md shadow-sm py-2 px-3"/>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-brand-text-secondary">Оптовая цена за шт. (USDT)</label>
+                                <input type="number" name="b2bPrice" value={formData.b2bPrice || ''} onChange={handleChange} placeholder="Например: 25.00" className="mt-1 block w-full bg-brand-surface border border-brand-border rounded-md shadow-sm py-2 px-3"/>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+
+                 <div>
+                    <label className="block text-sm font-medium text-brand-text-secondary">Категория</label>
+                    <select name="category" value={formData.category} onChange={handleChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3">
+                        {getCategoryNames().map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                    </select>
+                </div>
+
+                {categorySchema?.name === 'Электроника' && (
+                    <div className="bg-brand-background/50 p-4 rounded-lg">
+                        <label className="flex items-center space-x-3 cursor-pointer">
+                            <input 
+                                type="checkbox"
+                                name="isAuthenticationAvailable"
+                                checked={!!formData.isAuthenticationAvailable}
+                                onChange={handleChange}
+                                className="h-4 w-4 rounded bg-brand-background border-brand-border text-brand-primary focus:ring-brand-primary"
+                            />
+                            <span className="font-medium text-white">Предложить проверку подлинности для этого товара</span>
+                        </label>
+                        <p className="text-xs text-brand-text-secondary mt-2 pl-7">
+                            Позволяет покупателям быть уверенными в вашем товаре. Услуга платная. Вы сможете запросить ее после сохранения.
+                        </p>
+                    </div>
+                )}
+
+                {categorySchema && categorySchema.fields.length > 0 && (
+                <div className="border-t border-brand-border/50 pt-6 space-y-4">
+                     <h3 className="text-lg font-semibold text-white">Характеристики категории "{formData.category}"</h3>
+                     {categorySchema.fields.map(field => (
+                         <div key={field.name}>
+                             <label htmlFor={field.name} className="block text-sm font-medium text-brand-text-secondary">{field.label}</label>
+                             <DynamicField field={field} value={formData.dynamicAttributes?.[field.label]} onChange={(name, value) => handleDynamicAttrChange(field.label, value)} />
+                         </div>
+                     ))}
+                </div>
+                )}
+
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-sm font-medium text-brand-text-secondary">Закупочная стоимость (USDT)</label>
+                        <input type="number" name="purchaseCost" value={formData.purchaseCost || ''} onChange={handleChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3" placeholder="Для вашей аналитики"/>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-brand-text-secondary">Вес в упаковке (г)</label>
+                        <input type="number" name="weight" value={formData.weight || ''} onChange={handleChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3" placeholder="Например: 500"/>
+                    </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-brand-text-secondary mb-2">Тип товара</label>
+                  <div className="flex gap-4">
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                          <input type="radio" name="productType" value="PHYSICAL" checked={formData.productType === 'PHYSICAL'} onChange={handleChange} className="h-4 w-4 text-brand-primary border-brand-border focus:ring-brand-primary"/>
+                          <span>Физический</span>
+                      </label>
+                       <label className="flex items-center space-x-2 cursor-pointer">
+                          <input type="radio" name="productType" value="DIGITAL" checked={formData.productType === 'DIGITAL'} onChange={handleChange} className="h-4 w-4 text-brand-primary border-brand-border focus:ring-brand-primary"/>
+                          <span>Цифровой</span>
+                      </label>
+                  </div>
+                </div>
+
+                {formData.productType === 'DIGITAL' && (
+                  <div className="bg-brand-background/50 p-4 rounded-lg">
+                      <p className="text-sm text-brand-text-secondary">Текущий файл: <span className="font-mono text-brand-primary">{product.digitalFileUrl || 'Не загружен'}</span></p>
+                      <label htmlFor="digital-file-upload" className="block text-sm font-medium text-brand-text-secondary mt-2 mb-2">Загрузить новый файл</label>
+                      <input id="digital-file-upload" type="file" className="block w-full text-sm text-brand-text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-primary/20 file:text-brand-primary hover:file:bg-brand-primary/30" />
+                  </div>
+                )}
+            
+                {formData.productType === 'PHYSICAL' && (
+                    <div className="space-y-4 bg-brand-background/50 p-4 rounded-lg">
+                      <label className="flex items-center space-x-3 cursor-pointer">
+                          <input type="checkbox" name="giftWrapAvailable" checked={!!formData.giftWrapAvailable} onChange={handleChange} className="h-4 w-4 rounded bg-brand-background border-brand-border text-brand-primary focus:ring-brand-primary"/>
+                          <span className="font-medium text-white">Доступна подарочная упаковка</span>
+                      </label>
+                      {formData.giftWrapAvailable && (
+                          <div className="pl-7">
+                              <label className="block text-sm font-medium text-brand-text-secondary">Стоимость упаковки (USDT)</label>
+                              <input type="number" name="giftWrapPrice" value={formData.giftWrapPrice || ''} onChange={handleChange} placeholder="Например: 5" className="mt-1 block w-full bg-brand-surface border border-brand-border rounded-md shadow-sm py-2 px-3"/>
+                          </div>
+                      )}
+                  </div>
+                )}
+
+                <button onClick={handleUpdate} disabled={isUpdating} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-500">
+                    {isUpdating ? <Spinner size="sm"/> : 'Сохранить изменения'}
+                </button>
+            </div>
+        </div>
+    );
+};
+
+export default EditListingPage;
