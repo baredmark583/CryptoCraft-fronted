@@ -6,11 +6,19 @@ import type { GeneratedListing, StructuredSearchQuery, SellerAnalytics, AiInsigh
 // This is a placeholder for demonstration purposes, assuming process.env.API_KEY is available.
 const API_KEY = process.env.API_KEY;
 
-if (!API_KEY) {
+// Conditionally initialize the Gemini client only if the API key is available.
+// This prevents the application from crashing if the key is not set in the environment.
+let ai: GoogleGenAI | null = null;
+if (API_KEY) {
+  try {
+    ai = new GoogleGenAI({ apiKey: API_KEY });
+  } catch (e) {
+    console.error("Failed to initialize GoogleGenAI:", e);
+  }
+} else {
   console.warn("Gemini API key not found. AI features will be disabled. Please set process.env.API_KEY.");
 }
 
-const ai = new GoogleGenAI({ apiKey: API_KEY! });
 
 export interface VerificationAnalysis {
   isDocument: boolean;
@@ -19,7 +27,7 @@ export interface VerificationAnalysis {
 
 export const geminiService = {
   generateListingDetails: async (imageBase64: string, userDescription: string): Promise<GeneratedListing> => {
-    if (!API_KEY) {
+    if (!ai) {
         // Return mock data if API key is not available
         console.log("Using enhanced mock Gemini response with classification.");
         
@@ -147,7 +155,7 @@ export const geminiService = {
   },
 
   editImage: async (imageBase64: string, mimeType: string, prompt: string): Promise<string> => {
-    if (!API_KEY) {
+    if (!ai) {
         console.log("Using mock Gemini image edit response.");
         // Return a different placeholder image to simulate an edit
         const randomId = Math.floor(Math.random() * 1000);
@@ -167,10 +175,10 @@ export const geminiService = {
     }
   
     try {
+        // FIX: Update `contents` payload to match the recommended structure for image editing.
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image-preview',
-            contents: [{
-                role: 'user',
+            contents: {
                 parts: [
                     {
                         inlineData: {
@@ -182,7 +190,7 @@ export const geminiService = {
                         text: prompt,
                     },
                 ],
-            }],
+            },
             config: {
                 responseModalities: [Modality.IMAGE, Modality.TEXT],
             },
@@ -202,7 +210,7 @@ export const geminiService = {
   },
 
   generateSearchQuery: async (userQuery: string): Promise<StructuredSearchQuery> => {
-    if (!API_KEY) {
+    if (!ai) {
       console.log("Using mock Gemini search response.");
       // Simple mock: split query into keywords, use first word for category mock
       const keywords = userQuery.toLowerCase().split(' ').filter(word => word.length > 2);
@@ -263,7 +271,7 @@ export const geminiService = {
   },
 
   analyzeDocumentForVerification: async (imageBase64: string): Promise<VerificationAnalysis> => {
-    if (!API_KEY) {
+    if (!ai) {
       console.log("Using mock Gemini document analysis response.");
       return new Promise(resolve => setTimeout(() => resolve({
         isDocument: true,
@@ -310,7 +318,7 @@ export const geminiService = {
   },
 
   getAnalyticsInsights: async (analyticsData: SellerAnalytics): Promise<AiInsight[]> => {
-    if (!API_KEY) {
+    if (!ai) {
         console.log("Using mock Gemini analytics insights.");
         return new Promise(resolve => setTimeout(() => resolve([
             {
@@ -391,7 +399,7 @@ ${JSON.stringify(analyticsData, null, 2)}
   },
 
   generateDashboardFocus: async (dashboardData: SellerDashboardData): Promise<AiFocus> => {
-    if (!API_KEY) {
+    if (!ai) {
         console.log("Using mock Gemini dashboard focus.");
         // Mock logic: prioritize new orders, then messages, then wishlist adds.
         const newOrder = dashboardData.actionableItems.find(i => i.type === 'new_order');

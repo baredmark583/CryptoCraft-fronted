@@ -99,9 +99,9 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ setActiveTab, sellerId }) =
     };
 
 
+    // FIX: The 'chat' link is for navigation, not for switching profile tabs.
+    // This ensures that 'chat' is handled by `navigate` and not passed to `setActiveTab`, which would cause a type error.
     const handleActionClick = (linkTo: 'sales' | 'listings' | 'chat' | 'analytics' | 'settings', entityId?: string) => {
-        // FIX: The 'chat' link is for navigation, not for switching profile tabs.
-        // This ensures that 'chat' is handled by `navigate` and not passed to `setActiveTab`, which would cause a type error.
         if (linkTo === 'chat') {
             navigate(entityId ? `/chat/${entityId}` : '/chat');
         } else {

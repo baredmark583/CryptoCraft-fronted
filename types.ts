@@ -1,12 +1,11 @@
-
-// FIX: Add type definitions for import.meta.env to resolve TypeScript error.
+// Add type definitions for import.meta.env to resolve TypeScript error.
 // This is a standard way to handle Vite environment variables.
-interface ImportMetaEnv {
-  readonly VITE_API_BASE_URL?: string;
-}
-
-interface ImportMeta {
-  readonly env: ImportMetaEnv;
+declare global {
+  interface ImportMeta {
+    readonly env: {
+      readonly VITE_API_BASE_URL?: string;
+    };
+  }
 }
 
 

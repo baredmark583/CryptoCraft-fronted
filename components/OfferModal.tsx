@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import type { User, Product, PromoCode } from '../types';
 import { apiService } from '../services/apiService';

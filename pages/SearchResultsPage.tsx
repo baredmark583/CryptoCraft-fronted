@@ -122,7 +122,6 @@ const SearchResultsPage: React.FC = () => {
         </div>
       )}
 
-      {/* The FilterBar component requires a 'products' prop, not 'categories'. */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-1">
              <FilterBar filters={filters} setFilters={setFilters} products={products} categories={CATEGORIES} />
