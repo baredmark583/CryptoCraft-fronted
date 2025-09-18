@@ -15,22 +15,30 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001
 
 /**
  * A helper function to make fetch requests to the backend API.
- * It automatically sets content type to JSON and handles errors.
+ * It automatically sets content type to JSON, adds the auth token, and handles errors.
  */
 const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
   try {
+    const token = localStorage.getItem('authToken');
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      headers,
     });
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ message: response.statusText }));
       throw new Error(errorData.message || 'An API error occurred');
     }
-    // Handle cases where the response might be empty (e.g., DELETE with 204 No Content)
+
     const contentType = response.headers.get("content-type");
     if (contentType && contentType.indexOf("application/json") !== -1) {
         return response.json();
@@ -38,7 +46,6 @@ const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
     return;
   } catch (error) {
     console.error(`API fetch error: ${options.method || 'GET'} ${endpoint}`, error);
-    // Re-throw the error to be caught by the calling function
     throw error;
   }
 };
@@ -77,6 +84,14 @@ let proposals: Proposal[] = [];
 
 export const apiService = {
   // --- REAL API METHODS ---
+
+  // Authentication
+  loginWithTelegram: async (initData: string): Promise<{ access_token: string, user: User }> => {
+    return apiFetch('/auth/telegram', {
+      method: 'POST',
+      body: JSON.stringify({ initData }),
+    });
+  },
 
   // Products
   getProducts: async (filters: any): Promise<Product[]> => {
