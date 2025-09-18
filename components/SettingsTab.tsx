@@ -4,19 +4,22 @@ import Spinner from './Spinner';
 import { apiService } from '../services/apiService';
 import { getCategoryNames } from '../constants';
 import { useAuth } from '../hooks/useAuth';
+import { cloudinaryService } from '../services/cloudinaryService';
 
 const SettingsTab: React.FC<{ user: User }> = ({ user }) => {
     const { updateUser } = useAuth();
     const [formData, setFormData] = useState({
         name: user.name,
         avatarUrl: user.avatarUrl,
-        headerImageUrl: user.headerImageUrl || '',
         city: user.defaultShippingAddress?.city || '',
         postOffice: user.defaultShippingAddress?.postOffice || '',
         recipientName: user.defaultShippingAddress?.recipientName || user.name,
-        phoneNumber: user.defaultShippingAddress?.phoneNumber || '',
+        phoneNumber: user.defaultShippingAddress?.phoneNumber || user.phoneNumber || '',
         paymentCard: '',
     });
+
+    const [headerImageFile, setHeaderImageFile] = useState<File | null>(null);
+    const [headerPreview, setHeaderPreview] = useState(user.headerImageUrl || '');
     const [isSaving, setIsSaving] = useState(false);
     
     const [copied, setCopied] = useState(false);
@@ -53,7 +56,8 @@ const SettingsTab: React.FC<{ user: User }> = ({ user }) => {
     const handleHeaderImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            setFormData({ ...formData, headerImageUrl: URL.createObjectURL(file) });
+            setHeaderImageFile(file);
+            setHeaderPreview(URL.createObjectURL(file));
         }
     };
     
@@ -61,24 +65,33 @@ const SettingsTab: React.FC<{ user: User }> = ({ user }) => {
         e.preventDefault();
         setIsSaving(true);
         try {
+            let finalHeaderImageUrl = user.headerImageUrl;
+
+            if (headerImageFile) {
+                finalHeaderImageUrl = await cloudinaryService.uploadImage(headerImageFile);
+            }
+
             const updatedData: Partial<User> = {
                 name: formData.name,
                 avatarUrl: formData.avatarUrl,
-                headerImageUrl: formData.headerImageUrl,
-                phoneNumber: formData.phoneNumber,
+                headerImageUrl: finalHeaderImageUrl,
+                phoneNumber: formData.phoneNumber.trim() ? formData.phoneNumber.trim() : undefined,
                 defaultShippingAddress: {
                     city: formData.city,
                     postOffice: formData.postOffice,
                     recipientName: formData.recipientName,
-                    phoneNumber: formData.phoneNumber
+                    phoneNumber: formData.phoneNumber.trim()
                 }
             };
             const updatedUser = await apiService.updateUser(user.id, updatedData);
-            updateUser(updatedUser); // Update global user state
+            updateUser(updatedUser);
+            setHeaderPreview(updatedUser.headerImageUrl || '');
             alert('Настройки успешно сохранены!');
+            setHeaderImageFile(null);
         } catch (error) {
+            const errorMessage = (error as Error).message || 'Не удалось сохранить настройки.';
             console.error("Failed to save settings:", error);
-            alert('Не удалось сохранить настройки.');
+            alert(`Ошибка сохранения: ${errorMessage}`);
         } finally {
             setIsSaving(false);
         }
@@ -166,8 +179,8 @@ const SettingsTab: React.FC<{ user: User }> = ({ user }) => {
                         <label className="block text-sm font-medium text-brand-text-secondary">Шапка профиля</label>
                         <div className="mt-1 flex items-center gap-4">
                             <span className="h-16 w-32 rounded-md overflow-hidden bg-brand-background">
-                                {formData.headerImageUrl && (
-                                    <img src={formData.headerImageUrl} alt="Предпросмотр шапки" className="h-full w-full object-cover" />
+                                {headerPreview && (
+                                    <img src={headerPreview} alt="Предпросмотр шапки" className="h-full w-full object-cover" />
                                 )}
                             </span>
                             <label htmlFor="header-upload" className="cursor-pointer bg-brand-surface border border-brand-border rounded-md py-2 px-3 text-sm font-medium text-brand-text-primary hover:bg-brand-border">

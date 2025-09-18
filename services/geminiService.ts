@@ -3,8 +3,8 @@ import { getCategoryNames } from '../constants';
 import type { GeneratedListing, StructuredSearchQuery, SellerAnalytics, AiInsight, PromoCode, SellerDashboardData, AiFocus } from '../types';
 
 // IMPORTANT: In a real application, the API key must be secured and not exposed on the client-side.
-// This is a placeholder for demonstration purposes, assuming process.env.API_KEY is available.
-const API_KEY = process.env.API_KEY;
+// This is a placeholder for demonstration purposes, assuming VITE_GEMINI_API_KEY is available.
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 // Conditionally initialize the Gemini client only if the API key is available.
 // This prevents the application from crashing if the key is not set in the environment.
@@ -16,7 +16,7 @@ if (API_KEY) {
     console.error("Failed to initialize GoogleGenAI:", e);
   }
 } else {
-  console.warn("Gemini API key not found. AI features will be disabled. Please set process.env.API_KEY.");
+  console.warn("Gemini API key not found. AI features will be disabled. Please set import.meta.env.VITE_GEMINI_API_KEY.");
 }
 
 

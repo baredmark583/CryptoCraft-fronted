@@ -4,6 +4,8 @@ declare global {
   interface ImportMeta {
     readonly env: {
       readonly VITE_API_BASE_URL?: string;
+      // FIX: Add VITE_GEMINI_API_KEY to the environment type definitions.
+      readonly VITE_GEMINI_API_KEY?: string;
     };
   }
 }
