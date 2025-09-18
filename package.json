@@ -20,7 +20,13 @@
     "@nestjs/typeorm": "^11.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
-    "@nestjs/mapped-types": "^2.1.0"
+    "@nestjs/mapped-types": "^2.1.0",
+    "crypto": "^1.0.1",
+    "@nestjs/jwt": "^11.0.0",
+    "src": "^1.1.2",
+    "passport-jwt": "^4.0.1",
+    "passport-custom": "^1.1.1",
+    "@nestjs/passport": "^11.0.5"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
