@@ -179,6 +179,38 @@ export const apiService = {
         return undefined;
     }
   },
+  updateUser: async (userId: string, data: Partial<User>): Promise<User> => {
+    return apiFetch(`/users/${userId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+    });
+  },
+  
+  // File Upload
+  uploadFile: async (file: File): Promise<{ url: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    // apiFetch is not used here because we are sending FormData, not JSON.
+    const token = localStorage.getItem('authToken');
+    const headers: HeadersInit = {};
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/upload`, {
+        method: 'POST',
+        body: formData,
+        headers,
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(errorData.message || 'File upload failed');
+    }
+    return response.json();
+  },
+
 
   // --- MOCKED API METHODS (for remaining features) ---
   

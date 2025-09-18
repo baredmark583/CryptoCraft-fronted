@@ -3,8 +3,10 @@ import type { User, PromoCode } from '../types';
 import Spinner from './Spinner';
 import { apiService } from '../services/apiService';
 import { getCategoryNames } from '../constants';
+import { useAuth } from '../hooks/useAuth';
 
 const SettingsTab: React.FC<{ user: User }> = ({ user }) => {
+    const { updateUser } = useAuth();
     const [formData, setFormData] = useState({
         name: user.name,
         avatarUrl: user.avatarUrl,
@@ -58,10 +60,28 @@ const SettingsTab: React.FC<{ user: User }> = ({ user }) => {
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
-        // Mock API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setIsSaving(false);
-        alert('Настройки сохранены! (демо)');
+        try {
+            const updatedData: Partial<User> = {
+                name: formData.name,
+                avatarUrl: formData.avatarUrl,
+                headerImageUrl: formData.headerImageUrl,
+                phoneNumber: formData.phoneNumber,
+                defaultShippingAddress: {
+                    city: formData.city,
+                    postOffice: formData.postOffice,
+                    recipientName: formData.recipientName,
+                    phoneNumber: formData.phoneNumber
+                }
+            };
+            const updatedUser = await apiService.updateUser(user.id, updatedData);
+            updateUser(updatedUser); // Update global user state
+            alert('Настройки успешно сохранены!');
+        } catch (error) {
+            console.error("Failed to save settings:", error);
+            alert('Не удалось сохранить настройки.');
+        } finally {
+            setIsSaving(false);
+        }
     };
     
     const handleCopy = () => {
