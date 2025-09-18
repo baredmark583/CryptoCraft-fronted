@@ -1,15 +1,16 @@
-
-
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../hooks/useCart';
 import { useCurrency } from '../hooks/useCurrency';
 import type { CartItem } from '../types';
+import { useTelegramBackButton } from '../hooks/useTelegram';
 
 const CartPage: React.FC = () => {
   const { cartItems, updateQuantity, removeFromCart, cartTotal } = useCart();
   const { getFormattedPrice } = useCurrency();
   const navigate = useNavigate();
+
+  useTelegramBackButton(true);
 
   if (cartItems.length === 0) {
     return (

@@ -21,6 +21,7 @@ import VerifiedBadge from '../components/VerifiedBadge';
 import AuthenticationRequestModal from '../components/AuthenticationRequestModal';
 import ElectronicsDashboardTab from '../components/ElectronicsDashboardTab';
 import NFTCertificateModal from '../components/NFTCertificateModal';
+import { useTelegramBackButton } from '../hooks/useTelegram';
 
 export type ProfileTab = 'dashboard' | 'listings' | 'workshop' | 'wishlist' | 'collections' | 'purchases' | 'sales' | 'analytics' | 'wallet' | 'settings';
 
@@ -344,6 +345,8 @@ const ProfilePage: React.FC = () => {
     const [isContacting, setIsContacting] = useState(false);
     
     const isOwnProfile = !profileId || profileId === authUser.id;
+    useTelegramBackButton(!isOwnProfile);
+
     const initialTab: ProfileTab = isOwnProfile ? 'dashboard' : 'listings';
     const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab);
 

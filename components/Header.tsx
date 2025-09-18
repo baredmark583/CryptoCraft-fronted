@@ -42,7 +42,7 @@ const Header: React.FC = () => {
   }, []);
 
   return (
-    <header className="bg-brand-surface/80 backdrop-blur-lg sticky top-0 z-40 border-b border-brand-border">
+    <header className="bg-brand-surface/80 backdrop-blur-lg sticky top-0 z-30 border-b border-brand-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="text-2xl font-bold text-white">
@@ -69,35 +69,44 @@ const Header: React.FC = () => {
           </div>
 
           <div className="flex items-center space-x-2 sm:space-x-4">
-            <div className="hidden lg:block">
-              <CurrencySwitcher />
-            </div>
-
-            <Link to="/create" className="hidden sm:block text-sm bg-brand-secondary hover:bg-brand-primary-hover text-white font-semibold py-2 px-4 rounded-lg transition-colors">
-              Продать
-            </Link>
+             {/* Search Icon for Mobile */}
+            <button onClick={() => navigate('/search')} className="md:hidden text-brand-text-secondary hover:text-white p-2" title="Поиск">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-6 h-6">
+                    <path fillRule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clipRule="evenodd" />
+                </svg>
+            </button>
             
-            <Link to="/community" className="text-brand-text-secondary hover:text-white p-2" title="Центр сообщества">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                  <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63l-2.693 1.57a.75.75 0 01-.67-.015l-1.12-1.12a.75.75 0 00-.869-.086l-1.12 1.12a.75.75 0 01-.67.015l-2.693-1.57a.75.75 0 01-.363-.63l-.001-.12v-.003zM12 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63l-2.693 1.57a.75.75 0 01-.67-.015l-1.12-1.12a.75.75 0 00-.869-.086l-1.12 1.12a.75.75 0 01-.67.015l-2.693-1.57a.75.75 0 01-.363-.63l-.001-.12v-.003z" />
-                </svg>
-            </Link>
-
-            <div className="relative" ref={notificationsRef}>
-               <button onClick={toggleNotifications} className="relative text-brand-text-secondary hover:text-white p-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+            {/* Desktop Icons */}
+            <div className="hidden md:flex items-center space-x-2 sm:space-x-4">
+                <div className="hidden lg:block">
+                  <CurrencySwitcher />
+                </div>
+    
+                <Link to="/create" className="text-sm bg-brand-secondary hover:bg-brand-primary-hover text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                  Продать
+                </Link>
+                
+                <Link to="/community" className="text-brand-text-secondary hover:text-white p-2" title="Центр сообщества">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+                      <path d="M4.5 6.375a4.125 4.125 0 118.25 0 4.125 4.125 0 01-8.25 0zM14.25 8.625a3.375 3.375 0 116.75 0 3.375 3.375 0 01-6.75 0zM1.5 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63l-2.693 1.57a.75.75 0 01-.67-.015l-1.12-1.12a.75.75 0 00-.869-.086l-1.12 1.12a.75.75 0 01-.67.015l-2.693-1.57a.75.75 0 01-.363-.63l-.001-.12v-.003zM12 19.125a7.125 7.125 0 0114.25 0v.003l-.001.119a.75.75 0 01-.363.63l-2.693 1.57a.75.75 0 01-.67-.015l-1.12-1.12a.75.75 0 00-.869-.086l-1.12 1.12a.75.75 0 01-.67.015l-2.693-1.57a.75.75 0 01-.363-.63l-.001-.12v-.003z" />
                     </svg>
-                    {unreadCount > 0 && <span className="absolute top-1 right-1 block h-3 w-3 rounded-full bg-red-500 border-2 border-brand-surface animate-pulse"></span>}
-               </button>
-               {isNotificationsOpen && <NotificationsDropdown onClose={() => setIsNotificationsOpen(false)} />}
-            </div>
+                </Link>
 
-            <Link to="/chat" className="text-brand-text-secondary hover:text-white p-2">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-            </Link>
+                <div className="relative" ref={notificationsRef}>
+                   <button onClick={toggleNotifications} className="relative text-brand-text-secondary hover:text-white p-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                        </svg>
+                        {unreadCount > 0 && <span className="absolute top-1 right-1 block h-3 w-3 rounded-full bg-red-500 border-2 border-brand-surface animate-pulse"></span>}
+                   </button>
+                   {isNotificationsOpen && <NotificationsDropdown onClose={() => setIsNotificationsOpen(false)} />}
+                </div>
+                 <Link to="/chat" className="text-brand-text-secondary hover:text-white p-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </Link>
+            </div>
             
             <Link to="/cart" className="relative text-brand-text-secondary hover:text-white p-2">
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
@@ -114,7 +123,7 @@ const Header: React.FC = () => {
               <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full border-2 border-brand-border" />
             </Link>
 
-            <div className="hidden sm:block">
+            <div className="hidden md:block">
                 <TonConnectButton />
             </div>
           </div>

@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import type { Product, Collection } from '../types';
 import Spinner from '../components/Spinner';
 import ProductCard from '../components/ProductCard';
+import { useTelegramBackButton } from '../hooks/useTelegram';
 
 const CollectionDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -12,6 +13,8 @@ const CollectionDetailPage: React.FC = () => {
   const [collection, setCollection] = useState<Collection | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  useTelegramBackButton(true);
 
   useEffect(() => {
     if (!id) return;

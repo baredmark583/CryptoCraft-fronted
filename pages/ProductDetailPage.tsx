@@ -14,6 +14,7 @@ import { useCart } from '../hooks/useCart';
 import VerifiedBadge from '../components/VerifiedBadge';
 import AuthenticatedBadge from '../components/AuthenticatedBadge';
 import NFTCertificateModal from '../components/NFTCertificateModal';
+import { useTelegramBackButton } from '../hooks/useTelegram';
 
 const AffiliateBanner: React.FC<{affiliateId: string}> = ({ affiliateId }) => {
     const [affiliate, setAffiliate] = useState<User | null>(null);
@@ -143,6 +144,8 @@ const ProductDetailPage: React.FC = () => {
   const { getFormattedPrice } = useCurrency();
   const { addToCart } = useCart();
   
+  useTelegramBackButton(true);
+
   const [product, setProduct] = useState<Product | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);

@@ -7,6 +7,7 @@ import AuctionCard from '../components/AuctionCard';
 import Spinner from '../components/Spinner';
 import { CATEGORIES } from '../constants';
 import FilterBar from '../components/FilterBar';
+import { useTelegramBackButton } from '../hooks/useTelegram';
 
 interface Filters {
     category: string;
@@ -20,6 +21,8 @@ interface Filters {
 const ProductListPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const initialCategory = searchParams.get('category') || 'Все';
+
+  useTelegramBackButton(true);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);

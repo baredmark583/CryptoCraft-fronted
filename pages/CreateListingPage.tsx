@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -12,6 +10,7 @@ import { apiService } from '../services/apiService';
 import { fileToBase64 } from '../lib/utils';
 import Spinner from '../components/Spinner';
 import { CATEGORIES, getCategoryNames } from '../constants';
+import { useTelegramBackButton } from '../hooks/useTelegram';
 
 const AIGenerateForm: React.FC<{ onGenerated: (data: GeneratedListing, file: File) => void }> = ({ onGenerated }) => {
     const [description, setDescription] = useState('');
@@ -398,6 +397,8 @@ const CreateListingPage: React.FC = () => {
     const [step, setStep] = useState<'generate' | 'review'>('generate');
     const [generatedData, setGeneratedData] = useState<(GeneratedListing & { productType: Product['productType']; saleType: string; }) | null>(null);
     const [imageFile, setImageFile] = useState<File | null>(null);
+
+    useTelegramBackButton(true);
 
     const handleGenerated = (data: GeneratedListing, file: File) => {
         setGeneratedData({...data, productType: 'PHYSICAL', saleType: 'FIXED_PRICE' }); // Default to physical & fixed price

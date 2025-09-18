@@ -1,11 +1,10 @@
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import type { ForumThread, ForumPost } from '../types';
 import Spinner from '../components/Spinner';
 import { useAuth } from '../hooks/useAuth';
+import { useTelegramBackButton } from '../hooks/useTelegram';
 
 const ForumThreadPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +15,8 @@ const ForumThreadPage: React.FC = () => {
   const [replyContent, setReplyContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useTelegramBackButton(true);
 
   useEffect(() => {
     if (!id) return;

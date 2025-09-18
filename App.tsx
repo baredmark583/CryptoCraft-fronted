@@ -11,6 +11,7 @@ import { WishlistProvider } from './hooks/useWishlist';
 
 import Header from './components/Header';
 import Footer from './components/Footer';
+import MobileNavBar from './components/MobileNavBar';
 import HomePage from './pages/HomePage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import CreateListingPage from './pages/CreateListingPage';
@@ -38,7 +39,7 @@ const MainLayout: React.FC = () => {
     <Router>
       <div className="bg-brand-background min-h-screen flex flex-col font-sans text-brand-text-primary">
         <Header />
-        <main className="flex-grow container mx-auto px-4 py-8">
+        <main className="flex-grow container mx-auto px-4 py-8 pb-24 md:pb-8">
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/products" element={<ProductListPage />} />
@@ -66,6 +67,7 @@ const MainLayout: React.FC = () => {
           </Routes>
         </main>
         <Footer />
+        <MobileNavBar />
       </div>
     </Router>
   );

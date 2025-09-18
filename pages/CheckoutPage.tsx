@@ -6,6 +6,7 @@ import { useCurrency } from '../hooks/useCurrency';
 import { apiService } from '../services/apiService';
 import type { ShippingAddress, User, CartItem } from '../types';
 import Spinner from '../components/Spinner';
+import { useTelegramBackButton } from '../hooks/useTelegram';
 
 type CheckoutStep = 'shipping' | 'payment' | 'summary';
 
@@ -16,6 +17,8 @@ const CheckoutPage: React.FC = () => {
     const { cartItems, clearCart, removeItemsIfSoldOut } = useCart();
     const { getFormattedPrice } = useCurrency();
     const navigate = useNavigate();
+
+    useTelegramBackButton(true);
 
     const [step, setStep] = useState<CheckoutStep>('shipping');
     const [isProcessing, setIsProcessing] = useState(false);

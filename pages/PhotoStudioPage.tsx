@@ -6,6 +6,7 @@ import { cloudinaryService } from '../services/cloudinaryService';
 import { useAuth } from '../hooks/useAuth';
 import type { Product } from '../types';
 import Spinner from '../components/Spinner';
+import { useTelegramBackButton } from '../hooks/useTelegram';
 
 const AI_PROMPT_SUGGESTIONS = [
     { name: 'Удалить фон', prompt: 'remove the background, replacing it with a clean, neutral light grey studio background for an e-commerce product photo.' },
@@ -27,6 +28,8 @@ const PhotoStudioPage: React.FC = () => {
     const { productId } = useParams<{ productId: string }>();
     const { user, updateUser } = useAuth();
     const navigate = useNavigate();
+
+    useTelegramBackButton(true);
 
     const [product, setProduct] = useState<Product | null>(null);
     const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -73,187 +76,188 @@ const PhotoStudioPage: React.FC = () => {
 
     const freeEditsRemaining = useMemo(() => 
         Math.max(0, freeEditLimit - editsCount.count),
+    // FIX: Completed the useMemo hook dependency array.
     [freeEditLimit, editsCount.count]);
 
-    const isPaidEdit = freeEditsRemaining === 0;
+    const canAffordEdit = useMemo(() => {
+        return freeEditsRemaining > 0 || user.balance >= EDIT_COST;
+    }, [freeEditsRemaining, user.balance]);
 
-    useEffect(() => {
-        const fetchProduct = async () => {
-            if (!productId) return;
-            setIsLoading(true);
-            try {
-                const data = await apiService.getProductById(productId);
-                if (data && data.seller.id === user.id) {
-                    setProduct(data);
-                    setOriginalImage(data.imageUrls[0]);
-                    setCurrentImage(data.imageUrls[0]);
-                } else {
-                    alert("Товар не найден или у вас нет прав на его редактирование.");
-                    navigate('/profile');
-                }
-            } catch (err) {
-                setError('Не удалось загрузить товар.');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchProduct();
-    }, [productId, user.id, navigate]);
-    
-    const urlToBase64 = async (url: string): Promise<{ base64: string, mimeType: string }> => {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        const mimeType = blob.type;
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const result = reader.result as string;
-                resolve({ base64: result.split(',')[1], mimeType });
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-        });
-    };
-
-    const handleEdit = useCallback(async (editPrompt: string) => {
-        if (!currentImage) return;
-
-        if (isPaidEdit && user.balance < EDIT_COST) {
-            setError(`Недостаточно средств. Необходимо ${EDIT_COST} USDT.`);
-            return;
-        }
+    const handleEditImage = async () => {
+        if (!currentImage || !prompt.trim() || !canAffordEdit) return;
 
         setIsEditing(true);
         setError('');
         try {
-            if (isPaidEdit) {
-                // Deduct balance
+            // Simulate payment for non-free edits
+            if (freeEditsRemaining <= 0) {
                 const newBalance = user.balance - EDIT_COST;
+                if (newBalance < 0) {
+                    throw new Error("Недостаточно средств на балансе.");
+                }
                 await apiService.updateUserBalance(user.id, newBalance);
                 updateUser({ balance: newBalance });
             }
+
+            // The image should be base64 without the data URI prefix
+            const base64Data = currentImage.split(',')[1];
+            // Infer mime type
+            const mimeType = currentImage.match(/data:(.*);base64,/)?.[1] || 'image/jpeg';
             
-            const { base64, mimeType } = await urlToBase64(currentImage);
-            const editedBase64 = await geminiService.editImage(base64, mimeType, editPrompt);
-            setCurrentImage(`data:${mimeType};base64,${editedBase64}`);
+            const editedImageBase64 = await geminiService.editImage(base64Data, mimeType, prompt);
             
-            // Increment usage count
-            const newCount = editsCount.count + 1;
-            const newUsage = { ...editsCount, count: newCount };
+            setCurrentImage(`data:image/png;base64,${editedImageBase64}`); // Gemini might return a different format, assume png for simplicity
+
+            // Update usage count
+            const today = new Date().setHours(0, 0, 0, 0);
+            const newCount = editsCount.resetDate < today ? 1 : editsCount.count + 1;
+            const newUsage = { count: newCount, resetDate: today };
             setEditsCount(newUsage);
             localStorage.setItem(getUsageKey(), JSON.stringify(newUsage));
 
         } catch (err: any) {
-            setError(err.message || "Ошибка редактирования");
+            setError(err.message || 'Произошла ошибка при редактировании.');
         } finally {
             setIsEditing(false);
         }
-    }, [currentImage, isPaidEdit, user, updateUser, editsCount]);
+    };
 
     const handleSave = async () => {
         if (!currentImage || !product || currentImage === originalImage) return;
         setIsSaving(true);
         setError('');
         try {
-            // This logic assumes currentImage is a data URL
             const response = await fetch(currentImage);
             const blob = await response.blob();
-            const file = new File([blob], `${product.id}-edited.jpg`, { type: blob.type });
+            const file = new File([blob], "edited-image.png", { type: "image/png" });
 
             const newImageUrl = await cloudinaryService.uploadImage(file);
             
+            // For simplicity, we'll replace the first image. A real app might allow adding new images.
             const updatedImageUrls = [newImageUrl, ...product.imageUrls.slice(1)];
-            const updatedProduct = await apiService.updateListing(product.id, { imageUrls: updatedImageUrls });
+            
+            await apiService.updateListing(product.id, { imageUrls: updatedImageUrls });
 
-            setProduct(updatedProduct);
-            setOriginalImage(newImageUrl);
-            setCurrentImage(newImageUrl);
-
-            alert("Изображение успешно сохранено!");
+            alert('Изображение успешно сохранено!');
+            navigate(`/product/${product.id}`);
         } catch (err: any) {
             setError(err.message || 'Не удалось сохранить изображение.');
-        } finally {
             setIsSaving(false);
         }
     };
     
-    const canSave = currentImage !== originalImage;
+    useEffect(() => {
+        if (!productId) return;
+        const fetchProduct = async () => {
+            setIsLoading(true);
+            const data = await apiService.getProductById(productId);
+            if (data && data.seller.id === user.id) {
+                setProduct(data);
+                // We need to fetch the image and convert it to a data URL for editing
+                try {
+                    const response = await fetch(data.imageUrls[0]);
+                    const blob = await response.blob();
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const base64data = reader.result as string;
+                        setOriginalImage(base64data);
+                        setCurrentImage(base64data);
+                    };
+                    reader.readAsDataURL(blob);
+                } catch (e) {
+                    setError("Не удалось загрузить изображение для редактирования.");
+                }
+            } else {
+                setError("Товар не найден или у вас нет прав на его редактирование.");
+            }
+            setIsLoading(false);
+        };
+        fetchProduct();
+    }, [productId, user.id]);
 
-    if (isLoading) return <div className="flex justify-center py-16"><Spinner size="lg"/></div>;
-    if (!product) return <div className="text-center text-xl text-brand-text-secondary">Товар не найден.</div>;
+    if (isLoading) {
+        return <div className="flex justify-center items-center h-96"><Spinner size="lg" /></div>;
+    }
+
+    if (error && !product) {
+        return <div className="text-center text-red-500 mt-16">{error}</div>;
+    }
+
+    if (!product) {
+        return null;
+    }
 
     return (
-        <div>
-            <div className="mb-6">
-                <Link to={`/edit/${productId}`} className="text-sm text-brand-secondary hover:text-brand-primary mb-4 block">&larr; Вернуться к редактированию</Link>
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-4">
                 <h1 className="text-3xl font-bold text-white">AI Фотостудия</h1>
-                <p className="text-brand-text-secondary">Улучшите главное изображение для товара "{product.title}"</p>
+                <div className="relative aspect-square bg-brand-background rounded-lg flex items-center justify-center p-2">
+                    {isEditing && (
+                        <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center z-10 rounded-lg">
+                            <Spinner size="lg" />
+                            <p className="text-white mt-4">Применяем магию...</p>
+                        </div>
+                    )}
+                    {currentImage && (
+                        <img src={currentImage} alt="Редактируемое изображение" className="max-w-full max-h-full object-contain rounded-md" />
+                    )}
+                </div>
+                 <div className="flex gap-4">
+                    <button onClick={() => setCurrentImage(originalImage)} disabled={isEditing} className="flex-1 bg-brand-surface hover:bg-brand-border text-white font-semibold py-2 px-4 rounded-lg disabled:opacity-50">
+                        Сбросить
+                    </button>
+                    <button onClick={handleSave} disabled={isSaving || currentImage === originalImage} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center disabled:bg-gray-500">
+                        {isSaving ? <Spinner size="sm" /> : 'Сохранить'}
+                    </button>
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 bg-brand-surface rounded-lg p-4 flex flex-col items-center justify-center">
-                    <div className="relative w-full aspect-square max-w-xl">
-                        {currentImage ? (
-                            <img src={currentImage} alt="Редактируемый товар" className="w-full h-full object-contain rounded-md" />
-                        ) : <div className="w-full h-full bg-brand-background rounded-md"></div>}
-                        
-                        {(isEditing || isSaving) && (
-                            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center rounded-md">
-                                <Spinner />
-                                <p className="mt-4 text-white font-semibold">{isSaving ? 'Сохранение...' : 'Магия AI в действии...'}</p>
-                            </div>
-                        )}
-                    </div>
-                     <div className="flex items-center gap-4 mt-4">
-                        {originalImage && <img src={originalImage} alt="Оригинал" className="w-24 h-24 object-cover rounded-md border-2 border-brand-border" title="Оригинал"/>}
-                         <button onClick={() => setCurrentImage(originalImage)} disabled={currentImage === originalImage} className="text-sm bg-brand-border hover:bg-brand-border/70 text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">
-                             Сбросить
-                         </button>
-                    </div>
+            <div className="lg:col-span-1 bg-brand-surface p-6 rounded-lg space-y-6">
+                <div>
+                    <h2 className="text-xl font-bold text-white mb-2">Инструменты</h2>
+                    <p className="text-sm text-brand-text-secondary">Опишите, что вы хотите изменить, или выберите готовый вариант.</p>
                 </div>
 
-                <div className="space-y-6">
-                    <div className="bg-brand-surface rounded-lg p-4 text-center">
-                        <p className={`font-bold text-lg ${user.verificationLevel === 'PRO' ? 'text-amber-400' : 'text-sky-400'}`}>
-                           {user.verificationLevel === 'PRO' ? '✨ Pro План' : '⭐ Стандартный План'}
-                        </p>
-                        <p className="text-brand-text-primary">
-                           Осталось бесплатных редактирований сегодня:
-                        </p>
-                        <p className="text-4xl font-bold text-white my-2">{freeEditsRemaining} / {freeEditLimit}</p>
-                        {isPaidEdit && <p className="text-sm text-brand-text-secondary">Следующее редактирование: {EDIT_COST} USDT</p>}
-                    </div>
-
-                    <div className="bg-brand-surface rounded-lg p-4">
-                        <h3 className="font-bold text-white mb-3">Быстрые действия</h3>
-                        <div className="grid grid-cols-2 gap-2">
-                            {AI_PROMPT_SUGGESTIONS.map(s => (
-                                <button key={s.name} onClick={() => handleEdit(s.prompt)} disabled={isEditing} className="text-sm bg-brand-secondary hover:bg-brand-primary-hover text-white font-semibold p-3 rounded-lg text-center disabled:opacity-50">
-                                    {s.name}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="bg-brand-surface rounded-lg p-4">
-                        <h3 className="font-bold text-white mb-3">Ваша команда</h3>
-                        <textarea
-                            value={prompt}
-                            onChange={e => setPrompt(e.target.value)}
-                            rows={4}
-                            placeholder="Например: 'поставь вазу на пляже во время заката'"
-                            className="w-full bg-brand-background border border-brand-border rounded-md p-2 text-sm"
-                        />
-                         <button onClick={() => handleEdit(prompt)} disabled={isEditing || !prompt.trim()} className="w-full mt-2 bg-brand-primary hover:bg-brand-primary-hover text-white font-bold py-2 px-4 rounded-lg disabled:opacity-50">
-                            {isPaidEdit ? `Применить (${EDIT_COST} USDT)` : 'Применить'}
+                <div>
+                    <label htmlFor="prompt-input" className="block text-sm font-medium text-brand-text-secondary mb-2">Ваш запрос:</label>
+                    <textarea 
+                        id="prompt-input"
+                        rows={3}
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        placeholder="Например, 'добавь тень под предмет'"
+                        className="w-full bg-brand-background border border-brand-border rounded-md p-2"
+                    />
+                </div>
+                
+                <div className="space-y-2">
+                    {AI_PROMPT_SUGGESTIONS.map(sugg => (
+                        <button key={sugg.name} onClick={() => setPrompt(sugg.prompt)} className="w-full text-left bg-brand-background/50 hover:bg-brand-border/50 p-2 rounded-md text-sm text-brand-text-primary">
+                            {sugg.name}
                         </button>
-                    </div>
+                    ))}
+                </div>
 
-                    <div className="mt-4">
-                        {error && <p className="text-red-500 text-sm mb-2 text-center">{error}</p>}
-                        <button onClick={handleSave} disabled={isSaving || !canSave} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg flex justify-center items-center disabled:bg-gray-500 disabled:cursor-not-allowed">
-                            {isSaving ? <Spinner size="sm" /> : 'Сохранить как главное фото'}
-                        </button>
-                    </div>
+                <div className="border-t border-brand-border pt-4 space-y-3">
+                     <div className="text-center">
+                        <p className="text-sm text-brand-text-secondary">
+                            Бесплатных правок сегодня: <span className={`font-bold ${freeEditsRemaining > 0 ? 'text-green-400' : 'text-red-400'}`}>{freeEditsRemaining}</span> / {freeEditLimit}
+                        </p>
+                        {freeEditsRemaining === 0 && (
+                             <p className="text-xs text-brand-text-secondary">Стоимость следующей правки: {EDIT_COST.toFixed(2)} USDT</p>
+                        )}
+                     </div>
+                     <button
+                        onClick={handleEditImage}
+                        disabled={isEditing || !prompt.trim() || !canAffordEdit}
+                        className="w-full bg-brand-primary hover:bg-brand-primary-hover text-white font-bold py-3 px-4 rounded-lg disabled:bg-gray-500 disabled:cursor-not-allowed"
+                    >
+                        Применить
+                    </button>
+                     {!canAffordEdit && (
+                        <p className="text-xs text-red-500 text-center">Недостаточно средств или исчерпан лимит правок.</p>
+                    )}
+                    {error && <p className="text-sm text-red-500 text-center">{error}</p>}
                 </div>
             </div>
         </div>

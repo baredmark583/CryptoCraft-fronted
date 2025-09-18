@@ -7,6 +7,7 @@ import ProductCard from '../components/ProductCard';
 import Spinner from '../components/Spinner';
 import FilterBar from '../components/FilterBar';
 import { CATEGORIES } from '../constants';
+import { useTelegramBackButton } from '../hooks/useTelegram';
 
 interface Filters {
     query?: string,
@@ -22,6 +23,8 @@ const SearchResultsPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
   
+  useTelegramBackButton(true);
+
   const [products, setProducts] = useState<Product[]>([]);
   const [isAiProcessing, setIsAiProcessing] = useState(true);
   const [isFetchingProducts, setIsFetchingProducts] = useState(false);

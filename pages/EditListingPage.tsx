@@ -7,6 +7,7 @@ import type { CategoryField } from '../constants';
 import Spinner from '../components/Spinner';
 import { CATEGORIES, getCategoryNames } from '../constants';
 import { cloudinaryService } from '../services/cloudinaryService';
+import { useTelegramBackButton } from '../hooks/useTelegram';
 
 const DynamicField: React.FC<{ field: CategoryField, value: any, onChange: (name: string, value: any) => void }> = ({ field, value, onChange }) => {
     const commonProps = {
@@ -230,6 +231,8 @@ const EditListingPage: React.FC = () => {
     const [videoFile, setVideoFile] = useState<File | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isUpdating, setIsUpdating] = useState(false);
+
+    useTelegramBackButton(true);
 
     const categorySchema = useMemo(() => {
         if (!formData?.category) return null;

@@ -7,12 +7,15 @@ import type { Chat, Message, MessageContent } from '../types';
 import Spinner from '../components/Spinner';
 import ChatMessage from '../components/ChatMessage';
 import VerifiedBadge from '../components/VerifiedBadge';
+import { useTelegramBackButton } from '../hooks/useTelegram';
 
 const ChatPage: React.FC = () => {
   const { chatId } = useParams<{ chatId?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  useTelegramBackButton(!!chatId);
 
   const [chats, setChats] = useState<Chat[]>([]);
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
