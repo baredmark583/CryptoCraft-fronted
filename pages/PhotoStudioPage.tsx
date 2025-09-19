@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { geminiService } from '../services/geminiService';
@@ -40,6 +40,10 @@ const PhotoStudioPage: React.FC = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState('');
     
+    // Cooldown state for rate limiting
+    const [cooldownUntil, setCooldownUntil] = useState<number | null>(null);
+    const [countdown, setCountdown] = useState(0);
+    
     // Usage tracking state
     const [editsCount, setEditsCount] = useState<UsageData>({ count: 0, resetDate: new Date().setHours(0,0,0,0) });
 
@@ -70,13 +74,32 @@ const PhotoStudioPage: React.FC = () => {
         }
     }, [user.id]);
 
+    // Countdown timer effect for rate limiting
+    useEffect(() => {
+        if (!cooldownUntil) return;
+
+        const interval = setInterval(() => {
+            const now = Date.now();
+            const remaining = Math.ceil((cooldownUntil - now) / 1000);
+            if (remaining > 0) {
+                setCountdown(remaining);
+            } else {
+                setCooldownUntil(null);
+                setCountdown(0);
+                setError(''); // Clear rate limit error message when cooldown ends
+                clearInterval(interval);
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [cooldownUntil]);
+
     const freeEditLimit = useMemo(() => 
         user.verificationLevel === 'PRO' ? FREE_EDITS_PRO : FREE_EDITS_STANDARD,
     [user.verificationLevel]);
 
     const freeEditsRemaining = useMemo(() => 
         Math.max(0, freeEditLimit - editsCount.count),
-    // FIX: Completed the useMemo hook dependency array.
     [freeEditLimit, editsCount.count]);
 
     const canAffordEdit = useMemo(() => {
@@ -84,7 +107,7 @@ const PhotoStudioPage: React.FC = () => {
     }, [freeEditsRemaining, user.balance]);
 
     const handleEditImage = async () => {
-        if (!currentImage || !prompt.trim() || !canAffordEdit) return;
+        if (!currentImage || !prompt.trim() || !canAffordEdit || cooldownUntil) return;
 
         setIsEditing(true);
         setError('');
@@ -116,7 +139,18 @@ const PhotoStudioPage: React.FC = () => {
             localStorage.setItem(getUsageKey(), JSON.stringify(newUsage));
 
         } catch (err: any) {
-            setError(err.message || 'Произошла ошибка при редактировании.');
+             if (err.message?.startsWith('RATE_LIMIT:')) {
+                const message = err.message.replace('RATE_LIMIT:', '');
+                setError(message);
+                const match = message.match(/(\d+(\.\d+)?)/); // Find integer or float
+                if (match) {
+                    const seconds = Math.ceil(parseFloat(match[0]));
+                    setCooldownUntil(Date.now() + seconds * 1000);
+                    setCountdown(seconds);
+                }
+            } else {
+                setError(err.message || 'Произошла ошибка при редактировании.');
+            }
         } finally {
             setIsEditing(false);
         }
@@ -249,12 +283,12 @@ const PhotoStudioPage: React.FC = () => {
                      </div>
                      <button
                         onClick={handleEditImage}
-                        disabled={isEditing || !prompt.trim() || !canAffordEdit}
+                        disabled={isEditing || !prompt.trim() || !canAffordEdit || !!cooldownUntil}
                         className="w-full bg-brand-primary hover:bg-brand-primary-hover text-white font-bold py-3 px-4 rounded-lg disabled:bg-gray-500 disabled:cursor-not-allowed"
                     >
-                        Применить
+                        {isEditing ? 'Применяем...' : cooldownUntil ? `Подождите (${countdown}с)` : 'Применить'}
                     </button>
-                     {!canAffordEdit && (
+                     {!cooldownUntil && !canAffordEdit && (
                         <p className="text-xs text-red-500 text-center">Недостаточно средств или исчерпан лимит правок.</p>
                     )}
                     {error && <p className="text-sm text-red-500 text-center">{error}</p>}

@@ -268,7 +268,6 @@ export const geminiService = {
     }
   
     try {
-        // FIX: Update `contents` payload to match the recommended structure for image editing.
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image-preview',
             contents: {
@@ -296,8 +295,33 @@ export const geminiService = {
         }
         throw new Error("AI did not return an image.");
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error calling Gemini Image Edit API:", error);
+
+        // Improved error handling for rate limiting
+        if (error && typeof error.message === 'string' && error.message.includes('RESOURCE_EXHAUSTED')) {
+            try {
+                const jsonStartIndex = error.message.indexOf('{');
+                if (jsonStartIndex !== -1) {
+                    const jsonString = error.message.substring(jsonStartIndex);
+                    const errorJson = JSON.parse(jsonString);
+                    const retryDetail = errorJson.error?.details?.find(
+                        (d: any) => d['@type'] === 'type.googleapis.com/google.rpc.RetryInfo'
+                    );
+                    
+                    if (retryDetail?.retryDelay) {
+                        const seconds = parseFloat(retryDetail.retryDelay) || 5;
+                        const waitSeconds = Math.ceil(seconds);
+                        throw new Error(`RATE_LIMIT:Сервер перегружен. Пожалуйста, попробуйте снова через ${waitSeconds} секунд.`);
+                    }
+                }
+            } catch (parseError) {
+                console.error("Could not parse rate limit error details:", parseError);
+                throw new Error("RATE_LIMIT:Слишком много запросов. Пожалуйста, попробуйте еще раз через минуту.");
+            }
+            throw new Error("RATE_LIMIT:Слишком много запросов. Пожалуйста, попробуйте еще раз через минуту.");
+        }
+
         throw new Error("Не удалось отредактировать изображение. Пожалуйста, попробуйте еще раз.");
     }
   },
