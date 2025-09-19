@@ -212,6 +212,13 @@ export const apiService = {
     return response.json();
   },
 
+  uploadFileFromUrl: async (url: string): Promise<{ url: string }> => {
+    return apiFetch('/upload/url', {
+        method: 'POST',
+        body: JSON.stringify({ url }),
+    });
+  },
+
   // Orders - REAL IMPLEMENTATION
 // FIX: Update function signature to accept all 8 arguments passed from CheckoutPage.tsx.
   createOrdersFromCart: async (cartItems: CartItem[], user: User, paymentMethod: 'ESCROW' | 'DIRECT', shippingMethod: 'NOVA_POSHTA' | 'UKRPOSHTA', shippingAddress: ShippingAddress, requestAuthentication: boolean, appliedPromos: any, shippingCosts: any) => {

@@ -168,14 +168,7 @@ const ImportPage: React.FC = () => {
     
                 const uploadedUrls = await Promise.all(
                     item.listing.imageUrls.map(async (url) => {
-                        // Use proxy for images
-                        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-                        const response = await fetch(proxyUrl);
-                        if (!response.ok) throw new Error(`Не удалось загрузить изображение: ${url}`);
-                        const blob = await response.blob();
-                        const fileName = url.substring(url.lastIndexOf('/') + 1).split('?')[0] || `imported-image-${Date.now()}.jpg`;
-                        const file = new File([blob], fileName, { type: blob.type || 'image/jpeg' });
-                        const result = await apiService.uploadFile(file);
+                        const result = await apiService.uploadFileFromUrl(url);
                         return result.url;
                     })
                 );
@@ -292,4 +285,4 @@ const ImportPage: React.FC = () => {
     );
 };
 
-export default ImportPage;
+    export default ImportPage;

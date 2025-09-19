@@ -426,12 +426,12 @@ export interface ImportItem {
   url: string;
   status: 'pending' | 'scraping' | 'parsing' | 'enriching' | 'success' | 'error' | 'publishing' | 'published' | 'publish_error';
   errorMessage?: string;
-  listing?: Partial<GeneratedListing> & {
+  // FIX: Update the `listing` type to correctly match the expected structure of an editable imported listing. This resolves TypeScript errors in `ImportPage.tsx`.
+  listing?: (Omit<GeneratedListing, 'price'> & { price?: number }) & {
     imageUrls: string[];
-    originalPrice?: number;
-    originalCurrency?: string;
-    // FIX: Add missing properties to align with ImportedListingData and EditableListing types, resolving multiple TypeScript errors in ImportPage.tsx.
+    originalPrice: number;
+    originalCurrency: string;
     saleType: 'FIXED_PRICE' | 'AUCTION';
     giftWrapAvailable: boolean;
   };
-} 
+}
