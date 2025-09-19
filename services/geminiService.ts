@@ -236,7 +236,7 @@ export const geminiService = {
 2.  **Извлечение Атрибутов:** Извлеки значения для характеристик, соответствующих выбранной категории.
 3.  **Улучшение Контента:** Напиши новый, привлекательный заголовок и описание.
 
-Твой ответ ДОЛЖЕН быть только в формате JSON и строго соответствовать схеме. Поле 'price' оставь равным 0.`;
+Твой ответ ДОЛЖЕН быть только в формате JSON и строго соответствовать схеме. Поле 'price' оставь равным 0. Поле 'dynamicAttributes' должно быть JSON-СТРОКОЙ.`;
 
     try {
       const response = await ai.models.generateContent({
@@ -251,7 +251,10 @@ export const geminiService = {
               description: { type: Type.STRING },
               price: { type: Type.NUMBER, description: "Всегда возвращай 0 для этого поля." },
               category: { type: Type.STRING, enum: getCategoryNames() },
-              dynamicAttributes: { type: Type.OBJECT }
+              dynamicAttributes: { 
+                type: Type.STRING,
+                description: 'JSON-СТРОКА с парами ключ-значение для характеристик товара (напр., "{\\"Бренд\\": \\"Razer\\"}").'
+              }
             },
             required: ["title", "description", "price", "category", "dynamicAttributes"]
           }
@@ -259,7 +262,25 @@ export const geminiService = {
       });
       
       const resultText = response.text;
-      return JSON.parse(resultText) as GeneratedListing;
+      const parsedJson = JSON.parse(resultText);
+
+      // The API returns dynamicAttributes as a string, we need to parse it into an object.
+      if (typeof parsedJson.dynamicAttributes === 'string') {
+          try {
+              if (parsedJson.dynamicAttributes.trim().startsWith('{')) {
+                 parsedJson.dynamicAttributes = JSON.parse(parsedJson.dynamicAttributes);
+              } else {
+                 parsedJson.dynamicAttributes = {};
+              }
+          } catch (e) {
+              console.error("Could not parse dynamicAttributes string from enrich:", parsedJson.dynamicAttributes, e);
+              parsedJson.dynamicAttributes = {};
+          }
+      } else if (typeof parsedJson.dynamicAttributes !== 'object') {
+          parsedJson.dynamicAttributes = {};
+      }
+      
+      return parsedJson as GeneratedListing;
 
     } catch (error) {
       console.error("Error calling Gemini API for enrichment:", error);
