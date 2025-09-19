@@ -426,5 +426,9 @@ export interface ImportItem {
   url: string;
   status: 'pending' | 'scraping' | 'parsing' | 'success' | 'error';
   errorMessage?: string;
-  listing?: Partial<GeneratedListing> & { imageUrls: string[] };
+  listing?: Partial<GeneratedListing> & { 
+    imageUrls: string[];
+    originalPrice?: number;
+    originalCurrency?: string;
+  };
 }

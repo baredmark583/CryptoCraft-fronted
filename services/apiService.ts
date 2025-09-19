@@ -257,11 +257,36 @@ export const apiService = {
   },
 
   // Scraping
-  scrapeUrl: async (url: string): Promise<{ html: string }> => {
+  scrapeUrl: async (url: string): Promise<{ cleanText: string }> => {
     return apiFetch('/scrape', {
       method: 'POST',
       body: JSON.stringify({ url }),
     });
+  },
+  
+  // Currency Conversion (Mock)
+  convertCurrency: async (amount: number, fromCurrency: string): Promise<number> => {
+    // This is a mock. A real service would call a currency API.
+    await new Promise(res => setTimeout(res, 100)); // Simulate network latency
+    const from = fromCurrency.toUpperCase();
+
+    // Rough exchange rates
+    const rates: Record<string, number> = {
+        'UAH': 0.025, // 1 UAH = 0.025 USDT
+        'ГРН': 0.025,
+        'USD': 1.0,
+        '$': 1.0,
+        'EUR': 1.08, // 1 EUR = 1.08 USDT
+        '€': 1.08,
+    };
+
+    const rate = rates[from];
+    if (rate) {
+      return amount * rate;
+    }
+    
+    // If currency is unknown, return original amount
+    return amount;
   },
 
   // --- MOCKED API METHODS (for remaining features) ---

@@ -46,6 +46,11 @@ const EditableListingCard: React.FC<EditableListingProps> = ({ item, onUpdate })
              <div>
                 <label className="text-xs text-brand-text-secondary">Цена (USDT)</label>
                 <input name="price" type="number" value={item.listing.price} onChange={handlePriceChange} className="w-full bg-brand-surface border border-brand-border rounded p-2 text-sm" />
+                {item.listing.originalPrice && item.listing.originalCurrency && (
+                    <p className="text-xs text-brand-text-secondary mt-1">
+                        Оригинал: {item.listing.originalPrice} {item.listing.originalCurrency}
+                    </p>
+                )}
             </div>
             <div>
                 <label className="text-xs text-brand-text-secondary mb-2 block">Изображения ({selectedImages.length} / {item.listing.imageUrls?.length || 0} выбрано)</label>
@@ -91,16 +96,24 @@ const ImportPage: React.FC = () => {
         setSelectedItems(new Set()); // Reset selection
 
         for (const item of initialItems) {
-            // Scrape HTML
+            // Scrape and clean HTML on backend
             setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'scraping' } : i));
             try {
-                const { html } = await apiService.scrapeUrl(item.url);
+                const { cleanText } = await apiService.scrapeUrl(item.url);
                 
                 // Parse with AI
                 setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'parsing' } : i));
-                const parsedData = await geminiService.extractListingFromHtml(html);
+                const parsedData = await geminiService.extractListingFromHtml(cleanText);
+                
+                // Convert currency
+                const convertedPrice = await apiService.convertCurrency(parsedData.originalPrice, parsedData.originalCurrency);
 
-                setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'success', listing: parsedData } : i));
+                const finalListingData = {
+                    ...parsedData,
+                    price: parseFloat(convertedPrice.toFixed(2)),
+                };
+
+                setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'success', listing: finalListingData } : i));
                 setSelectedItems(prev => new Set(prev).add(item.id)); // Auto-select successful items
 
             } catch (error: any) {

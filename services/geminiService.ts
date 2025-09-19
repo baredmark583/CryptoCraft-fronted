@@ -154,7 +154,7 @@ export const geminiService = {
     }
   },
 
-  extractListingFromHtml: async (html: string): Promise<GeneratedListing & { imageUrls: string[] }> => {
+  extractListingFromHtml: async (cleanText: string): Promise<GeneratedListing & { imageUrls: string[], originalPrice: number, originalCurrency: string }> => {
     if (!ai) {
       // Mock response for when AI is not available
       return new Promise(resolve => setTimeout(() => resolve({
@@ -163,16 +163,18 @@ export const geminiService = {
         price: parseFloat((Math.random() * 100).toFixed(2)),
         category: "Товары ручной работы",
         dynamicAttributes: {},
-        imageUrls: [`https://picsum.photos/seed/import${Date.now()}/600/400`]
+        imageUrls: [`https://picsum.photos/seed/import${Date.now()}/600/400`],
+        originalPrice: 2195,
+        originalCurrency: 'UAH'
       }), 1500));
     }
 
-    const prompt = `Ты — эксперт по парсингу веб-страниц. Твоя задача — извлечь информацию о товаре из предоставленного HTML-кода страницы товара с любого маркетплейса. Найди и верни заголовок, подробное описание, цену (только числовое значение, без валюты) и массив URL-адресов всех изображений товара в высоком разрешении. Игнорируй иконки, логотипы и изображения, не относящиеся к товару. Твой ответ ДОЛЖЕН быть только в формате JSON и строго соответствовать предоставленной схеме.`;
+    const prompt = `Ты — эксперт по анализу данных. Твоя задача — извлечь информацию о товаре из предоставленного текста, который был предварительно очищен со страницы товара. Найди и верни: заголовок, подробное описание, цену (только числовое значение), СИМВОЛ или КОД ВАЛЮТЫ (например, "грн", "$", "USD") и массив URL-адресов всех изображений товара. Игнорируй нерелевантную информацию. Твой ответ ДОЛЖЕН быть только в формате JSON и строго соответствовать предоставленной схеме.`;
     
     try {
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: { parts: [{ text: `HTML-код для анализа:\n\n${html}` }, { text: prompt }] },
+        contents: { parts: [{ text: `Очищенный текст для анализа:\n\n${cleanText}` }, { text: prompt }] },
         config: {
           responseMimeType: 'application/json',
           responseSchema: {
@@ -181,13 +183,14 @@ export const geminiService = {
               title: { type: Type.STRING, description: 'Полный заголовок товара.' },
               description: { type: Type.STRING, description: 'Полное описание товара, сохранив форматирование абзацев.' },
               price: { type: Type.NUMBER, description: 'Цена товара как числовое значение.' },
+              currency: { type: Type.STRING, description: 'Символ или код валюты (например, "грн", "$", "UAH").' },
               imageUrls: {
                 type: Type.ARRAY,
                 description: 'Массив URL-адресов изображений товара.',
                 items: { type: Type.STRING }
               }
             },
-            required: ["title", "description", "price", "imageUrls"]
+            required: ["title", "description", "price", "currency", "imageUrls"]
           }
         }
       });
@@ -198,9 +201,11 @@ export const geminiService = {
       // Mock category and dynamic attributes as they are not extracted from HTML yet.
       return {
         ...parsedJson,
-        category: "Товары ручной работы",
+        originalPrice: parsedJson.price,
+        originalCurrency: parsedJson.currency,
+        category: "Товары ручной работы", // Will be classified in a later step
         dynamicAttributes: {}
-      } as GeneratedListing & { imageUrls: string[] };
+      } as GeneratedListing & { imageUrls: string[], originalPrice: number, originalCurrency: string };
 
     } catch (error) {
       console.error("Error calling Gemini API for HTML extraction:", error);
