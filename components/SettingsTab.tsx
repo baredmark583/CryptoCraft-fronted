@@ -345,25 +345,12 @@ const SettingsTab: React.FC<{ user: User }> = ({ user }) => {
             </div>
 
             <div className="bg-brand-surface p-6 sm:p-8 rounded-lg">
-                <h2 className="text-2xl font-bold text-white mb-2">Импорт и Экспорт</h2>
-                <p className="text-brand-text-secondary mb-6">Инструменты для массового управления товарами. Скоро в CryptoCraft!</p>
+                <h2 className="text-2xl font-bold text-white mb-2">Импорт товаров</h2>
+                <p className="text-brand-text-secondary mb-6">Инструменты для быстрого переноса ваших товаров на нашу платформу.</p>
                 <div className="space-y-4">
                     <div>
-                        <h3 className="text-lg font-semibold text-white">Массовая загрузка товаров</h3>
-                        <p className="text-sm text-brand-text-secondary mb-3">Загрузите сотни товаров за один раз с помощью CSV-файла.</p>
-                        <button
-                            disabled
-                            className="w-full sm:w-auto px-4 py-2 bg-brand-border text-brand-text-secondary font-bold rounded-lg transition-colors cursor-not-allowed flex items-center justify-center gap-2"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l-3.75 3.75M12 9.75l3.75 3.75M3.75 18A2.25 2.25 0 016 20.25h12A2.25 2.25 0 0119.5 18v-2.625A2.25 2.25 0 0017.25 13.5H6.75A2.25 2.25 0 004.5 15.375V18z" />
-                            </svg>
-                            <span>Загрузить CSV (скоро)</span>
-                        </button>
-                    </div>
-                    <div className="border-t border-brand-border/50 pt-4">
                         <h3 className="text-lg font-semibold text-white">Импорт с других платформ</h3>
-                        <p className="text-sm text-brand-text-secondary mb-3">Перенесите свой магазин с Etsy или другого маркетплейса в несколько кликов.</p>
+                        <p className="text-sm text-brand-text-secondary mb-3">Перенесите свой магазин с другого маркетплейса в несколько кликов, вставив ссылки на товары. Наш AI сделает всю работу за вас.</p>
                         <Link
                             to="/import"
                             className="w-full sm:w-auto px-4 py-2 bg-brand-primary hover:bg-brand-primary-hover text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
