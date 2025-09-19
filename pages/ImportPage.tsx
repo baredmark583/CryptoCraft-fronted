@@ -100,51 +100,34 @@ const ImportPage: React.FC = () => {
         for (const item of initialItems) {
             setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'scraping' } : i));
             try {
-                let parsedData: any;
+                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(item.url)}`;
+                const response = await fetch(proxyUrl);
+                if (!response.ok) {
+                    throw new Error(`Proxy fetch failed: ${response.statusText}`);
+                }
+                const html = await response.text();
 
-                if (item.url.includes('olx.ua')) {
-                    // --- OLX SIMULATION PATH ---
-                    setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'parsing' } : i));
-                    await new Promise(res => setTimeout(res, 1500)); // Simulate work
+                const $ = cheerio.load(html);
+                $('script, style, link[rel="stylesheet"]').remove();
+                const cleanHtml = $('body').html() || '';
 
-                    parsedData = {
-                        title: "Товар с OLX (Симуляция)",
-                        description: `Это описание для товара ${item.url}, сгенерированное симуляцией, так как OLX защищен от скрапинга.`,
-                        price: Math.floor(Math.random() * 2000) + 100, // Random price
-                        currency: 'грн',
-                        imageUrls: ['https://picsum.photos/seed/' + item.id + '/600/400'], // Unique image
-                    };
-
-                } else {
-                    // --- REAL SCRAPING PATH FOR OTHER SITES ---
-                    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(item.url)}`;
-                    const response = await fetch(proxyUrl);
-                    if (!response.ok) {
-                        throw new Error(`Proxy fetch failed: ${response.statusText}`);
-                    }
-                    const html = await response.text();
-
-                    const $ = cheerio.load(html);
-                    $('script, style, link[rel="stylesheet"]').remove();
-                    const cleanHtml = $('body').html() || '';
-
-                    if (!cleanHtml.trim()) {
-                        throw new Error("Could not extract meaningful HTML from the page.");
-                    }
-
-                    setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'parsing' } : i));
-                    parsedData = await geminiService.extractListingFromHtml(cleanHtml);
+                if (!cleanHtml.trim()) {
+                    throw new Error("Could not extract meaningful HTML from the page.");
                 }
 
-                // Common logic for both paths
-                const convertedPrice = await apiService.convertCurrency(parsedData.price, parsedData.currency);
+                setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'parsing' } : i));
+                const parsedData = await geminiService.extractListingFromHtml(cleanHtml);
+                
+                // FIX: Property 'currency' does not exist on type 'GeneratedListing & { imageUrls: string[]; originalPrice: number; originalCurrency: string; }'.
+                const convertedPrice = await apiService.convertCurrency(parsedData.price, parsedData.originalCurrency);
 
                 const finalListingData = {
                     title: parsedData.title,
                     description: parsedData.description,
                     imageUrls: parsedData.imageUrls,
                     originalPrice: parsedData.price,
-                    originalCurrency: parsedData.currency,
+                    // FIX: Property 'currency' does not exist on type 'GeneratedListing & { imageUrls: string[]; originalPrice: number; originalCurrency: string; }'.
+                    originalCurrency: parsedData.originalCurrency,
                     price: parseFloat(convertedPrice.toFixed(2)),
                     category: "Импортированные", // Default category
                     dynamicAttributes: {}
