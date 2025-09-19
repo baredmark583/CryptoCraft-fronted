@@ -154,6 +154,60 @@ export const geminiService = {
     }
   },
 
+  extractListingFromHtml: async (html: string): Promise<GeneratedListing & { imageUrls: string[] }> => {
+    if (!ai) {
+      // Mock response for when AI is not available
+      return new Promise(resolve => setTimeout(() => resolve({
+        title: "Импортированный товар (Mock)",
+        description: "Это описание было сгенерировано в результате симуляции импорта, так как Gemini API недоступен.",
+        price: parseFloat((Math.random() * 100).toFixed(2)),
+        category: "Товары ручной работы",
+        dynamicAttributes: {},
+        imageUrls: [`https://picsum.photos/seed/import${Date.now()}/600/400`]
+      }), 1500));
+    }
+
+    const prompt = `Ты — эксперт по парсингу веб-страниц. Твоя задача — извлечь информацию о товаре из предоставленного HTML-кода страницы товара с любого маркетплейса. Найди и верни заголовок, подробное описание, цену (только числовое значение, без валюты) и массив URL-адресов всех изображений товара в высоком разрешении. Игнорируй иконки, логотипы и изображения, не относящиеся к товару. Твой ответ ДОЛЖЕН быть только в формате JSON и строго соответствовать предоставленной схеме.`;
+    
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: { parts: [{ text: `HTML-код для анализа:\n\n${html}` }, { text: prompt }] },
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              title: { type: Type.STRING, description: 'Полный заголовок товара.' },
+              description: { type: Type.STRING, description: 'Полное описание товара, сохранив форматирование абзацев.' },
+              price: { type: Type.NUMBER, description: 'Цена товара как числовое значение.' },
+              imageUrls: {
+                type: Type.ARRAY,
+                description: 'Массив URL-адресов изображений товара.',
+                items: { type: Type.STRING }
+              }
+            },
+            required: ["title", "description", "price", "imageUrls"]
+          }
+        }
+      });
+
+      const resultText = response.text;
+      const parsedJson = JSON.parse(resultText);
+
+      // Mock category and dynamic attributes as they are not extracted from HTML yet.
+      return {
+        ...parsedJson,
+        category: "Товары ручной работы",
+        dynamicAttributes: {}
+      } as GeneratedListing & { imageUrls: string[] };
+
+    } catch (error) {
+      console.error("Error calling Gemini API for HTML extraction:", error);
+      throw new Error("Не удалось извлечь данные из HTML с помощью AI.");
+    }
+  },
+
   editImage: async (imageBase64: string, mimeType: string, prompt: string): Promise<string> => {
     if (!ai) {
         console.log("Using mock Gemini image edit response.");

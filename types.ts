@@ -419,3 +419,12 @@ export interface AiFocus {
     ctaLink: 'sales' | 'chat' | 'analytics' | 'settings';
     ctaEntityId?: string; // Optional: for linking to a specific chat or order
 }
+
+// New type for AI Import feature
+export interface ImportItem {
+  id: string;
+  url: string;
+  status: 'pending' | 'scraping' | 'parsing' | 'success' | 'error';
+  errorMessage?: string;
+  listing?: Partial<GeneratedListing> & { imageUrls: string[] };
+}

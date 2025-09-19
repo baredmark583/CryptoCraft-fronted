@@ -29,7 +29,8 @@
     "@nestjs/passport": "^11.0.5",
     "stream": "^0.0.3",
     "cloudinary": "^2.7.0",
-    "@nestjs/platform-express": "^11.1.6"
+    "@nestjs/platform-express": "^11.1.6",
+    "axios": "^1.12.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

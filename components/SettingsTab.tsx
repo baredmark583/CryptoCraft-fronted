@@ -5,6 +5,7 @@ import { apiService } from '../services/apiService';
 import { getCategoryNames } from '../constants';
 import { useAuth } from '../hooks/useAuth';
 import { cloudinaryService } from '../services/cloudinaryService';
+import { Link } from 'react-router-dom';
 
 const SettingsTab: React.FC<{ user: User }> = ({ user }) => {
     const { updateUser } = useAuth();
@@ -363,15 +364,15 @@ const SettingsTab: React.FC<{ user: User }> = ({ user }) => {
                     <div className="border-t border-brand-border/50 pt-4">
                         <h3 className="text-lg font-semibold text-white">Импорт с других платформ</h3>
                         <p className="text-sm text-brand-text-secondary mb-3">Перенесите свой магазин с Etsy или другого маркетплейса в несколько кликов.</p>
-                        <button
-                            disabled
-                            className="w-full sm:w-auto px-4 py-2 bg-brand-border text-brand-text-secondary font-bold rounded-lg transition-colors cursor-not-allowed flex items-center justify-center gap-2"
+                        <Link
+                            to="/import"
+                            className="w-full sm:w-auto px-4 py-2 bg-brand-primary hover:bg-brand-primary-hover text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                             </svg>
-                            <span>Начать импорт (скоро)</span>
-                        </button>
+                            <span>Начать импорт</span>
+                        </Link>
                     </div>
                 </div>
             </div>

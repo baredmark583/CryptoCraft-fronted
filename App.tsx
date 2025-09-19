@@ -33,6 +33,7 @@ import GovernancePage from './pages/GovernancePage';
 import ProposalDetailPage from './pages/ProposalDetailPage';
 import CreateLiveStreamPage from './pages/CreateLiveStreamPage';
 import ProductListPage from './pages/ProductListPage';
+import ImportPage from './pages/ImportPage';
 
 const MainLayout: React.FC = () => {
   return (
@@ -64,6 +65,7 @@ const MainLayout: React.FC = () => {
             <Route path="/live/:streamId" element={<LiveStreamPage />} />
             <Route path="/governance" element={<GovernancePage />} />
             <Route path="/proposal/:id" element={<ProposalDetailPage />} />
+            <Route path="/import" element={<ImportPage />} />
           </Routes>
         </main>
         <Footer />

@@ -256,6 +256,14 @@ export const apiService = {
     });
   },
 
+  // Scraping
+  scrapeUrl: async (url: string): Promise<{ html: string }> => {
+    return apiFetch('/scrape', {
+      method: 'POST',
+      body: JSON.stringify({ url }),
+    });
+  },
+
   // --- MOCKED API METHODS (for remaining features) ---
   
   // This function now uses the real getProducts and filters on the client side.
