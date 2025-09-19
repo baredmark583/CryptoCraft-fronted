@@ -154,7 +154,7 @@ export const geminiService = {
     }
   },
 
-  extractListingFromHtml: async (cleanText: string): Promise<GeneratedListing & { imageUrls: string[], originalPrice: number, originalCurrency: string }> => {
+  extractListingFromHtml: async (cleanHtml: string): Promise<GeneratedListing & { imageUrls: string[], originalPrice: number, originalCurrency: string }> => {
     if (!ai) {
       // Mock response for when AI is not available
       return new Promise(resolve => setTimeout(() => resolve({
@@ -169,12 +169,12 @@ export const geminiService = {
       }), 1500));
     }
 
-    const prompt = `Ты — эксперт по анализу данных. Твоя задача — извлечь информацию о товаре из предоставленного текста, который был предварительно очищен со страницы товара. Найди и верни: заголовок, подробное описание, цену (только числовое значение), СИМВОЛ или КОД ВАЛЮТЫ (например, "грн", "$", "USD") и массив URL-адресов всех изображений товара. Игнорируй нерелевантную информацию. Твой ответ ДОЛЖЕН быть только в формате JSON и строго соответствовать предоставленной схеме.`;
+    const prompt = `Ты — эксперт по анализу данных. Твоя задача — извлечь информацию о товаре из этого фрагмента HTML-кода, извлеченного со страницы товара. Найди и верни: заголовок, подробное описание, цену (только числовое значение), СИМВОЛ или КОД ВАЛЮТЫ (например, "грн", "$", "USD") и массив ПОЛНЫХ URL-адресов всех изображений товара. Игнорируй нерелевантную информацию, такую как навигация или реклама. Твой ответ ДОЛЖЕН быть только в формате JSON и строго соответствовать предоставленной схеме.`;
     
     try {
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: { parts: [{ text: `Очищенный текст для анализа:\n\n${cleanText}` }, { text: prompt }] },
+        contents: { parts: [{ text: `HTML-фрагмент для анализа:\n\n${cleanHtml}` }, { text: prompt }] },
         config: {
           responseMimeType: 'application/json',
           responseSchema: {

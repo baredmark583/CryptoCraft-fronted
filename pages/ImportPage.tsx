@@ -5,6 +5,8 @@ import { apiService } from '../services/apiService';
 import { geminiService } from '../services/geminiService';
 import type { ImportItem, GeneratedListing } from '../types';
 import Spinner from '../components/Spinner';
+import * as cheerio from 'cheerio';
+
 
 interface EditableListingProps {
     item: ImportItem;
@@ -98,14 +100,30 @@ const ImportPage: React.FC = () => {
         for (const item of initialItems) {
             setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'scraping' } : i));
             try {
-                // Step 1: Scrape text via our robust backend
-                const { cleanText } = await apiService.scrapeUrl(item.url);
+                // Step 1: Scrape HTML via client-side proxy
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(item.url)}`;
+                const response = await fetch(proxyUrl);
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch: ${response.statusText}`);
+                }
+                const html = await response.text();
+
+                // Step 2: Extract relevant parts with Cheerio
+                const $ = cheerio.load(html);
+                const mainHtml = $('[data-testid="main"]').html();
+                const asideHtml = $('[data-testid="aside"]').html();
                 
-                // Step 2: Parse with AI
+                const combinedHtml = `<div>${asideHtml}</div><div>${mainHtml}</div>`;
+                
+                if (!mainHtml && !asideHtml) {
+                    throw new Error("Could not find main content blocks on the page.");
+                }
+
+                // Step 3: Parse with AI
                 setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'parsing' } : i));
-                const parsedData = await geminiService.extractListingFromHtml(cleanText);
+                const parsedData = await geminiService.extractListingFromHtml(combinedHtml);
                 
-                // Step 3: Convert currency
+                // Step 4: Convert currency
                 const convertedPrice = await apiService.convertCurrency(parsedData.originalPrice, parsedData.originalCurrency);
 
                 const finalListingData = {
