@@ -426,9 +426,12 @@ export interface ImportItem {
   url: string;
   status: 'pending' | 'scraping' | 'parsing' | 'enriching' | 'success' | 'error' | 'publishing' | 'published' | 'publish_error';
   errorMessage?: string;
-  listing?: Partial<GeneratedListing> & { 
+  listing?: Partial<GeneratedListing> & {
     imageUrls: string[];
     originalPrice?: number;
     originalCurrency?: string;
+    // FIX: Add missing properties to align with ImportedListingData and EditableListing types, resolving multiple TypeScript errors in ImportPage.tsx.
+    saleType: 'FIXED_PRICE' | 'AUCTION';
+    giftWrapAvailable: boolean;
   };
-}
+} 

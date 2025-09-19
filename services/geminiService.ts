@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { getCategoryNames } from '../constants';
-import type { GeneratedListing, StructuredSearchQuery, SellerAnalytics, AiInsight, PromoCode, SellerDashboardData, AiFocus } from '../types';
+import type { GeneratedListing, StructuredSearchQuery, SellerAnalytics, AiInsight, PromoCode, SellerDashboardData, AiFocus, Product } from '../types';
 
 // IMPORTANT: In a real application, the API key must be secured and not exposed on the client-side.
 // This is a placeholder for demonstration purposes, assuming VITE_GEMINI_API_KEY is available.
@@ -24,6 +24,14 @@ export interface VerificationAnalysis {
   isDocument: boolean;
   fullName?: string;
 }
+
+export type ImportedListingData = GeneratedListing & {
+  imageUrls: string[];
+  originalPrice: number;
+  originalCurrency: string;
+  saleType: 'FIXED_PRICE' | 'AUCTION';
+  giftWrapAvailable: boolean;
+};
 
 export const geminiService = {
   generateListingDetails: async (imageBase64: string, userDescription: string): Promise<GeneratedListing> => {
@@ -153,23 +161,36 @@ export const geminiService = {
       throw new Error("Не удалось сгенерировать описание. Пожалуйста, попробуйте еще раз.");
     }
   },
-
-  extractListingFromHtml: async (cleanHtml: string): Promise<GeneratedListing & { imageUrls: string[], originalPrice: number, originalCurrency: string }> => {
+  
+  // New combined function for import
+  processImportedHtml: async (cleanHtml: string): Promise<ImportedListingData> => {
     if (!ai) {
       // Mock response for when AI is not available
       return new Promise(resolve => setTimeout(() => resolve({
         title: "Импортированный товар (Mock)",
-        description: "Это описание было сгенерировано в результате симуляции импорта, так как Gemini API недоступен.",
-        price: parseFloat((Math.random() * 100).toFixed(2)),
+        description: "Это описание было сгенерировано в результате симуляции импорта. AI также определил бы категорию, характеристики и тип продажи.",
+        price: 0, // Will be converted later
         category: "Товары ручной работы",
-        dynamicAttributes: {},
+        dynamicAttributes: { "Материал": "Керамика (Mock)"},
         imageUrls: [`https://picsum.photos/seed/import${Date.now()}/600/400`],
         originalPrice: 2195,
-        originalCurrency: 'UAH'
+        originalCurrency: 'UAH',
+        saleType: 'FIXED_PRICE',
+        giftWrapAvailable: true,
       }), 1500));
     }
 
-    const prompt = `Ты — эксперт по анализу HTML. Тебе предоставлен HTML-код всего тега <body> страницы товара. Твоя задача — тщательно проанализировать его и извлечь ключевую информацию о товаре. Игнорируй все нерелевантное: навигацию, футеры, рекламу, похожие товары, скрипты и стили. Сконцентрируйся только на основной карточке товара. Извлеки: заголовок, подробное описание, цену (только числовое значение), СИМВОЛ или КОД ВАЛЮТЫ (например, "грн", "$", "USD") и массив ПОЛНЫХ URL-адресов всех основных изображений товара (не иконок или аватаров). Твой ответ ДОЛЖЕН быть только в формате JSON и строго соответствовать предоставленной схеме.`;
+    const prompt = `Ты — эксперт по анализу e-commerce страниц. Тебе предоставлен HTML-код всего тега <body> страницы товара. Твоя задача — тщательно проанализировать его и извлечь всю ключевую информацию, необходимую для создания объявления на нашем маркетплейсе. Игнорируй навигацию, футеры, рекламу и похожие товары.
+
+Твоя задача:
+1.  **Создай** привлекательный, SEO-оптимизированный заголовок и подробное описание.
+2.  **Извлеки** цену (только число), символ или код валюты (напр., "грн", "$"), и массив ПОЛНЫХ URL-адресов всех изображений.
+3.  **Определи**, является ли это аукционом. Если да, верни "AUCTION", иначе "FIXED_PRICE".
+4.  **Проанализируй** текст на наличие упоминаний подарочной упаковки и верни true/false.
+5.  **Классифицируй** товар в одну из категорий: [${getCategoryNames().join(', ')}].
+6.  **Извлеки** все релевантные характеристики товара (атрибуты) в виде JSON-строки. Например: "{\\"Материал\\": \\"Хлопок\\", \\"Цвет\\": \\"Синий\\"}".
+
+Твой ответ ДОЛЖЕН быть только в формате JSON и строго соответствовать предоставленной схеме.`;
     
     try {
       const response = await ai.models.generateContent({
@@ -180,92 +201,26 @@ export const geminiService = {
           responseSchema: {
             type: Type.OBJECT,
             properties: {
-              title: { type: Type.STRING, description: 'Полный заголовок товара.' },
-              description: { type: Type.STRING, description: 'Полное описание товара, сохранив форматирование абзацев.' },
-              price: { type: Type.NUMBER, description: 'Цена товара как числовое значение.' },
-              currency: { type: Type.STRING, description: 'Символ или код валюты (например, "грн", "$", "UAH").' },
-              imageUrls: {
-                type: Type.ARRAY,
-                description: 'Массив URL-адресов изображений товара.',
-                items: { type: Type.STRING }
-              }
+              title: { type: Type.STRING, description: 'SEO-оптимизированный заголовок.' },
+              description: { type: Type.STRING, description: 'Подробное описание товара.' },
+              originalPrice: { type: Type.NUMBER, description: 'Цена товара как число.' },
+              originalCurrency: { type: Type.STRING, description: 'Символ или код валюты (напр., "грн", "$").' },
+              imageUrls: { type: Type.ARRAY, description: 'Массив URL-адресов изображений.', items: { type: Type.STRING } },
+              category: { type: Type.STRING, enum: getCategoryNames(), description: 'Наиболее подходящая категория.' },
+              dynamicAttributes: { type: Type.STRING, description: 'JSON-строка с характеристиками.' },
+              saleType: { type: Type.STRING, enum: ['FIXED_PRICE', 'AUCTION'], description: 'Тип продажи.' },
+              giftWrapAvailable: { type: Type.BOOLEAN, description: 'Доступна ли подарочная упаковка.' }
             },
-            required: ["title", "description", "price", "currency", "imageUrls"]
+            required: ["title", "description", "originalPrice", "originalCurrency", "imageUrls", "category", "dynamicAttributes", "saleType", "giftWrapAvailable"]
           }
         }
       });
 
       const resultText = response.text;
       const parsedJson = JSON.parse(resultText);
-
-      // Mock category and dynamic attributes as they are not extracted from HTML yet.
-      return {
-        ...parsedJson,
-        originalPrice: parsedJson.price,
-        originalCurrency: parsedJson.currency,
-        category: "Товары ручной работы", // Will be classified in a later step
-        dynamicAttributes: {}
-      } as GeneratedListing & { imageUrls: string[], originalPrice: number, originalCurrency: string };
-
-    } catch (error) {
-      console.error("Error calling Gemini API for HTML extraction:", error);
-      throw new Error("Не удалось извлечь данные из HTML с помощью AI.");
-    }
-  },
-  
-  classifyAndEnrichListing: async (title: string, description: string): Promise<GeneratedListing> => {
-    if (!ai) {
-      // Mock response for enrichment
-      return new Promise(resolve => setTimeout(() => resolve({
-        title: `Улучшенный: ${title}`,
-        description: `Это улучшенное AI описание для товара. ${description}`,
-        price: 0, // Price is handled separately
-        category: "Электроника",
-        dynamicAttributes: { "Бренд": "MockBrand", "Состояние": "Б/у" },
-      }), 1500));
-    }
-
-    const prompt = `Ты — ассистент маркетплейса CryptoCraft. Тебе предоставлены "сырые" заголовок и описание товара, извлеченные с другого сайта.
-
-Исходные данные:
-- Заголовок: "${title}"
-- Описание: "${description}"
-
-Твоя задача — "облагородить" эти данные для нашего маркетплейса:
-1.  **Классификация:** Определи наиболее подходящую категорию из списка.
-2.  **Извлечение Атрибутов:** Извлеки значения для характеристик, соответствующих выбранной категории.
-3.  **Улучшение Контента:** Напиши новый, привлекательный заголовок и описание.
-
-Твой ответ ДОЛЖЕН быть только в формате JSON и строго соответствовать схеме. Поле 'price' оставь равным 0. Поле 'dynamicAttributes' должно быть JSON-СТРОКОЙ.`;
-
-    try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: { parts: [{ text: prompt }] },
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              title: { type: Type.STRING },
-              description: { type: Type.STRING },
-              price: { type: Type.NUMBER, description: "Всегда возвращай 0 для этого поля." },
-              category: { type: Type.STRING, enum: getCategoryNames() },
-              dynamicAttributes: { 
-                type: Type.STRING,
-                description: 'JSON-СТРОКА с парами ключ-значение для характеристик товара (напр., "{\\"Бренд\\": \\"Razer\\"}").'
-              }
-            },
-            required: ["title", "description", "price", "category", "dynamicAttributes"]
-          }
-        }
-      });
       
-      const resultText = response.text;
-      const parsedJson = JSON.parse(resultText);
-
-      // The API returns dynamicAttributes as a string, we need to parse it into an object.
-      if (typeof parsedJson.dynamicAttributes === 'string') {
+      // Parse the dynamicAttributes string into an object
+       if (typeof parsedJson.dynamicAttributes === 'string') {
           try {
               if (parsedJson.dynamicAttributes.trim().startsWith('{')) {
                  parsedJson.dynamicAttributes = JSON.parse(parsedJson.dynamicAttributes);
@@ -273,18 +228,22 @@ export const geminiService = {
                  parsedJson.dynamicAttributes = {};
               }
           } catch (e) {
-              console.error("Could not parse dynamicAttributes string from enrich:", parsedJson.dynamicAttributes, e);
+              console.error("Could not parse dynamicAttributes string from import:", parsedJson.dynamicAttributes, e);
               parsedJson.dynamicAttributes = {};
           }
       } else if (typeof parsedJson.dynamicAttributes !== 'object') {
           parsedJson.dynamicAttributes = {};
       }
-      
-      return parsedJson as GeneratedListing;
+
+      // Price will be converted in a separate step, so we initialize it to 0.
+      return {
+        ...parsedJson,
+        price: 0,
+      } as ImportedListingData;
 
     } catch (error) {
-      console.error("Error calling Gemini API for enrichment:", error);
-      throw new Error("Не удалось улучшить данные с помощью AI.");
+      console.error("Error calling Gemini API for HTML processing:", error);
+      throw new Error("Не удалось извлечь и обработать данные из HTML с помощью AI.");
     }
   },
 
