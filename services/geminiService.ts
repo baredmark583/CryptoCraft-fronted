@@ -212,6 +212,60 @@ export const geminiService = {
       throw new Error("Не удалось извлечь данные из HTML с помощью AI.");
     }
   },
+  
+  classifyAndEnrichListing: async (title: string, description: string): Promise<GeneratedListing> => {
+    if (!ai) {
+      // Mock response for enrichment
+      return new Promise(resolve => setTimeout(() => resolve({
+        title: `Улучшенный: ${title}`,
+        description: `Это улучшенное AI описание для товара. ${description}`,
+        price: 0, // Price is handled separately
+        category: "Электроника",
+        dynamicAttributes: { "Бренд": "MockBrand", "Состояние": "Б/у" },
+      }), 1500));
+    }
+
+    const prompt = `Ты — ассистент маркетплейса CryptoCraft. Тебе предоставлены "сырые" заголовок и описание товара, извлеченные с другого сайта.
+
+Исходные данные:
+- Заголовок: "${title}"
+- Описание: "${description}"
+
+Твоя задача — "облагородить" эти данные для нашего маркетплейса:
+1.  **Классификация:** Определи наиболее подходящую категорию из списка.
+2.  **Извлечение Атрибутов:** Извлеки значения для характеристик, соответствующих выбранной категории.
+3.  **Улучшение Контента:** Напиши новый, привлекательный заголовок и описание.
+
+Твой ответ ДОЛЖЕН быть только в формате JSON и строго соответствовать схеме. Поле 'price' оставь равным 0.`;
+
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: { parts: [{ text: prompt }] },
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              title: { type: Type.STRING },
+              description: { type: Type.STRING },
+              price: { type: Type.NUMBER, description: "Всегда возвращай 0 для этого поля." },
+              category: { type: Type.STRING, enum: getCategoryNames() },
+              dynamicAttributes: { type: Type.OBJECT }
+            },
+            required: ["title", "description", "price", "category", "dynamicAttributes"]
+          }
+        }
+      });
+      
+      const resultText = response.text;
+      return JSON.parse(resultText) as GeneratedListing;
+
+    } catch (error) {
+      console.error("Error calling Gemini API for enrichment:", error);
+      throw new Error("Не удалось улучшить данные с помощью AI.");
+    }
+  },
 
   editImage: async (imageBase64: string, mimeType: string, prompt: string): Promise<string> => {
     if (!ai) {

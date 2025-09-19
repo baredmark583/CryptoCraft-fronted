@@ -104,35 +104,28 @@ const ImportPage: React.FC = () => {
         for (const item of initialItems) {
             setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'scraping' } : i));
             try {
-                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(item.url)}`;
-                const response = await fetch(proxyUrl);
-                if (!response.ok) {
-                    throw new Error(`Proxy fetch failed: ${response.statusText}`);
-                }
-                const html = await response.text();
+                // Step 1: Scrape HTML
+                const { cleanText: html } = await apiService.scrapeUrl(item.url);
 
-                const $ = cheerio.load(html);
-                $('script, style, link[rel="stylesheet"]').remove();
-                const cleanHtml = $('body').html() || '';
-
-                if (!cleanHtml.trim()) {
-                    throw new Error("Could not extract meaningful HTML from the page.");
-                }
-
+                // Step 2: Extract raw data with Gemini
                 setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'parsing' } : i));
-                const parsedData = await geminiService.extractListingFromHtml(cleanHtml);
+                const parsedData = await geminiService.extractListingFromHtml(html);
                 
+                // Step 3: Enrich data with Gemini
+                setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'enriching' } : i));
+                const enrichedData = await geminiService.classifyAndEnrichListing(parsedData.title, parsedData.description);
+
+                // Step 4: Convert price
                 const convertedPrice = await apiService.convertCurrency(parsedData.price, parsedData.originalCurrency);
 
+                // Step 5: Combine all data
                 const finalListingData = {
-                    title: parsedData.title,
-                    description: parsedData.description,
+                    ...enrichedData, // Has smart title, desc, category, attributes
                     imageUrls: parsedData.imageUrls,
                     originalPrice: parsedData.price,
+                    // FIX: Corrected property access from `parsedData.currency` to `parsedData.originalCurrency` to match the type definition returned by `geminiService.extractListingFromHtml`. The service maps the parsed `currency` to `originalCurrency`.
                     originalCurrency: parsedData.originalCurrency,
                     price: parseFloat(convertedPrice.toFixed(2)),
-                    category: "Импортированные", // Default category
-                    dynamicAttributes: {}
                 };
 
                 setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'success', listing: finalListingData } : i));
@@ -182,6 +175,7 @@ const ImportPage: React.FC = () => {
     
                 const uploadedUrls = await Promise.all(
                     item.listing.imageUrls.map(async (url) => {
+                        // Use proxy for images
                         const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
                         const response = await fetch(proxyUrl);
                         if (!response.ok) throw new Error(`Не удалось загрузить изображение: ${url}`);
@@ -197,7 +191,7 @@ const ImportPage: React.FC = () => {
                     title: item.listing.title,
                     description: item.listing.description,
                     price: item.listing.price,
-                    category: "Товары ручной работы", // TODO: Allow user to select category
+                    category: item.listing.category,
                     dynamicAttributes: item.listing.dynamicAttributes || {},
                 };
     
@@ -219,6 +213,7 @@ const ImportPage: React.FC = () => {
             case 'pending': return <span className="text-xs text-brand-text-secondary">Ожидание</span>;
             case 'scraping': return <span className="text-xs text-sky-400 flex items-center gap-1"><Spinner size="sm" /> Сбор данных...</span>;
             case 'parsing': return <span className="text-xs text-purple-400 flex items-center gap-1"><Spinner size="sm" /> Анализ AI...</span>;
+            case 'enriching': return <span className="text-xs text-purple-400 flex items-center gap-1"><Spinner size="sm" /> Уточнение AI...</span>;
             case 'success': return <span className="text-xs text-green-400 font-bold">Готово к публикации</span>;
             case 'publishing': return <span className="text-xs text-yellow-400 flex items-center gap-1"><Spinner size="sm" /> Публикация...</span>;
             case 'published': return <span className="text-xs text-green-400 font-bold flex items-center gap-1">✅ Опубликовано</span>;
