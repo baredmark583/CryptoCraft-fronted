@@ -210,7 +210,7 @@ const ListingReviewForm: React.FC<{ listingData: GeneratedListing & { productTyp
                 }, {} as Record<string, any>)
             };
 
-            const newProduct = await apiService.createListing(finalData, imageUrl, videoUrl, user);
+            const newProduct = await apiService.createListing(finalData, [imageUrl], videoUrl, user);
             alert("Объявление успешно опубликовано!");
             navigate(`/product/${newProduct.id}`);
         } catch (error) {

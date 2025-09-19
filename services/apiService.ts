@@ -149,11 +149,11 @@ export const apiService = {
         return undefined; // Return undefined on 404 or other errors
     }
   },
-  createListing: async (data: Partial<Product>, imageUrl: string, videoUrl: string | undefined, seller: User): Promise<Product> => {
+  createListing: async (data: Partial<Product>, imageUrls: string[], videoUrl: string | undefined, seller: User): Promise<Product> => {
     const payload = {
         ...data,
         sellerId: seller.id,
-        imageUrls: [imageUrl],
+        imageUrls: imageUrls,
         videoUrl: videoUrl,
     };
     return apiFetch('/products', {

@@ -424,7 +424,7 @@ export interface AiFocus {
 export interface ImportItem {
   id: string;
   url: string;
-  status: 'pending' | 'scraping' | 'parsing' | 'success' | 'error';
+  status: 'pending' | 'scraping' | 'parsing' | 'success' | 'error' | 'publishing' | 'published' | 'publish_error';
   errorMessage?: string;
   listing?: Partial<GeneratedListing> & { 
     imageUrls: string[];

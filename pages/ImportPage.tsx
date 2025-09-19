@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useTelegramBackButton } from '../hooks/useTelegram';
 import { apiService } from '../services/apiService';
 import { geminiService } from '../services/geminiService';
-import type { ImportItem, GeneratedListing } from '../types';
+import type { ImportItem, GeneratedListing, Product } from '../types';
 import Spinner from '../components/Spinner';
 import * as cheerio from 'cheerio';
+import { useAuth } from '../hooks/useAuth';
 
 
 interface EditableListingProps {
     item: ImportItem;
     onUpdate: (id: string, updatedListing: Partial<GeneratedListing> & { imageUrls: string[] }) => void;
+    disabled: boolean;
 }
 
-const EditableListingCard: React.FC<EditableListingProps> = ({ item, onUpdate }) => {
+const EditableListingCard: React.FC<EditableListingProps> = ({ item, onUpdate, disabled }) => {
     if (!item.listing) return null;
 
     const [selectedImages, setSelectedImages] = useState<string[]>(item.listing.imageUrls || []);
@@ -27,6 +28,7 @@ const EditableListingCard: React.FC<EditableListingProps> = ({ item, onUpdate })
     };
 
     const toggleImageSelection = (url: string) => {
+        if (disabled) return;
         const newSelection = selectedImages.includes(url)
             ? selectedImages.filter(imgUrl => imgUrl !== url)
             : [...selectedImages, url];
@@ -36,18 +38,18 @@ const EditableListingCard: React.FC<EditableListingProps> = ({ item, onUpdate })
 
 
     return (
-        <div className="bg-brand-background/50 p-4 rounded-lg space-y-3">
+        <div className={`bg-brand-background/50 p-4 rounded-lg space-y-3 ${disabled ? 'opacity-50' : ''}`}>
             <div>
                 <label className="text-xs text-brand-text-secondary">Заголовок</label>
-                <input name="title" value={item.listing.title} onChange={handleFieldChange} className="w-full bg-brand-surface border border-brand-border rounded p-2 text-sm" />
+                <input name="title" value={item.listing.title} onChange={handleFieldChange} disabled={disabled} className="w-full bg-brand-surface border border-brand-border rounded p-2 text-sm disabled:cursor-not-allowed" />
             </div>
             <div>
                 <label className="text-xs text-brand-text-secondary">Описание</label>
-                <textarea name="description" value={item.listing.description} onChange={handleFieldChange} rows={4} className="w-full bg-brand-surface border border-brand-border rounded p-2 text-sm" />
+                <textarea name="description" value={item.listing.description} onChange={handleFieldChange} disabled={disabled} rows={4} className="w-full bg-brand-surface border border-brand-border rounded p-2 text-sm disabled:cursor-not-allowed" />
             </div>
              <div>
                 <label className="text-xs text-brand-text-secondary">Цена (USDT)</label>
-                <input name="price" type="number" value={item.listing.price} onChange={handlePriceChange} className="w-full bg-brand-surface border border-brand-border rounded p-2 text-sm" />
+                <input name="price" type="number" value={item.listing.price} onChange={handlePriceChange} disabled={disabled} className="w-full bg-brand-surface border border-brand-border rounded p-2 text-sm disabled:cursor-not-allowed" />
                 {item.listing.originalPrice && item.listing.originalCurrency && (
                     <p className="text-xs text-brand-text-secondary mt-1">
                         Оригинал: {item.listing.originalPrice} {item.listing.originalCurrency}
@@ -58,7 +60,7 @@ const EditableListingCard: React.FC<EditableListingProps> = ({ item, onUpdate })
                 <label className="text-xs text-brand-text-secondary mb-2 block">Изображения ({selectedImages.length} / {item.listing.imageUrls?.length || 0} выбрано)</label>
                 <div className="grid grid-cols-4 gap-2">
                     {item.listing.imageUrls?.map(url => (
-                        <div key={url} className="relative cursor-pointer group" onClick={() => toggleImageSelection(url)}>
+                        <div key={url} className={`relative group ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`} onClick={() => toggleImageSelection(url)}>
                             <img src={url} alt="Preview" className="w-full h-full object-cover rounded-md" />
                             <div className={`absolute inset-0 rounded-md transition-all ${selectedImages.includes(url) ? 'ring-2 ring-brand-primary bg-black/20' : 'bg-black/60 group-hover:bg-black/30'}`}>
                                 {selectedImages.includes(url) && (
@@ -78,17 +80,19 @@ const EditableListingCard: React.FC<EditableListingProps> = ({ item, onUpdate })
 
 const ImportPage: React.FC = () => {
     useTelegramBackButton(true);
+    const { user } = useAuth();
 
     const [urls, setUrls] = useState('');
     const [items, setItems] = useState<ImportItem[]>([]);
-    const [isProcessing, setIsProcessing] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
+    const [isPublishing, setIsPublishing] = useState(false);
     const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
     const handleStartImport = async () => {
         const urlList = urls.split('\n').map(u => u.trim()).filter(Boolean);
         if (urlList.length === 0) return;
 
-        setIsProcessing(true);
+        setIsImporting(true);
         const initialItems: ImportItem[] = urlList.map(url => ({
             id: url + Date.now(),
             url,
@@ -139,7 +143,7 @@ const ImportPage: React.FC = () => {
                 setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'error', errorMessage: error.message || 'Unknown error' } : i));
             }
         }
-        setIsProcessing(false);
+        setIsImporting(false);
     };
 
     const handleUpdateItem = (id: string, updatedListing: Partial<GeneratedListing> & { imageUrls: string[] }) => {
@@ -149,6 +153,9 @@ const ImportPage: React.FC = () => {
     };
 
     const toggleItemSelection = (id: string) => {
+        const item = items.find(i => i.id === id);
+        if (!item || item.status === 'published' || item.status === 'publishing') return;
+
         setSelectedItems(prev => {
             const newSelection = new Set(prev);
             if (newSelection.has(id)) {
@@ -160,9 +167,51 @@ const ImportPage: React.FC = () => {
         });
     };
 
-    const handlePublish = () => {
-        const itemsToPublish = items.filter(i => selectedItems.has(i.id));
-        alert(`Симуляция публикации ${itemsToPublish.length} товаров. Этот функционал будет подключен на следующем этапе.`);
+    const handlePublish = async () => {
+        const itemsToPublish = items.filter(i => selectedItems.has(i.id) && i.status === 'success');
+        if (itemsToPublish.length === 0) return;
+    
+        setIsPublishing(true);
+    
+        for (const item of itemsToPublish) {
+            setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'publishing' } : i));
+            try {
+                if (!item.listing?.imageUrls || item.listing.imageUrls.length === 0) {
+                    throw new Error("Нет изображений для загрузки.");
+                }
+    
+                const uploadedUrls = await Promise.all(
+                    item.listing.imageUrls.map(async (url) => {
+                        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+                        const response = await fetch(proxyUrl);
+                        if (!response.ok) throw new Error(`Не удалось загрузить изображение: ${url}`);
+                        const blob = await response.blob();
+                        const fileName = url.substring(url.lastIndexOf('/') + 1).split('?')[0] || `imported-image-${Date.now()}.jpg`;
+                        const file = new File([blob], fileName, { type: blob.type || 'image/jpeg' });
+                        const result = await apiService.uploadFile(file);
+                        return result.url;
+                    })
+                );
+                
+                const listingData: Partial<Product> = {
+                    title: item.listing.title,
+                    description: item.listing.description,
+                    price: item.listing.price,
+                    category: "Товары ручной работы", // TODO: Allow user to select category
+                    dynamicAttributes: item.listing.dynamicAttributes || {},
+                };
+    
+                await apiService.createListing(listingData, uploadedUrls, undefined, user);
+    
+                setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'published' } : i));
+            } catch (error) {
+                console.error(`Не удалось опубликовать ${item.url}:`, error);
+                const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
+                setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'publish_error', errorMessage } : i));
+            }
+        }
+    
+        setIsPublishing(false);
     };
 
     const getStatusUI = (item: ImportItem) => {
@@ -170,10 +219,15 @@ const ImportPage: React.FC = () => {
             case 'pending': return <span className="text-xs text-brand-text-secondary">Ожидание</span>;
             case 'scraping': return <span className="text-xs text-sky-400 flex items-center gap-1"><Spinner size="sm" /> Сбор данных...</span>;
             case 'parsing': return <span className="text-xs text-purple-400 flex items-center gap-1"><Spinner size="sm" /> Анализ AI...</span>;
-            case 'success': return <span className="text-xs text-green-400 font-bold">Готово</span>;
-            case 'error': return <span className="text-xs text-red-400" title={item.errorMessage}>Ошибка</span>;
+            case 'success': return <span className="text-xs text-green-400 font-bold">Готово к публикации</span>;
+            case 'publishing': return <span className="text-xs text-yellow-400 flex items-center gap-1"><Spinner size="sm" /> Публикация...</span>;
+            case 'published': return <span className="text-xs text-green-400 font-bold flex items-center gap-1">✅ Опубликовано</span>;
+            case 'error': return <span className="text-xs text-red-400" title={item.errorMessage}>Ошибка импорта</span>;
+            case 'publish_error': return <span className="text-xs text-red-400" title={item.errorMessage}>Ошибка публикации</span>;
         }
     }
+
+    const isProcessing = isImporting || isPublishing;
 
     return (
         <div className="max-w-4xl mx-auto">
@@ -198,7 +252,7 @@ const ImportPage: React.FC = () => {
                     disabled={isProcessing || !urls.trim()}
                     className="mt-4 w-full flex justify-center py-3 px-4 text-lg font-medium text-white bg-brand-primary hover:bg-brand-primary-hover disabled:bg-gray-500"
                 >
-                    {isProcessing ? <Spinner /> : 'Начать импорт'}
+                    {isImporting ? <Spinner /> : 'Начать импорт'}
                 </button>
             </div>
             
@@ -210,12 +264,13 @@ const ImportPage: React.FC = () => {
                             <div key={item.id} className="border border-brand-border rounded-lg">
                                 <div className="p-3 bg-brand-background/30 flex justify-between items-center">
                                     <div className="flex items-center gap-4">
-                                         {item.status === 'success' && (
+                                         {(item.status === 'success' || item.status === 'published') && (
                                             <input
                                                 type="checkbox"
-                                                checked={selectedItems.has(item.id)}
+                                                checked={selectedItems.has(item.id) || item.status === 'published'}
                                                 onChange={() => toggleItemSelection(item.id)}
-                                                className="h-5 w-5 rounded bg-brand-surface border-brand-border text-brand-primary focus:ring-brand-primary"
+                                                disabled={isProcessing || item.status === 'published'}
+                                                className="h-5 w-5 rounded bg-brand-surface border-brand-border text-brand-primary focus:ring-brand-primary disabled:cursor-not-allowed"
                                             />
                                         )}
                                         <p className="text-sm text-brand-text-primary truncate">{item.url}</p>
@@ -223,19 +278,19 @@ const ImportPage: React.FC = () => {
                                     {getStatusUI(item)}
                                 </div>
                                 {item.status === 'success' && item.listing && (
-                                    <EditableListingCard item={item} onUpdate={handleUpdateItem} />
+                                    <EditableListingCard item={item} onUpdate={handleUpdateItem} disabled={isProcessing} />
                                 )}
                             </div>
                         ))}
                     </div>
-                    {items.some(i => i.status === 'success') && (
+                    {items.some(i => i.status === 'success' || i.status === 'published') && (
                         <div className="mt-6 border-t border-brand-border pt-6">
                             <button
                                 onClick={handlePublish}
-                                disabled={selectedItems.size === 0}
+                                disabled={isProcessing || selectedItems.size === 0}
                                 className="w-full flex justify-center py-3 px-4 text-lg font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-500"
                             >
-                                Опубликовать выбранное ({selectedItems.size})
+                                {isPublishing ? <Spinner /> : `Опубликовать выбранное (${selectedItems.size})`}
                             </button>
                              <p className="text-xs text-brand-text-secondary text-center mt-2">Примечание: Изображения будут скачаны и загружены на наши серверы. Это может занять некоторое время.</p>
                         </div>
