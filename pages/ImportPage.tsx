@@ -118,7 +118,6 @@ const ImportPage: React.FC = () => {
                 setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'parsing' } : i));
                 const parsedData = await geminiService.extractListingFromHtml(cleanHtml);
                 
-                // FIX: Property 'currency' does not exist on type 'GeneratedListing & { imageUrls: string[]; originalPrice: number; originalCurrency: string; }'.
                 const convertedPrice = await apiService.convertCurrency(parsedData.price, parsedData.originalCurrency);
 
                 const finalListingData = {
@@ -126,7 +125,6 @@ const ImportPage: React.FC = () => {
                     description: parsedData.description,
                     imageUrls: parsedData.imageUrls,
                     originalPrice: parsedData.price,
-                    // FIX: Property 'currency' does not exist on type 'GeneratedListing & { imageUrls: string[]; originalPrice: number; originalCurrency: string; }'.
                     originalCurrency: parsedData.originalCurrency,
                     price: parseFloat(convertedPrice.toFixed(2)),
                     category: "Импортированные", // Default category
