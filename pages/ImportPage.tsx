@@ -5,7 +5,6 @@ import { apiService } from '../services/apiService';
 import { geminiService } from '../services/geminiService';
 import type { ImportItem, GeneratedListing } from '../types';
 import Spinner from '../components/Spinner';
-import * as cheerio from 'cheerio';
 
 interface EditableListingProps {
     item: ImportItem;
@@ -99,48 +98,14 @@ const ImportPage: React.FC = () => {
         for (const item of initialItems) {
             setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'scraping' } : i));
             try {
-                // Step 1: Fetch HTML via client-side proxy
-                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(item.url)}`;
-                const response = await fetch(proxyUrl);
-                if (!response.ok) throw new Error(`Proxy request failed: ${response.statusText}`);
-                const data = await response.json();
-                const html = data.contents;
-                if (!html) throw new Error('Could not retrieve page content.');
+                // Step 1: Scrape text via our robust backend
+                const { cleanText } = await apiService.scrapeUrl(item.url);
                 
-                // Step 2: Parse HTML on the client
-                const $ = cheerio.load(html);
-                const mainContent = $('[data-testid="main-content"]');
-                const asideContent = $('[data-testid="aside"]');
-                if (mainContent.length === 0 && asideContent.length === 0) {
-                   throw new Error('Could not find key content areas on the page.');
-                }
-                const title = asideContent.find('h1').text().trim();
-                const price = asideContent.find('h3[data-testid="ad-price-container"]').text().trim();
-                const descriptionParts: string[] = [];
-                mainContent.find('div[data-cy="ad_description"]').each((_i, el) => {
-                    descriptionParts.push($(el).text().trim());
-                });
-                const description = descriptionParts.join('\n\n');
-                const imageUrls = new Set<string>();
-                $('img').each((_i, el) => {
-                    const src = $(el).attr('src');
-                    if (src && (src.startsWith('http') || src.startsWith('//'))) {
-                        const fullUrl = src.startsWith('//') ? `https:${src}` : src;
-                        if (!fullUrl.includes('placeholder') && !fullUrl.includes('avatar')) {
-                            imageUrls.add(fullUrl);
-                        }
-                    }
-                });
-                const cleanText = `Source URL: ${item.url}\nTitle: ${title}\nPrice: ${price}\nDescription: ${description.substring(0, 4000)}\nImage URLs: ${Array.from(imageUrls).slice(0, 10).join('\n')}`;
-                if (!title && !description) {
-                    throw new Error('Could not extract meaningful content.');
-                }
-
-                // Step 3: Parse with AI
+                // Step 2: Parse with AI
                 setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'parsing' } : i));
                 const parsedData = await geminiService.extractListingFromHtml(cleanText);
                 
-                // Step 4: Convert currency
+                // Step 3: Convert currency
                 const convertedPrice = await apiService.convertCurrency(parsedData.originalPrice, parsedData.originalCurrency);
 
                 const finalListingData = {
