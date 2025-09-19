@@ -5,6 +5,7 @@ import { apiService } from '../services/apiService';
 import { geminiService } from '../services/geminiService';
 import type { ImportItem, GeneratedListing } from '../types';
 import Spinner from '../components/Spinner';
+import * as cheerio from 'cheerio';
 
 interface EditableListingProps {
     item: ImportItem;
@@ -96,16 +97,50 @@ const ImportPage: React.FC = () => {
         setSelectedItems(new Set()); // Reset selection
 
         for (const item of initialItems) {
-            // Scrape and clean HTML on backend
             setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'scraping' } : i));
             try {
-                const { cleanText } = await apiService.scrapeUrl(item.url);
+                // Step 1: Fetch HTML via client-side proxy
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(item.url)}`;
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error(`Proxy request failed: ${response.statusText}`);
+                const data = await response.json();
+                const html = data.contents;
+                if (!html) throw new Error('Could not retrieve page content.');
                 
-                // Parse with AI
+                // Step 2: Parse HTML on the client
+                const $ = cheerio.load(html);
+                const mainContent = $('[data-testid="main-content"]');
+                const asideContent = $('[data-testid="aside"]');
+                if (mainContent.length === 0 && asideContent.length === 0) {
+                   throw new Error('Could not find key content areas on the page.');
+                }
+                const title = asideContent.find('h1').text().trim();
+                const price = asideContent.find('h3[data-testid="ad-price-container"]').text().trim();
+                const descriptionParts: string[] = [];
+                mainContent.find('div[data-cy="ad_description"]').each((_i, el) => {
+                    descriptionParts.push($(el).text().trim());
+                });
+                const description = descriptionParts.join('\n\n');
+                const imageUrls = new Set<string>();
+                $('img').each((_i, el) => {
+                    const src = $(el).attr('src');
+                    if (src && (src.startsWith('http') || src.startsWith('//'))) {
+                        const fullUrl = src.startsWith('//') ? `https:${src}` : src;
+                        if (!fullUrl.includes('placeholder') && !fullUrl.includes('avatar')) {
+                            imageUrls.add(fullUrl);
+                        }
+                    }
+                });
+                const cleanText = `Source URL: ${item.url}\nTitle: ${title}\nPrice: ${price}\nDescription: ${description.substring(0, 4000)}\nImage URLs: ${Array.from(imageUrls).slice(0, 10).join('\n')}`;
+                if (!title && !description) {
+                    throw new Error('Could not extract meaningful content.');
+                }
+
+                // Step 3: Parse with AI
                 setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'parsing' } : i));
                 const parsedData = await geminiService.extractListingFromHtml(cleanText);
                 
-                // Convert currency
+                // Step 4: Convert currency
                 const convertedPrice = await apiService.convertCurrency(parsedData.originalPrice, parsedData.originalCurrency);
 
                 const finalListingData = {
@@ -114,7 +149,7 @@ const ImportPage: React.FC = () => {
                 };
 
                 setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'success', listing: finalListingData } : i));
-                setSelectedItems(prev => new Set(prev).add(item.id)); // Auto-select successful items
+                setSelectedItems(prev => new Set(prev).add(item.id));
 
             } catch (error: any) {
                 console.error(`Failed to process ${item.url}:`, error);
@@ -143,8 +178,6 @@ const ImportPage: React.FC = () => {
     };
 
     const handlePublish = () => {
-        // This is a simulation for now. In a real scenario, this would trigger
-        // a complex backend process to download images, upload them, and create listings.
         const itemsToPublish = items.filter(i => selectedItems.has(i.id));
         alert(`Симуляция публикации ${itemsToPublish.length} товаров. Этот функционал будет подключен на следующем этапе.`);
     };
@@ -173,7 +206,7 @@ const ImportPage: React.FC = () => {
                     value={urls}
                     onChange={e => setUrls(e.target.value)}
                     rows={6}
-                    placeholder="https://www.etsy.com/listing/12345/my-product&#10;https://www.another-marketplace.com/item/67890"
+                    placeholder="https://www.olx.ua/d/obyavlenie/..."
                     className="w-full bg-brand-background border border-brand-border rounded-md p-3 font-mono text-sm"
                     disabled={isProcessing}
                 />
