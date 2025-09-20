@@ -187,7 +187,7 @@ const VariantEditor: React.FC<{
             {variants.length > 0 && (
                 <div>
                     <h4 className="font-semibold text-white mb-2">2. Настройте варианты</h4>
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto scrollbar-hide">
                         <table className="w-full text-sm text-left">
                             <thead className="bg-brand-background text-xs text-brand-text-secondary uppercase">
                                 <tr>

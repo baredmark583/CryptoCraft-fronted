@@ -125,7 +125,7 @@ const CarSpecifications: React.FC<{ attributes: Record<string, string | number> 
                     </span>
                 </label>
                  <div className="flex items-center gap-2 bg-brand-background p-2 rounded-md">
-                     <span className="font-mono text-brand-primary flex-grow">{attributes['VIN-код']}</span>
+                     <span className="font-mono text-brand-primary flex-grow truncate">{attributes['VIN-код']}</span>
                      <button onClick={handleCopyVin} className="text-sm bg-brand-secondary hover:bg-brand-primary-hover text-white font-semibold px-3 py-1 rounded-md transition-colors w-24">
                          {vinCopied ? 'Готово!' : 'Копировать'}
                      </button>

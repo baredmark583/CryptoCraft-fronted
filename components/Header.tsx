@@ -45,9 +45,16 @@ const Header: React.FC = () => {
     <header className="bg-brand-surface/80 backdrop-blur-lg sticky top-0 z-30 border-b border-brand-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          <Link to="/" className="text-2xl font-bold text-white">
-            Crypto<span className="text-brand-primary">Craft</span>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link to="/" className="text-2xl font-bold text-white">
+              Crypto<span className="text-brand-primary">Craft</span>
+            </Link>
+             <button onClick={() => navigate(-1)} className="hidden md:flex items-center justify-center text-brand-text-secondary hover:text-white p-2 rounded-full hover:bg-brand-border" title="Назад">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+                </svg>
+            </button>
+          </div>
 
           <div className="hidden md:block w-full max-w-md">
             <form onSubmit={handleSearchSubmit}>
@@ -119,13 +126,11 @@ const Header: React.FC = () => {
               }
             </Link>
 
-            <Link to="/profile" className="flex items-center space-x-2 text-white">
+            <Link to="/profile" className="hidden md:flex items-center space-x-2 text-white">
               <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full border-2 border-brand-border" />
             </Link>
 
-            <div className="hidden md:block">
-                <TonConnectButton />
-            </div>
+            <TonConnectButton />
           </div>
         </div>
       </div>

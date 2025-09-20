@@ -38,7 +38,7 @@ import ImportPage from './pages/ImportPage';
 const MainLayout: React.FC = () => {
   return (
     <Router>
-      <div className="bg-brand-background min-h-screen flex flex-col font-sans text-brand-text-primary">
+      <div className="bg-brand-background min-h-screen flex flex-col font-sans text-brand-text-primary overflow-x-hidden">
         <Header />
         <main className="flex-grow container mx-auto px-4 py-8 pb-24 md:pb-8">
           <Routes>
