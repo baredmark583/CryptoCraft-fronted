@@ -7,9 +7,10 @@ import {
     useTonAddress as useRealTonAddress
 } from '@tonconnect/ui-react';
 
-// Dynamically create the absolute URL for the manifest file.
-// This ensures it works correctly in any environment (local, preview, production).
-const manifestUrl = new URL('/tonconnect-manifest.json', window.location.origin).href;
+// The manifest is now served from the backend to handle CORS correctly.
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+const manifestUrl = `${API_BASE_URL}/tonconnect-manifest.json`;
+
 
 /**
  * A custom provider component that wraps the real TonConnectUIProvider
