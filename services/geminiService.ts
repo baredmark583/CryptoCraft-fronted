@@ -1,22 +1,24 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
+// FIX: Correctly import getCategoryNames from constants
 import { getCategoryNames } from '../constants';
-import type { GeneratedListing, StructuredSearchQuery, SellerAnalytics, AiInsight, PromoCode, SellerDashboardData, AiFocus, Product } from '../types';
+import type { GeneratedListing, StructuredSearchQuery, SellerAnalytics, AiInsight, PromoCode, SellerDashboardData, AiFocus, Product, ImportedListingData } from '../types';
 
-// IMPORTANT: In a real application, the API key must be secured and not exposed on the client-side.
-// This is a placeholder for demonstration purposes, assuming VITE_GEMINI_API_KEY is available.
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+// FIX: Switched to process.env.API_KEY as per the guidelines for secure key management.
+const API_KEY = process.env.API_KEY;
 
 // Conditionally initialize the Gemini client only if the API key is available.
 // This prevents the application from crashing if the key is not set in the environment.
 let ai: GoogleGenAI | null = null;
 if (API_KEY) {
   try {
+    // FIX: Initialize with the correct object structure { apiKey: ... }
     ai = new GoogleGenAI({ apiKey: API_KEY });
   } catch (e) {
     console.error("Failed to initialize GoogleGenAI:", e);
   }
 } else {
-  console.warn("Gemini API key not found. AI features will be disabled. Please set import.meta.env.VITE_GEMINI_API_KEY.");
+  // FIX: Updated warning message to reflect the use of process.env.API_KEY.
+  console.warn("Gemini API key not found in process.env.API_KEY. AI features will be disabled.");
 }
 
 
@@ -24,14 +26,6 @@ export interface VerificationAnalysis {
   isDocument: boolean;
   fullName?: string;
 }
-
-export type ImportedListingData = GeneratedListing & {
-  imageUrls: string[];
-  originalPrice: number;
-  originalCurrency: string;
-  saleType: 'FIXED_PRICE' | 'AUCTION';
-  giftWrapAvailable: boolean;
-};
 
 export const geminiService = {
   generateListingDetails: async (imageBase64: string, userDescription: string): Promise<GeneratedListing> => {

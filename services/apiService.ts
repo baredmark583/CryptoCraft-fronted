@@ -11,7 +11,8 @@ import type {
 
 // This URL is now dynamic. It uses an environment variable for production
 // and falls back to localhost for local development.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+// FIX: Cast import.meta to any to resolve TypeScript error in environments where Vite types are not configured.
+const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 /**
  * A helper function to make fetch requests to the backend API.
@@ -54,7 +55,7 @@ const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
 // --- MOCKED DATA (for features not yet on backend) ---
 // We keep this data to ensure the rest of the application continues to function.
 const users: User[] = [
-  { id: 'user-1', name: 'Pottery Master', avatarUrl: 'https://picsum.photos/seed/seller1/100/100', headerImageUrl: 'https://picsum.photos/seed/header1/1000/300', rating: 4.9, reviews: [], following: ['user-2', 'user-3'], balance: 1250.75, commissionOwed: 25.01, verificationLevel: 'PRO', affiliateId: 'POTTERYPRO' },
+  { id: 'user-1', name: 'Pottery Master', avatarUrl: 'https://picsum.photos/seed/seller1/100/100', headerImageUrl: 'https://picsum.photos/seed/header1/1000/300', rating: 4.9, reviews: [], following: ['user-2', 'user-3'], balance: 1250.75, commissionOwed: 25.01, verificationLevel: 'PRO', affiliateId: 'POTTERYPRO', tonWalletAddress: 'UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA_______' },
   { id: 'user-2', name: 'Jewelry Queen', avatarUrl: 'https://picsum.photos/seed/seller2/100/100', headerImageUrl: 'https://picsum.photos/seed/header2/1000/300', rating: 4.8, reviews: [], following: ['user-1'], balance: 2500, commissionOwed: 150, verificationLevel: 'NONE' },
   { id: 'user-3', name: 'Leather Crafter', avatarUrl: 'https://picsum.photos/seed/seller3/100/100', headerImageUrl: 'https://picsum.photos/seed/header3/1000/300', rating: 4.7, reviews: [], following: [], balance: 500, commissionOwed: 0, verificationLevel: 'NONE' },
   { id: 'user-4', name: 'Digital Artist', avatarUrl: 'https://picsum.photos/seed/seller4/100/100', headerImageUrl: 'https://picsum.photos/seed/header4/1000/300', rating: 5.0, reviews: [], following: [], balance: 10000, commissionOwed: 420.69, verificationLevel: 'PRO' },
@@ -174,6 +175,8 @@ export const apiService = {
   },
   getUserById: async (id: string): Promise<User | undefined> => {
     try {
+        const user = users.find(u => u.id === id); // Use mock data first
+        if (user) return user;
         return await apiFetch(`/users/${id}`);
     } catch (e) {
         console.error(`Failed to fetch user ${id}`, e);
@@ -220,8 +223,7 @@ export const apiService = {
   },
 
   // Orders - REAL IMPLEMENTATION
-// FIX: Update function signature to accept all 8 arguments passed from CheckoutPage.tsx.
-  createOrdersFromCart: async (cartItems: CartItem[], user: User, paymentMethod: 'ESCROW' | 'DIRECT', shippingMethod: 'NOVA_POSHTA' | 'UKRPOSHTA', shippingAddress: ShippingAddress, requestAuthentication: boolean, appliedPromos: any, shippingCosts: any) => {
+  createOrdersFromCart: async (cartItems: CartItem[], user: User, paymentMethod: 'ESCROW' | 'DIRECT', shippingMethod: 'NOVA_POSHTA' | 'UKRPOSHTA', shippingAddress: ShippingAddress, requestAuthentication: boolean, appliedPromos: any, shippingCosts: any, transactionHash?: string): Promise<{success: boolean}> => {
     const payload = {
       cartItems: cartItems.map(item => ({
         product: {
@@ -239,6 +241,7 @@ export const apiService = {
       requestAuthentication,
       appliedPromos,
       shippingCosts,
+      transactionHash, // Include the transaction hash
     };
     return apiFetch('/orders', {
       method: 'POST',
