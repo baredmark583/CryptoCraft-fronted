@@ -87,10 +87,24 @@ export const apiService = {
 
   // Authentication
   loginWithTelegram: async (initData: string): Promise<{ access_token: string, user: User }> => {
-    return apiFetch('/auth/telegram', {
-      method: 'POST',
-      body: JSON.stringify({ initData }),
-    });
+    // MOCKED: This simulates a successful login without a real backend.
+    // In a real TWA, the initData would be validated server-side.
+    console.log("Simulating Telegram login with initData:", initData);
+    await new Promise(res => setTimeout(res, 500)); // Simulate network latency
+
+    // For the demo, we'll always log in as the first user.
+    const demoUser = users[0];
+    if (!demoUser) {
+        throw new Error("Mock user not found for login simulation.");
+    }
+    
+    // Create a mock JWT token
+    const mockToken = `mock_jwt_for_${demoUser.id}_${Date.now()}`;
+    
+    return {
+      access_token: mockToken,
+      user: demoUser,
+    };
   },
 
   // Products
