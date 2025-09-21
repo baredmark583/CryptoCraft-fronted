@@ -67,8 +67,33 @@ const users: User[] = [
 const products: Product[] = [
   { id: 'prod-1', title: 'Handmade Ceramic Mug', description: 'A beautiful, one-of-a-kind ceramic mug, perfect for your morning coffee. Glazed with a unique deep blue finish.', price: 35, imageUrls: ['https://picsum.photos/seed/prod1/600/400'], category: 'Товары ручной работы', seller: users[0], dynamicAttributes: {'Материал': 'Керамика', 'Объем (мл)': 350}, isPromoted: true, uniqueness: 'ONE_OF_A_KIND', giftWrapAvailable: true, giftWrapPrice: 5, purchaseCost: 15, weight: 450, productType: 'PHYSICAL', isB2BEnabled: true, b2bMinQuantity: 10, b2bPrice: 25 },
   { id: 'prod-2', title: 'Silver Necklace with Moonstone', description: 'Elegant sterling silver necklace featuring a mesmerizing moonstone pendant. A timeless piece.', price: 120, salePrice: 99, imageUrls: ['https://picsum.photos/seed/prod2/600/400'], category: 'Ювелирные изделия', seller: users[1], dynamicAttributes: {'Металл': 'Серебро 925', 'Камень': 'Лунный камень'}, isPromoted: true, purchaseCost: 60, weight: 150, productType: 'PHYSICAL' },
+  { id: 'prod-3', title: 'Кожаная куртка', description: 'Стильная куртка из натуральной кожи. Ручная работа.', price: 250, imageUrls: ['https://picsum.photos/seed/prod3/600/400'], category: 'Одежда и аксессуары', seller: users[2], dynamicAttributes: { 'Материал': 'Кожа', 'Размер': 'L', 'Цвет': 'Черный' }, productType: 'PHYSICAL' },
+  { id: 'prod-4', title: 'Шаблон для Figma "E-commerce"', description: 'Готовый шаблон для дизайна интернет-магазина. Легко редактировать.', price: 50, imageUrls: ['https://picsum.photos/seed/prod4/600/400'], category: 'Цифровые товары', seller: users[3], dynamicAttributes: { 'Тип файла': 'FIG', 'Лицензия': 'Personal Use' }, productType: 'DIGITAL', digitalFileUrl: 'mock_download_link' },
+  { id: 'prod-5', title: 'Игровой ноутбук Razer Blade 15', description: 'Мощный игровой ноутбук в отличном состоянии. Intel Core i7, RTX 3070, 16GB RAM, 1TB SSD.', price: 1150, imageUrls: ['https://picsum.photos/seed/prod5/600/400'], category: 'Электроника', seller: users[4], dynamicAttributes: { 'Бренд': 'Razer', 'Модель': 'Blade 15', 'Состояние': 'Б/у' }, isAuthenticationAvailable: true, authenticationStatus: 'NONE', productType: 'PHYSICAL' },
+  { id: 'prod-6', title: 'Audi A6 2019', description: 'Автомобиль в идеальном состоянии. Один владелец. Полная комплектация. Пробег 85000 км.', price: 25000, imageUrls: ['https://picsum.photos/seed/prod6/600/400'], category: 'Автомобили', seller: users[4], dynamicAttributes: { 'Бренд': 'Audi', 'Модель': 'A6', 'Год выпуска': 2019, 'Пробег, км': 85000, 'VIN-код': 'WAUZZZF27KN000123' }, isAuthenticationAvailable: true, authenticationStatus: 'AUTHENTICATED', nftTokenId: 'mock_nft_123', productType: 'PHYSICAL' },
+  { id: 'prod-7', title: 'Винтажная брошь', description: 'Элегантная винтажная брошь 60-х годов. Серебро с эмалью.', price: 95, imageUrls: ['https://picsum.photos/seed/prod7/600/400'], category: 'Винтаж', seller: users[1], dynamicAttributes: { 'Период': '1960-e', 'Состояние': 'Отличное' }, productType: 'PHYSICAL' },
+  { id: 'prod-8', title: 'Акварельный пейзаж', description: 'Оригинальная акварельная работа. Размер 30х40 см.', price: 150, imageUrls: ['https://picsum.photos/seed/prod8/600/400'], category: 'Искусство и коллекционирование', seller: users[3], dynamicAttributes: { 'Автор': 'Digital Artist', 'Стиль': 'Реализм' }, productType: 'PHYSICAL' },
 ];
 
+let orders: Order[] = [
+    {
+        id: 'order-1',
+        buyer: users[0], // Logged-in user
+        seller: users[3],
+        items: [{
+            product: products.find(p => p.id === 'prod-8')!,
+            quantity: 1,
+            price: 150,
+            purchaseType: 'RETAIL'
+        }],
+        total: 150,
+        status: 'COMPLETED',
+        orderDate: Date.now() - 5 * 24 * 60 * 60 * 1000, // 5 days ago
+        shippingAddress: { city: 'Киев', postOffice: 'Отделение 1', recipientName: 'Pottery Master', phoneNumber: '123456789' },
+        shippingMethod: 'NOVA_POSHTA',
+        paymentMethod: 'ESCROW',
+    }
+];
 let reviews: Review[] = [];
 let chats: Chat[] = [];
 let notifications: Notification[] = [];
@@ -109,19 +134,16 @@ export const apiService = {
 
   // Products
   getProducts: async (filters: any): Promise<Product[]> => {
-    // TODO: Backend filtering is not fully implemented yet for dynamic attributes etc.
-    // Fetching all and filtering on client for now.
-    const allProducts: Product[] = await apiFetch('/products');
+    // MOCKED: Reverted from real API call to mock data
+    await new Promise(res => setTimeout(res, 500)); // Simulate latency
     
-    // Fetch real orders to determine sold products
-    const realOrders: Order[] = await apiFetch('/orders/purchases');
-    const soldProductIds = new Set(realOrders.flatMap(o => o.items.map(i => i.product.id)));
+    const soldProductIds = new Set(orders.flatMap(o => o.items.map(i => i.product.id)));
     
     let baseProducts: Product[];
     if (filters.specialFilter === 'sold') {
-        baseProducts = allProducts.filter(p => soldProductIds.has(p.id));
+        baseProducts = products.filter(p => soldProductIds.has(p.id));
     } else {
-        baseProducts = allProducts.filter(p => !soldProductIds.has(p.id));
+        baseProducts = products.filter(p => !soldProductIds.has(p.id));
     }
 
     const filtered = baseProducts.filter(p => {
@@ -150,58 +172,63 @@ export const apiService = {
         const priceB = b.salePrice ?? b.price ?? 0;
         switch (filters.sortBy) {
             case 'priceAsc': return priceA - priceB;
-            case 'priceDesc': return priceB - a.price;
+            case 'priceDesc': return priceB - priceA;
             case 'rating': return b.seller.rating - a.seller.rating;
-            default: return 0; // Backend returns sorted by creation date
+            default: return 0;
         }
     });
   },
   getProductById: async (id: string): Promise<Product | undefined> => {
-    try {
-        return await apiFetch(`/products/${id}`);
-    } catch (e) {
-        console.error(`Failed to fetch product ${id}`, e);
-        return undefined; // Return undefined on 404 or other errors
+    // MOCKED: Reverted from real API call to mock data
+    await new Promise(res => setTimeout(res, 200));
+    const product = products.find(p => p.id === id);
+    if (product) {
+        // Return a copy to prevent direct mutation of mock data
+        return { ...product };
     }
+    return undefined;
   },
   createListing: async (data: Partial<Product>, imageUrls: string[], videoUrl: string | undefined, seller: User): Promise<Product> => {
-    const payload = {
+    // MOCKED: This simulates creating a new product.
+    await new Promise(res => setTimeout(res, 800));
+    const newProduct: Product = {
+        id: `prod-${Date.now()}`,
         ...data,
-        sellerId: seller.id,
-        imageUrls: imageUrls,
-        videoUrl: videoUrl,
-    };
-    return apiFetch('/products', {
-        method: 'POST',
-        body: JSON.stringify(payload)
-    });
+        seller,
+        imageUrls,
+        videoUrl,
+        dynamicAttributes: data.dynamicAttributes || {},
+    } as Product;
+    products.unshift(newProduct);
+    return newProduct;
   },
   updateListing: async (id: string, data: Partial<Product>): Promise<Product> => {
-    return apiFetch(`/products/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data)
-    });
+    // MOCKED: This simulates updating a product.
+    await new Promise(res => setTimeout(res, 500));
+    const productIndex = products.findIndex(p => p.id === id);
+    if (productIndex === -1) throw new Error("Product not found");
+    products[productIndex] = { ...products[productIndex], ...data };
+    return products[productIndex];
   },
 
   // Users
   getUsers: async (): Promise<User[]> => {
-    return apiFetch('/users');
+    // MOCKED
+    await new Promise(res => setTimeout(res, 100));
+    return users;
   },
   getUserById: async (id: string): Promise<User | undefined> => {
-    try {
-        const user = users.find(u => u.id === id); // Use mock data first
-        if (user) return user;
-        return await apiFetch(`/users/${id}`);
-    } catch (e) {
-        console.error(`Failed to fetch user ${id}`, e);
-        return undefined;
-    }
+    // MOCKED
+     await new Promise(res => setTimeout(res, 100));
+    return users.find(u => u.id === id);
   },
   updateUser: async (userId: string, data: Partial<User>): Promise<User> => {
-    return apiFetch(`/users/${userId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-    });
+    // MOCKED
+    await new Promise(res => setTimeout(res, 300));
+    const userIndex = users.findIndex(u => u.id === userId);
+    if (userIndex === -1) throw new Error("User not found");
+    users[userIndex] = { ...users[userIndex], ...data };
+    return users[userIndex];
   },
   
   // File Upload
@@ -216,76 +243,59 @@ export const apiService = {
         headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${API_BASE_URL}/upload`, {
-        method: 'POST',
-        body: formData,
-        headers,
-    });
-
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: response.statusText }));
-        throw new Error(errorData.message || 'File upload failed');
-    }
-    return response.json();
+    // MOCK: Simulate upload delay and return a placeholder image URL.
+    await new Promise(res => setTimeout(res, 1500));
+    const mockUrl = `https://picsum.photos/seed/${file.name}/${Math.round(Math.random() * 1000)}/600/400`;
+    console.log(`Mock uploaded file ${file.name} to ${mockUrl}`);
+    return { url: mockUrl };
   },
 
   uploadFileFromUrl: async (url: string): Promise<{ url: string }> => {
-    return apiFetch('/upload/url', {
-        method: 'POST',
-        body: JSON.stringify({ url }),
-    });
+    // MOCK: No need for a real backend call here in mocked mode.
+    await new Promise(res => setTimeout(res, 500));
+    return { url }; // Just return the same URL for simplicity.
   },
 
   // Orders - REAL IMPLEMENTATION
   createOrdersFromCart: async (cartItems: CartItem[], user: User, paymentMethod: 'ESCROW' | 'DIRECT', shippingMethod: 'NOVA_POSHTA' | 'UKRPOSHTA', shippingAddress: ShippingAddress, requestAuthentication: boolean, appliedPromos: any, shippingCosts: any, transactionHash?: string): Promise<{success: boolean}> => {
-    const payload = {
-      cartItems: cartItems.map(item => ({
-        product: {
-          id: item.product.id,
-          seller: { id: item.product.seller.id },
-        },
-        quantity: item.quantity,
-        priceAtTimeOfAddition: item.priceAtTimeOfAddition,
-        variant: item.variant,
-        purchaseType: item.purchaseType,
-      })),
-      paymentMethod,
-      shippingMethod,
-      shippingAddress,
-      requestAuthentication,
-      appliedPromos,
-      shippingCosts,
-      transactionHash, // Include the transaction hash
-    };
-    return apiFetch('/orders', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
+    // MOCKED
+    await new Promise(res => setTimeout(res, 1000));
+    console.log("Simulating order creation with transaction hash:", transactionHash);
+    return { success: true };
   },
   getPurchasesByBuyerId: async (): Promise<Order[]> => {
-    return apiFetch('/orders/purchases');
+    // MOCKED
+    await new Promise(res => setTimeout(res, 300));
+    return orders.filter(o => o.buyer.id === users[0].id); // Logged in user is users[0]
   },
   getSalesBySellerId: async (): Promise<Order[]> => {
-    return apiFetch('/orders/sales');
+    // MOCKED
+    await new Promise(res => setTimeout(res, 300));
+    return orders.filter(o => o.seller.id === users[0].id);
   },
   updateOrder: async (orderId: string, updates: Partial<Order>): Promise<Order> => {
-    return apiFetch(`/orders/${orderId}`, {
-      method: 'PATCH',
-      body: JSON.stringify(updates),
-    });
+    // MOCKED
+    await new Promise(res => setTimeout(res, 300));
+    const orderIndex = orders.findIndex(o => o.id === orderId);
+    if (orderIndex === -1) throw new Error("Order not found");
+    orders[orderIndex] = { ...orders[orderIndex], ...updates };
+    return orders[orderIndex];
   },
   generateWaybill: async (orderId: string): Promise<Order> => {
-    return apiFetch(`/orders/${orderId}/generate-waybill`, {
-        method: 'POST'
-    });
+    // MOCKED
+    await new Promise(res => setTimeout(res, 800));
+    const orderIndex = orders.findIndex(o => o.id === orderId);
+    if (orderIndex === -1) throw new Error("Order not found");
+    orders[orderIndex].status = 'SHIPPED';
+    orders[orderIndex].trackingNumber = `59000${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+    return orders[orderIndex];
   },
 
   // Scraping
   scrapeUrl: async (url: string): Promise<{ cleanText: string }> => {
-    return apiFetch('/scrape', {
-      method: 'POST',
-      body: JSON.stringify({ url }),
-    });
+    // MOCKED
+    await new Promise(res => setTimeout(res, 2000));
+    return { cleanText: `<html><body><h1>Mock Scraped Content</h1><p>Description of product from ${url}</p><img src="https://picsum.photos/seed/scrape1/600/400" /><img src="https://picsum.photos/seed/scrape2/600/400" /></body></html>` };
   },
   
   // Currency Conversion (Mock)
@@ -324,12 +334,10 @@ export const apiService = {
   // This is a mocked function, but it uses the real getProducts as its data source.
   getPromotedProducts: async function(): Promise<Product[]> {
     const allProducts = await this.getProducts({});
-    // In a real scenario, the backend would have a flag for this. We'll mock it.
-    return allProducts.slice(0, 2).map(p => ({ ...p, isPromoted: true }));
+    return allProducts.filter(p => p.isPromoted);
   },
   getAuctions: async function(): Promise<Product[]> {
     const allProducts = await this.getProducts({});
-    // Mocking auctions
     return allProducts.filter(p => p.isAuction);
   },
   placeBid: async (productId: string, amount: number, userId: string): Promise<Product> => {
@@ -343,10 +351,8 @@ export const apiService = {
       return product;
   },
   getProductsByIds: async function(ids: string[]): Promise<Product[]> {
-    // This now calls the real endpoint in a loop. Not efficient, but works for now.
-    const productPromises = ids.map(id => this.getProductById(id));
-    const resolvedProducts = await Promise.all(productPromises);
-    return resolvedProducts.filter((p): p is Product => p !== undefined);
+    const allProducts = await this.getProducts({});
+    return allProducts.filter(p => ids.includes(p.id));
   },
 
   getReviewsByUserId: async (userId: string): Promise<Review[]> => {
@@ -612,8 +618,7 @@ export const apiService = {
   },
   getAuthenticationOrders: async (userId: string): Promise<Order[]> => {
       await new Promise(res => setTimeout(res, 500));
-      const allOrders: Order[] = await apiFetch('/orders/purchases');
-      return allOrders.filter(o => o.authenticationRequested && (o.buyer.id === userId || o.seller.id === userId));
+      return orders.filter(o => o.authenticationRequested && (o.buyer.id === userId || o.seller.id === userId));
   },
   getDisputeById: async (orderId: string): Promise<Dispute | null> => {
       await new Promise(res => setTimeout(res, 500));
