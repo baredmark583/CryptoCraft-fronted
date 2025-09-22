@@ -247,20 +247,20 @@ const ImportPage: React.FC = () => {
                     <div className="space-y-4">
                         {items.map(item => (
                             <div key={item.id} className="border border-brand-border rounded-lg">
-                                <div className="p-3 bg-brand-background/30 flex justify-between items-center">
-                                    <div className="flex items-center gap-4">
+                                <div className="p-3 bg-brand-background/30 flex justify-between items-center gap-4">
+                                    <div className="flex items-center gap-4 min-w-0">
                                          {(item.status === 'success' || item.status === 'published') && (
                                             <input
                                                 type="checkbox"
                                                 checked={selectedItems.has(item.id) || item.status === 'published'}
                                                 onChange={() => toggleItemSelection(item.id)}
                                                 disabled={isProcessing || item.status === 'published'}
-                                                className="h-5 w-5 rounded bg-brand-surface border-brand-border text-brand-primary focus:ring-brand-primary disabled:cursor-not-allowed"
+                                                className="flex-shrink-0 h-5 w-5 rounded bg-brand-surface border-brand-border text-brand-primary focus:ring-brand-primary disabled:cursor-not-allowed"
                                             />
                                         )}
                                         <p className="text-sm text-brand-text-primary truncate">{item.url}</p>
                                     </div>
-                                    {getStatusUI(item)}
+                                    <div className="flex-shrink-0">{getStatusUI(item)}</div>
                                 </div>
                                 {item.status === 'success' && item.listing && (
                                     <EditableListingCard item={item} onUpdate={handleUpdateItem} disabled={isProcessing} />
@@ -287,4 +287,4 @@ const ImportPage: React.FC = () => {
     );
 };
 
-    export default ImportPage;
+    export default ImportPage;	
