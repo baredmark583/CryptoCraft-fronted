@@ -160,16 +160,17 @@ export const apiService = {
 
   // Products
   getProducts: async (filters: any): Promise<Product[]> => {
-    // MOCKED: Reverted from real API call to mock data
-    await new Promise(res => setTimeout(res, 500)); // Simulate latency
-    
-    const soldProductIds = new Set(orders.flatMap(o => o.items.map(i => i.product.id)));
-    
+    const allProducts: Product[] = await apiFetch('/products');
+
+    // The backend doesn't have the concept of orders yet to filter by "sold".
+    // This logic is kept on the client-side until the backend is updated.
     let baseProducts: Product[];
     if (filters.specialFilter === 'sold') {
-        baseProducts = products.filter(p => soldProductIds.has(p.id));
+        // TODO: Implement this once backend supports orders and can identify sold products.
+        // For now, returning an empty array for "sold" to avoid showing unsold items.
+        baseProducts = []; 
     } else {
-        baseProducts = products.filter(p => !soldProductIds.has(p.id));
+        baseProducts = allProducts;
     }
 
     const filtered = baseProducts.filter(p => {
@@ -198,62 +199,45 @@ export const apiService = {
         const priceB = b.salePrice ?? b.price ?? 0;
         switch (filters.sortBy) {
             case 'priceAsc': return priceA - priceB;
-            case 'priceDesc': return priceB - a.seller.rating;
+            case 'priceDesc': return priceB - priceA;
             default: return 0;
         }
     });
   },
   getProductById: async (id: string): Promise<Product | undefined> => {
-    // MOCKED: Reverted from real API call to mock data
-    await new Promise(res => setTimeout(res, 200));
-    const product = products.find(p => p.id === id);
-    if (product) {
-        // Return a copy to prevent direct mutation of mock data
-        return { ...product };
-    }
-    return undefined;
+    return apiFetch(`/products/${id}`);
   },
   createListing: async (data: Partial<Product>, imageUrls: string[], videoUrl: string | undefined, seller: User): Promise<Product> => {
-    // MOCKED: This simulates creating a new product.
-    await new Promise(res => setTimeout(res, 800));
-    const newProduct: Product = {
-        id: `prod-${Date.now()}`,
+    const listingData = {
         ...data,
-        seller,
         imageUrls,
         videoUrl,
-        dynamicAttributes: data.dynamicAttributes || {},
-    } as Product;
-    products.unshift(newProduct);
-    return newProduct;
+        sellerId: seller.id,
+    };
+    return apiFetch('/products', {
+        method: 'POST',
+        body: JSON.stringify(listingData),
+    });
   },
   updateListing: async (id: string, data: Partial<Product>): Promise<Product> => {
-    // MOCKED: This simulates updating a product.
-    await new Promise(res => setTimeout(res, 500));
-    const productIndex = products.findIndex(p => p.id === id);
-    if (productIndex === -1) throw new Error("Product not found");
-    products[productIndex] = { ...products[productIndex], ...data };
-    return products[productIndex];
+    return apiFetch(`/products/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
   },
 
   // Users
   getUsers: async (): Promise<User[]> => {
-    // MOCKED
-    await new Promise(res => setTimeout(res, 100));
-    return users;
+    return apiFetch('/users');
   },
   getUserById: async (id: string): Promise<User | undefined> => {
-    // MOCKED
-     await new Promise(res => setTimeout(res, 100));
-    return users.find(u => u.id === id);
+    return apiFetch(`/users/${id}`);
   },
   updateUser: async (userId: string, data: Partial<User>): Promise<User> => {
-    // MOCKED
-    await new Promise(res => setTimeout(res, 300));
-    const userIndex = users.findIndex(u => u.id === userId);
-    if (userIndex === -1) throw new Error("User not found");
-    users[userIndex] = { ...users[userIndex], ...data };
-    return users[userIndex];
+    return apiFetch(`/users/${userId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
   },
   
   // File Upload
