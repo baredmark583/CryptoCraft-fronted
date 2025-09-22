@@ -374,6 +374,12 @@ export interface AiFocus {
     ctaLink: 'sales' | 'chat' | 'analytics' | 'settings';
 }
 
+// FIX: Add VerificationAnalysis type definition for use in AI services.
+export interface VerificationAnalysis {
+    isDocument: boolean;
+    fullName?: string;
+}
+
 export interface ImportItem {
     id: string;
     url: string;

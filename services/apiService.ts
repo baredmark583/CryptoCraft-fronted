@@ -3,7 +3,8 @@
 import type {
   User, Product, Review, Chat, Message, Order, Notification, Collection,
   WorkshopPost, WorkshopComment, ForumThread, ForumPost, SellerAnalytics, FeedItem,
-  PromoCode, SellerDashboardData, CartItem, ShippingAddress, MessageContent, Dispute, DisputeMessage, LiveStream, OrderItem, TrackingEvent, Proposal, VoteChoice
+  PromoCode, SellerDashboardData, CartItem, ShippingAddress, MessageContent, Dispute, DisputeMessage, LiveStream, OrderItem, TrackingEvent, Proposal, VoteChoice,
+  GeneratedListing, VerificationAnalysis, AiInsight, AiFocus, ImportedListingData
 } from '../types';
 
 
@@ -112,25 +113,50 @@ export const apiService = {
 
   // Authentication
   loginWithTelegram: async (initData: string): Promise<{ access_token: string, user: User }> => {
-    // MOCKED: This simulates a successful login without a real backend.
-    // In a real TWA, the initData would be validated server-side.
-    console.log("Simulating Telegram login with initData:", initData);
-    await new Promise(res => setTimeout(res, 500)); // Simulate network latency
-
-    // For the demo, we'll always log in as the first user.
-    const demoUser = users[0];
-    if (!demoUser) {
-        throw new Error("Mock user not found for login simulation.");
-    }
-    
-    // Create a mock JWT token
-    const mockToken = `mock_jwt_for_${demoUser.id}_${Date.now()}`;
-    
-    return {
-      access_token: mockToken,
-      user: demoUser,
-    };
+    return apiFetch('/auth/telegram', {
+      method: 'POST',
+      body: JSON.stringify({ initData }),
+    });
   },
+  
+  // AI Service Methods (delegated to backend)
+  generateListingWithAi: async (imageBase64: string, userDescription: string): Promise<GeneratedListing> => {
+    return apiFetch('/ai/generate-listing', {
+      method: 'POST',
+      body: JSON.stringify({ imageBase64, userDescription }),
+    });
+  },
+  editImageWithAi: async (imageBase64: string, mimeType: string, prompt: string): Promise<{ base64Image: string }> => {
+    return apiFetch('/ai/edit-image', {
+      method: 'POST',
+      body: JSON.stringify({ imageBase64, mimeType, prompt }),
+    });
+  },
+  analyzeDocumentForVerificationWithAi: async (imageBase64: string): Promise<VerificationAnalysis> => {
+    return apiFetch('/ai/analyze-document', {
+      method: 'POST',
+      body: JSON.stringify({ imageBase64 }),
+    });
+  },
+  getAnalyticsInsightsWithAi: async (analyticsData: SellerAnalytics): Promise<AiInsight[]> => {
+      return apiFetch('/ai/analytics-insights', {
+          method: 'POST',
+          body: JSON.stringify({ analyticsData }),
+      });
+  },
+  generateDashboardFocusWithAi: async (dashboardData: SellerDashboardData): Promise<AiFocus> => {
+      return apiFetch('/ai/dashboard-focus', {
+          method: 'POST',
+          body: JSON.stringify({ dashboardData }),
+      });
+  },
+  processImportedHtmlWithAi: async (html: string): Promise<ImportedListingData> => {
+      return apiFetch('/ai/process-html', {
+          method: 'POST',
+          body: JSON.stringify({ html }),
+      });
+  },
+
 
   // Products
   getProducts: async (filters: any): Promise<Product[]> => {
@@ -172,8 +198,7 @@ export const apiService = {
         const priceB = b.salePrice ?? b.price ?? 0;
         switch (filters.sortBy) {
             case 'priceAsc': return priceA - priceB;
-            case 'priceDesc': return priceB - priceA;
-            case 'rating': return b.seller.rating - a.seller.rating;
+            case 'priceDesc': return priceB - a.seller.rating;
             default: return 0;
         }
     });
@@ -236,24 +261,31 @@ export const apiService = {
     const formData = new FormData();
     formData.append('file', file);
     
-    // apiFetch is not used here because we are sending FormData, not JSON.
     const token = localStorage.getItem('authToken');
     const headers: HeadersInit = {};
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
     }
 
-    // MOCK: Simulate upload delay and return a placeholder image URL.
-    await new Promise(res => setTimeout(res, 1500));
-    const mockUrl = `https://picsum.photos/seed/${file.name}/${Math.round(Math.random() * 1000)}/600/400`;
-    console.log(`Mock uploaded file ${file.name} to ${mockUrl}`);
-    return { url: mockUrl };
+    const response = await fetch(`${API_BASE_URL}/upload`, {
+        method: 'POST',
+        body: formData,
+        headers,
+    });
+
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(errorData.message || 'File upload failed');
+    }
+
+    return response.json();
   },
 
   uploadFileFromUrl: async (url: string): Promise<{ url: string }> => {
-    // MOCK: No need for a real backend call here in mocked mode.
-    await new Promise(res => setTimeout(res, 500));
-    return { url }; // Just return the same URL for simplicity.
+    return apiFetch('/upload/url', {
+        method: 'POST',
+        body: JSON.stringify({ url }),
+    });
   },
 
   // Orders - REAL IMPLEMENTATION
@@ -293,9 +325,10 @@ export const apiService = {
 
   // Scraping
   scrapeUrl: async (url: string): Promise<{ cleanText: string }> => {
-    // MOCKED
-    await new Promise(res => setTimeout(res, 2000));
-    return { cleanText: `<html><body><h1>Mock Scraped Content</h1><p>Description of product from ${url}</p><img src="https://picsum.photos/seed/scrape1/600/400" /><img src="https://picsum.photos/seed/scrape2/600/400" /></body></html>` };
+    return apiFetch('/scrape', {
+        method: 'POST',
+        body: JSON.stringify({ url }),
+    });
   },
   
   // Currency Conversion (Mock)
