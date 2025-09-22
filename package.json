@@ -34,7 +34,8 @@
     "cheerio": "^1.1.2",
     "puppeteer": "^24.22.0",
     "buffer": "^6.0.3",
-    "@tonconnect/ui-react": "^2.0.5"
+    "@tonconnect/ui-react": "^2.0.5",
+    "multer": "^2.0.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
