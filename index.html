@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="cryptocraft">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CryptoCraft Marketplace</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.js"></script>
     <script>
       tailwind.config = {
         theme: {
@@ -21,6 +22,27 @@
               'brand-text-secondary': '#A8A29E', // Stone-400
             },
           },
+        },
+        plugins: [daisyui],
+        daisyui: {
+          themes: [
+            {
+              cryptocraft: {
+                "primary": "#F97316",
+                "secondary": "#FB923C",
+                "accent": "#37CDBE",
+                "neutral": "#292524",
+                "base-100": "#1C1917",
+                "base-content": "#F5F5F4",
+                "info": "#3ABFF8",
+                "success": "#36D399",
+                "warning": "#FBBD23",
+                "error": "#F87272",
+                "--rounded-box": "0.5rem", // 8px, as in ProductCard
+                "--rounded-btn": "0.5rem", // 8px for buttons
+              },
+            },
+          ],
         },
       }
     </script>
@@ -90,7 +112,8 @@
     "puppeteer": "https://aistudiocdn.com/puppeteer@^24.22.0",
     "buffer": "https://aistudiocdn.com/buffer@^6.0.3",
     "@tonconnect/ui-react": "https://aistudiocdn.com/@tonconnect/ui-react@^2.0.5",
-    "multer": "https://aistudiocdn.com/multer@^2.0.2"
+    "multer": "https://aistudiocdn.com/multer@^2.0.2",
+    "express": "https://aistudiocdn.com/express@^5.1.0"
   }
 }
 </script>
