@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useTelegramBackButton } from '../hooks/useTelegram';
 import { apiService } from '../services/apiService';
-import { geminiService } from '../services/geminiService';
-// FIX: Import ImportedListingData from types.ts where it is defined and exported.
-import type { ImportItem, Product, ImportedListingData } from '../types';
+import { geminiService, ImportedListingData } from '../services/geminiService';
+import type { ImportItem, Product } from '../types';
 import Spinner from '../components/Spinner';
 import { useAuth } from '../hooks/useAuth';
 
@@ -121,9 +120,8 @@ const ImportPage: React.FC = () => {
                     ...aiData,
                     price: parseFloat(convertedPrice.toFixed(2)),
                 };
-                
-                // FIX: Cast finalListingData to ImportedListingData to satisfy the type of ImportItem['listing'].
-                setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'success', listing: finalListingData as ImportedListingData } : i));
+
+                setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'success', listing: finalListingData } : i));
                 setSelectedItems(prev => new Set(prev).add(item.id));
 
             } catch (error: any) {

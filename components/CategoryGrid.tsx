@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-// FIX: Correctly import constant
 import { CATEGORIES } from '../constants';
 
 // A simple mapping for icons, you can replace these with more specific SVGs

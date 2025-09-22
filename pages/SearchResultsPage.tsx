@@ -6,7 +6,6 @@ import type { Product, StructuredSearchQuery } from '../types';
 import ProductCard from '../components/ProductCard';
 import Spinner from '../components/Spinner';
 import FilterBar from '../components/FilterBar';
-// FIX: Correctly import constant
 import { CATEGORIES } from '../constants';
 import { useTelegramBackButton } from '../hooks/useTelegram';
 

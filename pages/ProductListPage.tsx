@@ -5,7 +5,6 @@ import type { Product } from '../types';
 import ProductCard from '../components/ProductCard';
 import AuctionCard from '../components/AuctionCard';
 import Spinner from '../components/Spinner';
-// FIX: Correctly import constant
 import { CATEGORIES } from '../constants';
 import FilterBar from '../components/FilterBar';
 import { useTelegramBackButton } from '../hooks/useTelegram';

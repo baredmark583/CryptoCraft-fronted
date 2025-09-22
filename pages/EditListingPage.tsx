@@ -3,10 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { useAuth } from '../hooks/useAuth';
 import type { Product, VariantAttribute, ProductVariant } from '../types';
-// FIX: Correctly import types from constants file
 import type { CategoryField } from '../constants';
 import Spinner from '../components/Spinner';
-// FIX: Correctly import constants
 import { CATEGORIES, getCategoryNames } from '../constants';
 import { cloudinaryService } from '../services/cloudinaryService';
 import { useTelegramBackButton } from '../hooks/useTelegram';
