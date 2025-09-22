@@ -1,4 +1,7 @@
+
+
 import React, { useState, useMemo, useCallback } from 'react';
+// FIX: Upgraded react-router-dom to v6. Replaced useHistory with useNavigate.
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import type { GeneratedListing, Product } from '../types';
@@ -270,6 +273,7 @@ const ListingReviewCard: React.FC<{ item: BatchItem; onUpdate: (id: string, data
 
 const CreateListingPage: React.FC = () => {
     const { user } = useAuth();
+    // FIX: Upgraded react-router-dom to v6. Replaced useHistory with useNavigate.
     const navigate = useNavigate();
     const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
     const [isPublishing, setIsPublishing] = useState(false);

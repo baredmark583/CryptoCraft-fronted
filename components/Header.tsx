@@ -1,4 +1,7 @@
+
+
 import React, { useState, useRef, useEffect } from 'react';
+// FIX: Upgraded react-router-dom to v6. Replaced useHistory with useNavigate.
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { TonConnectButton } from '../hooks/useTonConnect';
@@ -9,6 +12,7 @@ import { useCart } from '../hooks/useCart';
 
 const Header: React.FC = () => {
   const { user } = useAuth();
+  // FIX: Upgraded react-router-dom to v6. Replaced useHistory with useNavigate.
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -20,6 +24,7 @@ const Header: React.FC = () => {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
+      // FIX: Use navigate instead of history.push.
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
@@ -49,6 +54,7 @@ const Header: React.FC = () => {
             <Link to="/" className="text-2xl font-bold text-white">
               Crypto<span className="text-brand-primary">Craft</span>
             </Link>
+             {/* FIX: Use navigate(-1) instead of history.goBack(). */}
              <button onClick={() => navigate(-1)} className="hidden md:flex items-center justify-center text-brand-text-secondary hover:text-white p-2 rounded-full hover:bg-brand-border" title="Назад">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />

@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+// FIX: Replaced `useSearchParams` with `useLocation` for compatibility with react-router-dom v5.
+import { useLocation } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { geminiService } from '../services/geminiService';
 import type { Product, StructuredSearchQuery } from '../types';
@@ -21,7 +23,9 @@ interface Filters {
 }
 
 const SearchResultsPage: React.FC = () => {
-  const [searchParams] = useSearchParams();
+  // FIX: Replaced `useSearchParams` with `useLocation` for compatibility with react-router-dom v5.
+  const { search } = useLocation();
+  const searchParams = useMemo(() => new URLSearchParams(search), [search]);
   const query = searchParams.get('q') || '';
   
   useTelegramBackButton(true);

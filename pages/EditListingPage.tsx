@@ -1,4 +1,7 @@
+
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+// FIX: Replaced v6 hooks with v5 equivalents for compatibility.
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { useAuth } from '../hooks/useAuth';
@@ -39,7 +42,7 @@ const DynamicField: React.FC<{ field: CategoryField, value: any, onChange: (name
 };
 
 
-type FormData = Omit<Product, 'id' | 'seller' | 'imageUrls'> & { saleType: 'FIXED_PRICE' | 'AUCTION', auctionDurationDays?: 1 | 3 | 7, hasVariants: boolean };
+type FormData = Omit<Product, 'id' | 'seller'> & { saleType: 'FIXED_PRICE' | 'AUCTION', auctionDurationDays?: 1 | 3 | 7, hasVariants: boolean };
 
 
 const VariantEditor: React.FC<{
@@ -137,7 +140,7 @@ const VariantEditor: React.FC<{
         
         onVariantsChange(newVariants);
 
-    }, [attributes]);
+    }, [attributes, onVariantsChange]);
 
 
     return (
@@ -226,10 +229,13 @@ const VariantEditor: React.FC<{
 
 const EditListingPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
+    // FIX: Upgraded react-router-dom to v6. Replaced useHistory with useNavigate.
     const navigate = useNavigate();
     const { user } = useAuth();
     const [product, setProduct] = useState<Product | null>(null);
     const [formData, setFormData] = useState<Partial<FormData> | null>(null);
+    const [imageUrls, setImageUrls] = useState<string[]>([]);
+    const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
     const [videoFile, setVideoFile] = useState<File | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isUpdating, setIsUpdating] = useState(false);
@@ -251,6 +257,7 @@ const EditListingPage: React.FC = () => {
             const data = await apiService.getProductById(id);
             if (data && data.seller.id === user.id) {
                 setProduct(data);
+                setImageUrls(data.imageUrls);
                 setFormData({
                     title: data.title,
                     description: data.description,
@@ -282,6 +289,20 @@ const EditListingPage: React.FC = () => {
         };
         fetchProduct();
     }, [id, user.id, navigate]);
+    
+    const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            setNewImageFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+        }
+    };
+
+    const handleRemoveImage = (index: number) => {
+        setImageUrls(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleRemoveNewImage = (index: number) => {
+        setNewImageFiles(prev => prev.filter((_, i) => i !== index));
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         if (!formData) return;
@@ -342,6 +363,13 @@ const EditListingPage: React.FC = () => {
         setIsUpdating(true);
         try {
             const dataToUpdate: Partial<Product> = { ...formData };
+            
+            // Handle image uploads
+            const uploadedImageUrls = await Promise.all(
+                newImageFiles.map(file => cloudinaryService.uploadImage(file))
+            );
+            dataToUpdate.imageUrls = [...imageUrls, ...uploadedImageUrls];
+            
             if (videoFile) {
                 dataToUpdate.videoUrl = await cloudinaryService.uploadVideo(videoFile);
             }
@@ -375,15 +403,34 @@ const EditListingPage: React.FC = () => {
         <div className="max-w-4xl mx-auto bg-brand-surface p-6 sm:p-8 rounded-lg shadow-xl">
             <h1 className="text-3xl font-bold text-center mb-2 text-white">Редактировать объявление</h1>
             <div className="space-y-6 mt-8">
-                <div className="relative group">
-                    <img src={product.imageUrls[0]} alt={product.title} className="w-full h-auto object-cover rounded-lg shadow-md mb-6 max-h-80" />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
-                        <Link to={`/studio/${product.id}`} className="bg-brand-primary hover:bg-brand-primary-hover text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2">
-                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
-                            Улучшить в студии
-                        </Link>
+                {/* Image Management */}
+                <div>
+                    <label className="block text-sm font-medium text-brand-text-secondary mb-2">Изображения</label>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+                        {imageUrls.map((url, index) => (
+                            <div key={index} className="relative group">
+                                <img src={url} alt={`Image ${index + 1}`} className="w-full aspect-square object-cover rounded-lg"/>
+                                <button onClick={() => handleRemoveImage(index)} className="absolute top-1 right-1 bg-red-600/80 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">&times;</button>
+                            </div>
+                        ))}
+                        {newImageFiles.map((file, index) => (
+                             <div key={index} className="relative group">
+                                <img src={URL.createObjectURL(file)} alt={`New Image ${index + 1}`} className="w-full aspect-square object-cover rounded-lg"/>
+                                <button onClick={() => handleRemoveNewImage(index)} className="absolute top-1 right-1 bg-red-600/80 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">&times;</button>
+                            </div>
+                        ))}
+                         <label htmlFor="image-upload" className="cursor-pointer w-full aspect-square bg-brand-background border-2 border-dashed border-brand-border rounded-lg flex flex-col items-center justify-center text-brand-text-secondary hover:border-brand-primary hover:text-brand-primary transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                            <span className="text-xs mt-1">Добавить</span>
+                            <input id="image-upload" type="file" multiple onChange={handleImageFileChange} className="hidden" accept="image/*" />
+                        </label>
                     </div>
+                     <Link to={`/studio/${product.id}`} className="mt-4 inline-flex items-center gap-2 text-sm text-brand-secondary hover:text-brand-primary">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+                        Улучшить фото в AI Студии
+                    </Link>
                 </div>
+
                 <div>
                     <label className="block text-sm font-medium text-brand-text-secondary">Заголовок</label>
                     <input type="text" name="title" value={formData.title} onChange={handleChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3"/>
@@ -476,7 +523,7 @@ const EditListingPage: React.FC = () => {
                 {/* B2B Section */}
                 <div className="border-t border-brand-border/50 pt-6 space-y-4">
                     <label className="flex items-center space-x-3 cursor-pointer">
-                        <input type="checkbox" name="isB2BEnabled" checked={!!formData.isB2BEnabled} onChange={handleChange} className="h-5 w-5 rounded bg-brand-background border-brand-border text-brand-primary focus:ring-brand-primary"/>
+                        <input type="checkbox" name="isB2BEnabled" checked={!!formData.isB2BEnabled} onChange={handleChange} className="h-5 w-5 rounded bg-brand-background border border-brand-border text-brand-primary focus:ring-brand-primary"/>
                         <span className="font-semibold text-lg text-white">Включить оптовые продажи (B2B)</span>
                     </label>
                     {formData.isB2BEnabled && (

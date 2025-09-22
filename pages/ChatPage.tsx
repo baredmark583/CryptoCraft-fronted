@@ -1,4 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+
+
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+// FIX: Upgraded to react-router-dom v6.
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { cloudinaryService } from '../services/cloudinaryService';
@@ -11,8 +14,11 @@ import { useTelegramBackButton } from '../hooks/useTelegram';
 
 const ChatPage: React.FC = () => {
   const { chatId } = useParams<{ chatId?: string }>();
+  // FIX: Using useSearchParams from react-router-dom v6.
   const [searchParams, setSearchParams] = useSearchParams();
+
   const { user } = useAuth();
+  // FIX: Upgraded react-router-dom to v6. Replaced useHistory with useNavigate.
   const navigate = useNavigate();
 
   useTelegramBackButton(!!chatId);
@@ -112,9 +118,9 @@ const ChatPage: React.FC = () => {
 
                     setSelectedChat(prev => prev ? {...prev, messages: [...prev.messages, productMessage, repliesMessage]} : null);
 
-                    // Clean the URL param so it doesn't trigger again
+                    // FIX: Use setSearchParams to clean URL params with react-router-dom v6.
                     searchParams.delete('productId');
-                    setSearchParams(searchParams);
+                    setSearchParams(searchParams, { replace: true });
                 }
             } catch (error) {
                 console.error("Failed to send product context message", error);

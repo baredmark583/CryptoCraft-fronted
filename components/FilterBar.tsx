@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { Product } from '../types';

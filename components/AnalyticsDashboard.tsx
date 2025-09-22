@@ -114,7 +114,7 @@ const AiAssistant: React.FC<{ analyticsData: SellerAnalytics }> = ({ analyticsDa
     };
     
     const insightIcons: Record<AiInsight['type'], JSX.Element> = {
-        OPTIMIZATION: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-sky-400"><path strokeLinecap="round" strokeLinejoin="round" d="M10.343 3.94c.09-.542.56-1.007 1.11-1.226l.554-.226c.46-.188.98-.188 1.44 0l.554.226c.55.219 1.02.684 1.11 1.226l.092.548c.097.572.359 1.096.776 1.486l.446.417c.414.39.999.551 1.581.43l.564-.18a1.875 1.875 0 012.164 1.62l.063.56c.053.476-.026 1.003-.32 1.442l-.298.445c-.37.552-.37 1.34 0 1.892l.298.445c.294.44.372.966.32 1.442l-.063.56a1.875 1.875 0 01-2.164 1.62l-.564-.18c-.582-.121-1.167.04-1.581.43l-.446.417c-.417.39-.679.914-.776 1.486l-.092.548c-.09.542-.56 1.007-1.11 1.226l-.554.226c-.46.188-.98.188-1.44 0l-.554-.226c-.55-.219-1.02-.684-1.11-1.226l-.092-.548c-.097-.572-.359-1.096-.776-1.486l-.446-.417c-.414-.39-.999-.551-1.581-.43l-.564.18a1.875 1.875 0 01-2.164-1.62l-.063-.56c-.053-.476.026-1.003.32-1.442l.298-.445c.37-.552.37-1.34 0-1.892l-.298-.445c-.294-.44-.372-.966-.32-1.442l.063-.56a1.875 1.875 0 012.164-1.62l.564.18c.582.121 1.167-.04 1.581-.43l.446-.417c.417-.39.679-.914.776-1.486l.092-.548z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
+        OPTIMIZATION: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-sky-400"><path strokeLinecap="round" strokeLinejoin="round" d="M10.343 3.94c.09-.542.56-1.007 1.11-1.226l.554-.226c.46-.188.98-.188 1.44 0l.554.226c.55.219 1.02.684 1.11 1.226l.092.548c.097.572.359 1.096.776 1.486l.446.417c.414.39.999.551 1.581.43l.564-.18a1.875 1.875 0 012.164 1.62l.063.56c.053.476-.026 1.003-.32 1.442l-.298.445c-.37.552-.37 1.34 0 1.892l.298.445c.294.44.372.966.32 1.442l-.063.56a1.875 1.875 0 01-2.164 1.62l-.564-.18c-.582-.121-1.167.04-1.581.43l-.446.417c-.417.39-.679.914-.776 1.486l-.092.548c-.09.542-.56 1.007-1.11 1.226l-.554-.226c-.46.188-.98-.188-1.44 0l-.554-.226c-.55-.219-1.02-.684-1.11-1.226l-.092-.548c-.097-.572-.359-1.096-.776-1.486l-.446-.417c-.414-.39-.999-.551-1.581-.43l-.564-.18a1.875 1.875 0 01-2.164-1.62l-.063-.56c-.053-.476.026-1.003.32-1.442l.298-.445c.37-.552-.37-1.34 0-1.892l-.298-.445c-.294-.44-.372-.966-.32-1.442l.063-.56a1.875 1.875 0 012.164-1.62l.564.18c.582.121 1.167.04 1.581.43l.446.417c.417.39.679.914-.776-1.486l.092-.548z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
         OPPORTUNITY: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-green-400"><path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.311l-3.75 0m3.75-7.478c.097-.057.195-.112.292-.169m-1.478-.31c.206-.102.413-.205.625-.307m2.458-1.135a3.001 3.001 0 00-3.75 0m3.75 0a3.001 3.001 0 01-3.75 0m-3.75 0c-.097.057-.195.112-.292.169m1.478.31c-.206.102-.413.205-.625.307m-2.458 1.135a3.001 3.001 0 013.75 0m-3.75 0a3.001 3.001 0 003.75 0" /></svg>,
         WARNING: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-yellow-400"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>,
     };
@@ -204,39 +204,43 @@ const AnalyticsDashboard: React.FC<{ sellerId: string }> = ({ sellerId }) => {
                  <StatCard title="Конверсия" value={`${analytics.conversionRate}%`} icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-3.75-.625m3.75.625V18" /></svg>} />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-brand-surface p-4 rounded-lg">
-                    <h3 className="font-bold text-white mb-2">Продажи</h3>
+             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-brand-surface p-6 rounded-lg">
+                    <h3 className="text-lg font-bold text-white mb-4">Динамика продаж</h3>
                     <BarChart data={analytics.salesOverTime} label="График продаж" colorClass="bg-brand-primary" />
                 </div>
-                 <div className="bg-brand-surface p-4 rounded-lg">
-                    <h3 className="font-bold text-white mb-2">Просмотры</h3>
-                    <BarChart data={analytics.viewsOverTime} label="График просмотров" colorClass="bg-brand-secondary" />
+                 <div className="bg-brand-surface p-6 rounded-lg">
+                    <h3 className="text-lg font-bold text-white mb-4">Динамика просмотров</h3>
+                     <BarChart data={analytics.viewsOverTime} label="График просмотров" colorClass="bg-sky-500" />
                 </div>
             </div>
-            
-             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-brand-surface p-4 rounded-lg">
-                    <h3 className="font-bold text-white mb-2">Популярные товары</h3>
-                     <div className="space-y-3">
-                        {analytics.topProducts.map(p => (
-                             <Link key={p.id} to={`/product/${p.id}`} className="bg-brand-background/50 p-2 rounded-md flex items-center gap-3 hover:bg-brand-border/50 transition-colors">
-                                <img src={p.imageUrl} alt={p.title} className="w-12 h-12 rounded-md object-cover"/>
-                                <div className="flex-grow">
-                                    <p className="font-semibold text-white truncate">{p.title}</p>
-                                    <p className="text-xs text-brand-text-secondary">{p.views} просмотров | {p.sales} продаж</p>
+
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                <div className="lg:col-span-3 bg-brand-surface p-6 rounded-lg">
+                     <h3 className="text-lg font-bold text-white mb-4">Самые популярные товары</h3>
+                     <div className="space-y-4">
+                         {analytics.topProducts.map(product => (
+                             <div key={product.id} className="flex items-center gap-4">
+                                <img src={product.imageUrl} alt={product.title} className="w-16 h-16 rounded-md object-cover"/>
+                                <div className="flex-1">
+                                    <Link to={`/product/${product.id}`} className="font-semibold text-white hover:text-brand-primary truncate block">{product.title}</Link>
+                                    <div className="flex gap-4 text-xs text-brand-text-secondary">
+                                        <span>Просмотров: {product.views}</span>
+                                        <span>Продаж: {product.sales}</span>
+                                    </div>
                                 </div>
-                             </Link>
-                        ))}
+                             </div>
+                         ))}
                      </div>
                 </div>
-                <div className="bg-brand-surface p-4 rounded-lg">
-                    <h3 className="font-bold text-white mb-2">Источники трафика</h3>
+                <div className="lg:col-span-2 bg-brand-surface p-6 rounded-lg">
+                    <h3 className="text-lg font-bold text-white mb-4">Источники трафика</h3>
                     <DonutChart data={analytics.trafficSources} />
                 </div>
             </div>
+
         </div>
-    )
-}
+    );
+};
 
 export default AnalyticsDashboard;

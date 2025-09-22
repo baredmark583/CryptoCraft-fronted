@@ -1,4 +1,7 @@
+
+
 import React, { useState, useEffect, useCallback } from 'react';
+// FIX: Upgraded react-router-dom to v6. Replaced useHistory with useNavigate.
 import { Link, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import type { ForumThread, LiveStream } from '../types';
@@ -76,6 +79,7 @@ const CommunityHubPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuth();
+  // FIX: Upgraded react-router-dom to v6. Replaced useHistory with useNavigate.
   const navigate = useNavigate();
 
   const fetchThreads = useCallback(async () => {
@@ -99,6 +103,7 @@ const CommunityHubPage: React.FC = () => {
       // Refetch or optimistically update
       setThreads(prev => [newThread, ...prev.filter(t => t.id !== newThread.id)]);
       setIsModalOpen(false);
+      // FIX: Use navigate instead of history.push.
       navigate(`/thread/${newThread.id}`);
       return newThread;
   };

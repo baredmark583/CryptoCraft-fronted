@@ -1,4 +1,7 @@
+
+
 import React from 'react';
+// FIX: Upgraded react-router-dom to v6.
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppContextProvider } from './hooks/useAppContext';
 import { AuthProvider } from './hooks/useAuth';
@@ -41,6 +44,7 @@ const MainLayout: React.FC = () => {
       <div className="bg-brand-background min-h-screen flex flex-col font-sans text-brand-text-primary overflow-x-hidden">
         <Header />
         <main className="flex-grow container mx-auto px-4 py-8 pb-24 md:pb-8">
+          {/* FIX: Upgraded to react-router-dom v6 syntax. */}
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/products" element={<ProductListPage />} />
