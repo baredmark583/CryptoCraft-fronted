@@ -1,100 +1,88 @@
-// Add type definitions for import.meta.env to resolve TypeScript error.
-// This is a standard way to handle Vite environment variables.
-declare global {
-  interface ImportMeta {
-    readonly env: {
-      readonly VITE_API_BASE_URL?: string;
-      // FIX: Add VITE_GEMINI_API_KEY to the environment type definitions.
-      readonly VITE_GEMINI_API_KEY?: string;
-    };
-  }
-}
-
+// This file contains the core type definitions for the CryptoCraft application.
 
 export interface User {
   id: string;
+  telegramId?: number;
   name: string;
   avatarUrl: string;
   headerImageUrl?: string;
   rating: number;
   reviews: Review[];
-  verificationLevel?: 'NONE' | 'PRO';
-  businessInfo?: {
-    registrationNumber: string;
-  };
   following: string[];
   balance: number;
   commissionOwed: number;
+  verificationLevel: 'NONE' | 'PRO';
   affiliateId?: string;
-  defaultShippingAddress?: ShippingAddress;
   phoneNumber?: string;
+  defaultShippingAddress?: ShippingAddress;
+  businessInfo?: {
+    registrationNumber: string;
+  };
+  tonWalletAddress?: string;
 }
 
+export type AuthenticationStatus =
+  | 'NONE'
+  | 'PENDING'
+  | 'AUTHENTICATED'
+  | 'REJECTED';
+  
 export interface VariantAttribute {
-    name: string; // e.g. "Цвет"
-    options: string[]; // e.g. ["Красный", "Синий"]
+  name: string;
+  options: string[];
 }
 
 export interface ProductVariant {
-    id: string;
-    attributes: Record<string, string>; // e.g. { "Цвет": "Красный", "Размер": "M" }
-    price: number;
-    salePrice?: number;
-    stock: number; // Quantity available
-    sku?: string; // Stock Keeping Unit
-    imageUrl?: string; // Optional: specific image for this variant
+  id: string;
+  attributes: Record<string, string>;
+  price: number;
+  salePrice?: number;
+  stock: number;
+  sku?: string;
+  imageUrl?: string;
 }
 
 export interface Product {
   id: string;
   title: string;
   description: string;
-  price?: number; // Optional: Will represent the base or default variant price if no variants are active
+  price?: number;
   salePrice?: number;
   imageUrls: string[];
-  videoUrl?: string; // New field for video review
+  videoUrl?: string;
   category: string;
   seller: User;
   dynamicAttributes: Record<string, string | number>;
-  
-  // New Variant System
-  variants?: ProductVariant[];
-  variantAttributes?: VariantAttribute[]; // Defines what kind of variants are available e.g. [{name: "Цвет", options: ["Красный"]}]
-
   isPromoted?: boolean;
   uniqueness?: 'ONE_OF_A_KIND' | 'LIMITED_EDITION' | 'MADE_TO_ORDER';
-  productType?: 'PHYSICAL' | 'DIGITAL' | 'SERVICE';
-  digitalFileUrl?: string;
   giftWrapAvailable?: boolean;
   giftWrapPrice?: number;
-  purchaseCost?: number; // for seller analytics
-  weight?: number; // in grams
+  purchaseCost?: number;
+  weight?: number; // grams
+  productType?: 'PHYSICAL' | 'DIGITAL' | 'SERVICE';
+  digitalFileUrl?: string;
 
-  // B2B (Wholesale) fields
+  // B2B
   isB2BEnabled?: boolean;
   b2bMinQuantity?: number;
   b2bPrice?: number;
 
-  // Service specific
-  turnaroundTime?: string; // e.g., "3-5 business days"
-  serviceLocation?: 'REMOTE' | 'ON-SITE';
-
-  // Electronics specific
-  warrantyDays?: number;
-  serialNumber?: string;
-
-  // Auction specific
+  // Auction
   isAuction?: boolean;
-  auctionEnds?: number; // timestamp
+  auctionEnds?: number;
   startingBid?: number;
   currentBid?: number;
-  bidders?: string[]; // user ids
+  bidders?: string[];
   winnerId?: string;
   finalPrice?: number;
+  
+  // Variants
+  variants?: ProductVariant[];
+  variantAttributes?: VariantAttribute[];
 
-  // Authentication fields
+  // Electronics
   isAuthenticationAvailable?: boolean;
-  authenticationStatus?: 'NONE' | 'PENDING' | 'AUTHENTICATED' | 'REJECTED';
+  authenticationStatus?: AuthenticationStatus;
   authenticationReportUrl?: string;
   nftTokenId?: string;
   nftContractAddress?: string;
@@ -102,61 +90,68 @@ export interface Product {
 
 export interface Review {
   id: string;
+  productId: string;
   author: User;
   rating: number;
   text: string;
   timestamp: number;
 }
 
-export interface CartItem {
-  product: Product;
-  quantity: number;
-  variant?: ProductVariant;
-  priceAtTimeOfAddition: number;
-  purchaseType: 'RETAIL' | 'WHOLESALE';
+export interface MessageContent {
+  text?: string;
+  imageUrl?: string;
+  productContext?: Product;
+  quickReplies?: string[];
+}
+
+export interface Message extends MessageContent {
+  id: string;
+  senderId: string;
+  timestamp: number;
+  senderName?: string;
+  senderAvatar?: string;
+}
+
+export interface Chat {
+  id: string;
+  participant: User;
+  messages: Message[];
+  lastMessage: Message;
 }
 
 export interface ShippingAddress {
-    city: string;
-    postOffice: string;
-    recipientName: string;
-    phoneNumber: string;
+  city: string;
+  postOffice: string; // "Відділення №1" or "12345"
+  recipientName: string;
+  phoneNumber: string;
 }
 
 export interface OrderItem {
   product: Product;
   quantity: number;
-  price: number;
+  price: number; // price at time of order
   variant?: ProductVariant;
   purchaseType: 'RETAIL' | 'WHOLESALE';
 }
 
-export type OrderStatus = 
-  'PENDING' | 
-  'PAID' | 
-  'SHIPPED' | 
-  'DELIVERED' | 
-  'DISPUTED' | 
-  'COMPLETED' | 
-  'CANCELLED' |
-  // New statuses for expert authentication flow
-  'SHIPPED_TO_EXPERT' |
-  'PENDING_AUTHENTICATION' |
-  'AUTHENTICATION_PASSED' |
-  'AUTHENTICATION_FAILED' |
-  'NFT_ISSUED';
-
-
+export type OrderStatus =
+  | 'PENDING'
+  | 'PAID'
+  | 'SHIPPED'
+  | 'SHIPPED_TO_EXPERT'
+  | 'PENDING_AUTHENTICATION'
+  | 'AUTHENTICATION_PASSED'
+  | 'NFT_ISSUED'
+  | 'AUTHENTICATION_FAILED'
+  | 'DELIVERED'
+  | 'DISPUTED'
+  | 'COMPLETED'
+  | 'CANCELLED';
+  
 export interface AuthenticationEvent {
   status: OrderStatus;
   timestamp: number;
   comment?: string;
-}
-
-export interface TrackingEvent {
-  timestamp: number;
-  status: string;
-  location: string;
 }
 
 export interface Order {
@@ -171,56 +166,11 @@ export interface Order {
   shippingMethod: 'NOVA_POSHTA' | 'UKRPOSHTA';
   paymentMethod: 'ESCROW' | 'DIRECT';
   trackingNumber?: string;
-  shippingProvider?: string;
-  shippingCost?: number;
-  trackingHistory?: TrackingEvent[];
-  // New field for authentication
-  authenticationRequested?: boolean;
-  authenticationEvents?: AuthenticationEvent[];
-  // New fields for promo codes
-  promoCode?: string;
-  discountAmount?: number;
-  // New field for disputes
-  disputeId?: string;
-  // New fields for smart contract escrow
   smartContractAddress?: string;
   transactionHash?: string;
-}
-
-export interface GeneratedListing {
-  title: string;
-  description: string;
-  price: number;
-  category: string;
-  dynamicAttributes: Record<string, string | number>;
-}
-
-export interface StructuredSearchQuery {
-    keywords: string[];
-    category: string;
-}
-
-export interface Message {
-  id: string;
-  senderId: string;
-  timestamp: number;
-  text?: string;
-  imageUrl?: string;
-  productContext?: Product;
-  quickReplies?: string[];
-  // For Live Chat simulation
-  senderName?: string; 
-  senderAvatar?: string;
-}
-
-export type MessageContent = Omit<Message, 'id' | 'senderId' | 'timestamp'>;
-
-
-export interface Chat {
-  id: string;
-  participant: User;
-  messages: Message[];
-  lastMessage: Message;
+  disputeId?: string;
+  authenticationRequested?: boolean;
+  authenticationEvents?: AuthenticationEvent[];
 }
 
 export interface Notification {
@@ -240,18 +190,12 @@ export interface Collection {
     productIds: string[];
 }
 
-export interface FeedItem {
-    post: WorkshopPost;
-    seller: User;
-}
-
 export interface WorkshopComment {
     id: string;
     author: User;
     text: string;
     timestamp: number;
 }
-
 export interface WorkshopPost {
     id: string;
     sellerId: string;
@@ -262,6 +206,11 @@ export interface WorkshopPost {
     comments: WorkshopComment[];
 }
 
+export interface FeedItem {
+    post: WorkshopPost;
+    seller: User;
+}
+
 export interface ForumPost {
     id: string;
     threadId: string;
@@ -269,7 +218,6 @@ export interface ForumPost {
     content: string;
     createdAt: number;
 }
-
 export interface ForumThread {
     id: string;
     title: string;
@@ -284,7 +232,6 @@ export interface TimeSeriesDataPoint {
     date: string;
     value: number;
 }
-
 export interface TopProduct {
     id: string;
     title: string;
@@ -292,124 +239,132 @@ export interface TopProduct {
     views: number;
     sales: number;
 }
-
 export interface SellerAnalytics {
     profileVisits: number;
     totalProductViews: number;
     totalSales: number;
-    conversionRate: number; // percentage
+    conversionRate: number;
     salesOverTime: TimeSeriesDataPoint[];
     viewsOverTime: TimeSeriesDataPoint[];
     topProducts: TopProduct[];
     trafficSources: { source: string; visits: number }[];
 }
 
-export interface AiInsight {
-  title: string;
-  recommendation: string;
-  type: 'OPTIMIZATION' | 'OPPORTUNITY' | 'WARNING';
-}
-
-
 export interface PromoCode {
-  id: string;
-  code: string;
-  sellerId: string;
-  isActive: boolean;
-  // Discount Type & Value
-  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
-  discountValue: number; // e.g., 10 for 10% or 10 for 10 USDT
-  // Scope
-  scope: 'ENTIRE_ORDER' | 'CATEGORY' | 'SPECIFIC_PRODUCTS';
-  applicableCategory?: string; // Category name
-  applicableProductIds?: string[]; // Array of product IDs
-  // Conditions
-  minPurchaseAmount?: number; // Minimum cart subtotal to apply
-  // Limits & Validity
-  validFrom?: number; // timestamp
-  validUntil?: number; // timestamp
-  maxUses?: number; // Total number of uses for this code
-  uses?: number; // How many times it has been used
-}
-
-// New types for Seller Dashboard
-export interface DashboardMetrics {
-    revenueToday: number;
-    salesToday: number;
-    profileVisitsToday: number;
-}
-
-export interface DashboardActionableItem {
     id: string;
-    type: 'new_order' | 'new_message' | 'low_stock' | 'dispute';
-    text: string;
-    linkTo: 'sales' | 'chat' | 'listings';
-    entityId?: string; // orderId, chatId, productId
-}
-
-export interface DashboardActivity {
-    id: string;
-    type: 'new_review' | 'wishlist_add' | 'sale';
-    icon: string;
-    time: string;
-    text?: string;
-    user?: { id: string, name: string };
-    product?: { id: string, name: string };
+    sellerId: string;
+    code: string;
+    discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+    discountValue: number;
+    isActive: boolean;
+    uses: number;
+    maxUses?: number;
+    minPurchaseAmount?: number;
+    scope: 'ENTIRE_ORDER' | 'CATEGORY';
+    applicableCategory?: string;
+    validUntil?: number;
 }
 
 export interface SellerDashboardData {
-    metrics: DashboardMetrics;
-    actionableItems: DashboardActionableItem[];
-    recentActivity: DashboardActivity[];
+    metrics: {
+        revenueToday: number;
+        salesToday: number;
+        profileVisitsToday: number;
+    };
+    actionableItems: {
+        id: string;
+        type: 'new_order' | 'new_message' | 'low_stock' | 'dispute';
+        text: string;
+        linkTo: 'sales' | 'chat' | 'listings' | 'settings';
+        entityId?: string;
+    }[];
+    recentActivity: {
+        id: string;
+        type: 'wishlist_add' | 'new_follower' | 'review_received';
+        icon: string;
+        time: string;
+        text?: string;
+        user?: { id: string, name: string };
+        product?: { id: string, name: string };
+    }[];
 }
 
-// New types for Dispute Center
+export interface CartItem {
+  product: Product;
+  quantity: number;
+  variant?: ProductVariant;
+  priceAtTimeOfAddition: number;
+  purchaseType: 'RETAIL' | 'WHOLESALE';
+}
+
 export interface DisputeMessage {
-  id: string;
-  senderId: string;
-  senderName: string;
-  senderAvatar: string;
-  timestamp: number;
-  text?: string;
-  imageUrl?: string;
+    id: string;
+    senderId: string;
+    senderName: string;
+    senderAvatar: string;
+    timestamp: number;
+    text?: string;
+    imageUrl?: string;
 }
 
 export interface Dispute {
-  id: string; // Will be the same as orderId for simplicity
-  order: Order;
-  status: 'OPEN' | 'UNDER_REVIEW' | 'RESOLVED_BUYER' | 'RESOLVED_SELLER';
-  messages: DisputeMessage[];
-  resolution?: string;
+    id: string; // Same as orderId
+    order: Order;
+    messages: DisputeMessage[];
+    status: 'OPEN' | 'UNDER_REVIEW' | 'RESOLVED_BUYER' | 'RESOLVED_SELLER';
 }
 
-// New type for Live Commerce
 export interface LiveStream {
-  id: string;
-  title: string;
-  seller: User;
-  status: 'LIVE' | 'UPCOMING' | 'ENDED';
-  featuredProductId: string;
-  moderatorId?: string;
-  isAiModeratorEnabled?: boolean;
-  scheduledStartTime?: number;
-  welcomeMessage?: string;
+    id: string;
+    title: string;
+    seller: User;
+    status: 'UPCOMING' | 'LIVE' | 'ENDED';
+    featuredProductId: string;
+    scheduledStartTime?: number;
+    moderatorId?: string;
+    isAiModeratorEnabled?: boolean;
+    welcomeMessage?: string;
 }
 
-// New types for DAO Governance
+export interface TrackingEvent {
+    timestamp: number;
+    status: string;
+    location: string;
+}
+
 export type ProposalStatus = 'ACTIVE' | 'PASSED' | 'REJECTED' | 'EXECUTED';
 export type VoteChoice = 'FOR' | 'AGAINST';
-
 export interface Proposal {
     id: string;
     title: string;
     description: string;
     proposer: User;
-    status: ProposalStatus;
     createdAt: number;
     endsAt: number;
+    status: ProposalStatus;
     votesFor: number;
     votesAgainst: number;
-    voters: Record<string, VoteChoice>; // Tracks who voted and what their choice was
+    voters: Record<string, VoteChoice>; // userId -> choice
+}
+
+// AI Service Types
+export interface GeneratedListing {
+    title: string;
+    description: string;
+    price: number;
+    category: string;
+    dynamicAttributes: Record<string, string | number>;
+}
+
+export interface StructuredSearchQuery {
+    keywords: string[];
+    category: string;
+}
+
+export interface AiInsight {
+    title: string;
+    recommendation: string;
+    type: 'OPTIMIZATION' | 'OPPORTUNITY' | 'WARNING';
 }
 
 export interface AiFocus {
@@ -417,21 +372,26 @@ export interface AiFocus {
     reason: string;
     ctaText: string;
     ctaLink: 'sales' | 'chat' | 'analytics' | 'settings';
-    ctaEntityId?: string; // Optional: for linking to a specific chat or order
 }
 
-// New type for AI Import feature
-export interface ImportItem {
-  id: string;
-  url: string;
-  status: 'pending' | 'scraping' | 'parsing' | 'enriching' | 'success' | 'error' | 'publishing' | 'published' | 'publish_error';
-  errorMessage?: string;
-  // FIX: Update the `listing` type to correctly match the expected structure of an editable imported listing. This resolves TypeScript errors in `ImportPage.tsx`.
-  listing?: (Omit<GeneratedListing, 'price'> & { price?: number }) & {
-    imageUrls: string[];
-    originalPrice: number;
-    originalCurrency: string;
-    saleType: 'FIXED_PRICE' | 'AUCTION';
-    giftWrapAvailable: boolean;
-  };
+// FIX: Add VerificationAnalysis type definition for use in AI services.
+export interface VerificationAnalysis {
+    isDocument: boolean;
+    fullName?: string;
 }
+
+export interface ImportItem {
+    id: string;
+    url: string;
+    status: 'pending' | 'scraping' | 'parsing' | 'enriching' | 'success' | 'publishing' | 'published' | 'error' | 'publish_error';
+    listing?: ImportedListingData;
+    errorMessage?: string;
+}
+
+export type ImportedListingData = GeneratedListing & {
+  imageUrls: string[];
+  originalPrice: number;
+  originalCurrency: string;
+  saleType: 'FIXED_PRICE' | 'AUCTION';
+  giftWrapAvailable: boolean;
+};

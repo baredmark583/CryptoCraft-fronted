@@ -8,7 +8,8 @@ import {
 } from '@tonconnect/ui-react';
 
 // The manifest is now served from the backend to handle CORS correctly.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+// FIX: Cast import.meta to any to resolve TypeScript error in environments where Vite types are not configured.
+const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:3001';
 const manifestUrl = `${API_BASE_URL}/tonconnect-manifest.json`;
 
 

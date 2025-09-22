@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import type { GeneratedListing, Product } from '../types';
+// FIX: Correctly import types from constants file
 import type { CategoryField } from '../constants';
 
 import { geminiService } from '../services/geminiService';
@@ -9,6 +10,7 @@ import { cloudinaryService } from '../services/cloudinaryService';
 import { apiService } from '../services/apiService';
 import { fileToBase64 } from '../lib/utils';
 import Spinner from '../components/Spinner';
+// FIX: Correctly import constants
 import { CATEGORIES, getCategoryNames } from '../constants';
 import { useTelegramBackButton } from '../hooks/useTelegram';
 
@@ -291,7 +293,7 @@ const CreateListingPage: React.FC = () => {
 
     const handleUpdateBatchItem = useCallback((id: string, updatedData: Partial<FormData>) => {
         setBatchItems(prev =>
-            prev.map(item => item.id === id ? { ...item, formData: updatedData } : item)
+            prev.map(item => item.id === id ? { ...item, formData: { ...item.formData, ...updatedData } } : item)
         );
     }, []);
 

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { Product } from '../types';
+// FIX: Correctly import type from constants
 import type { CategorySchema } from '../constants';
 
 // Accordion component defined locally to avoid creating new files.

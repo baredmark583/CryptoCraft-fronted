@@ -3,7 +3,8 @@
 import type {
   User, Product, Review, Chat, Message, Order, Notification, Collection,
   WorkshopPost, WorkshopComment, ForumThread, ForumPost, SellerAnalytics, FeedItem,
-  PromoCode, SellerDashboardData, CartItem, ShippingAddress, MessageContent, Dispute, DisputeMessage, LiveStream, OrderItem, TrackingEvent, Proposal, VoteChoice
+  PromoCode, SellerDashboardData, CartItem, ShippingAddress, MessageContent, Dispute, DisputeMessage, LiveStream, OrderItem, TrackingEvent, Proposal, VoteChoice,
+  GeneratedListing, VerificationAnalysis, AiInsight, AiFocus, ImportedListingData
 } from '../types';
 
 
@@ -11,7 +12,8 @@ import type {
 
 // This URL is now dynamic. It uses an environment variable for production
 // and falls back to localhost for local development.
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+// FIX: Cast import.meta to any to resolve TypeScript error in environments where Vite types are not configured.
+const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 /**
  * A helper function to make fetch requests to the backend API.
@@ -54,7 +56,7 @@ const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
 // --- MOCKED DATA (for features not yet on backend) ---
 // We keep this data to ensure the rest of the application continues to function.
 const users: User[] = [
-  { id: 'user-1', name: 'Pottery Master', avatarUrl: 'https://picsum.photos/seed/seller1/100/100', headerImageUrl: 'https://picsum.photos/seed/header1/1000/300', rating: 4.9, reviews: [], following: ['user-2', 'user-3'], balance: 1250.75, commissionOwed: 25.01, verificationLevel: 'PRO', affiliateId: 'POTTERYPRO' },
+  { id: 'user-1', name: 'Pottery Master', avatarUrl: 'https://picsum.photos/seed/seller1/100/100', headerImageUrl: 'https://picsum.photos/seed/header1/1000/300', rating: 4.9, reviews: [], following: ['user-2', 'user-3'], balance: 1250.75, commissionOwed: 25.01, verificationLevel: 'PRO', affiliateId: 'POTTERYPRO', tonWalletAddress: 'UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA_______' },
   { id: 'user-2', name: 'Jewelry Queen', avatarUrl: 'https://picsum.photos/seed/seller2/100/100', headerImageUrl: 'https://picsum.photos/seed/header2/1000/300', rating: 4.8, reviews: [], following: ['user-1'], balance: 2500, commissionOwed: 150, verificationLevel: 'NONE' },
   { id: 'user-3', name: 'Leather Crafter', avatarUrl: 'https://picsum.photos/seed/seller3/100/100', headerImageUrl: 'https://picsum.photos/seed/header3/1000/300', rating: 4.7, reviews: [], following: [], balance: 500, commissionOwed: 0, verificationLevel: 'NONE' },
   { id: 'user-4', name: 'Digital Artist', avatarUrl: 'https://picsum.photos/seed/seller4/100/100', headerImageUrl: 'https://picsum.photos/seed/header4/1000/300', rating: 5.0, reviews: [], following: [], balance: 10000, commissionOwed: 420.69, verificationLevel: 'PRO' },
@@ -66,8 +68,33 @@ const users: User[] = [
 const products: Product[] = [
   { id: 'prod-1', title: 'Handmade Ceramic Mug', description: 'A beautiful, one-of-a-kind ceramic mug, perfect for your morning coffee. Glazed with a unique deep blue finish.', price: 35, imageUrls: ['https://picsum.photos/seed/prod1/600/400'], category: 'Товары ручной работы', seller: users[0], dynamicAttributes: {'Материал': 'Керамика', 'Объем (мл)': 350}, isPromoted: true, uniqueness: 'ONE_OF_A_KIND', giftWrapAvailable: true, giftWrapPrice: 5, purchaseCost: 15, weight: 450, productType: 'PHYSICAL', isB2BEnabled: true, b2bMinQuantity: 10, b2bPrice: 25 },
   { id: 'prod-2', title: 'Silver Necklace with Moonstone', description: 'Elegant sterling silver necklace featuring a mesmerizing moonstone pendant. A timeless piece.', price: 120, salePrice: 99, imageUrls: ['https://picsum.photos/seed/prod2/600/400'], category: 'Ювелирные изделия', seller: users[1], dynamicAttributes: {'Металл': 'Серебро 925', 'Камень': 'Лунный камень'}, isPromoted: true, purchaseCost: 60, weight: 150, productType: 'PHYSICAL' },
+  { id: 'prod-3', title: 'Кожаная куртка', description: 'Стильная куртка из натуральной кожи. Ручная работа.', price: 250, imageUrls: ['https://picsum.photos/seed/prod3/600/400'], category: 'Одежда и аксессуары', seller: users[2], dynamicAttributes: { 'Материал': 'Кожа', 'Размер': 'L', 'Цвет': 'Черный' }, productType: 'PHYSICAL' },
+  { id: 'prod-4', title: 'Шаблон для Figma "E-commerce"', description: 'Готовый шаблон для дизайна интернет-магазина. Легко редактировать.', price: 50, imageUrls: ['https://picsum.photos/seed/prod4/600/400'], category: 'Цифровые товары', seller: users[3], dynamicAttributes: { 'Тип файла': 'FIG', 'Лицензия': 'Personal Use' }, productType: 'DIGITAL', digitalFileUrl: 'mock_download_link' },
+  { id: 'prod-5', title: 'Игровой ноутбук Razer Blade 15', description: 'Мощный игровой ноутбук в отличном состоянии. Intel Core i7, RTX 3070, 16GB RAM, 1TB SSD.', price: 1150, imageUrls: ['https://picsum.photos/seed/prod5/600/400'], category: 'Электроника', seller: users[4], dynamicAttributes: { 'Бренд': 'Razer', 'Модель': 'Blade 15', 'Состояние': 'Б/у' }, isAuthenticationAvailable: true, authenticationStatus: 'NONE', productType: 'PHYSICAL' },
+  { id: 'prod-6', title: 'Audi A6 2019', description: 'Автомобиль в идеальном состоянии. Один владелец. Полная комплектация. Пробег 85000 км.', price: 25000, imageUrls: ['https://picsum.photos/seed/prod6/600/400'], category: 'Автомобили', seller: users[4], dynamicAttributes: { 'Бренд': 'Audi', 'Модель': 'A6', 'Год выпуска': 2019, 'Пробег, км': 85000, 'VIN-код': 'WAUZZZF27KN000123' }, isAuthenticationAvailable: true, authenticationStatus: 'AUTHENTICATED', nftTokenId: 'mock_nft_123', productType: 'PHYSICAL' },
+  { id: 'prod-7', title: 'Винтажная брошь', description: 'Элегантная винтажная брошь 60-х годов. Серебро с эмалью.', price: 95, imageUrls: ['https://picsum.photos/seed/prod7/600/400'], category: 'Винтаж', seller: users[1], dynamicAttributes: { 'Период': '1960-e', 'Состояние': 'Отличное' }, productType: 'PHYSICAL' },
+  { id: 'prod-8', title: 'Акварельный пейзаж', description: 'Оригинальная акварельная работа. Размер 30х40 см.', price: 150, imageUrls: ['https://picsum.photos/seed/prod8/600/400'], category: 'Искусство и коллекционирование', seller: users[3], dynamicAttributes: { 'Автор': 'Digital Artist', 'Стиль': 'Реализм' }, productType: 'PHYSICAL' },
 ];
 
+let orders: Order[] = [
+    {
+        id: 'order-1',
+        buyer: users[0], // Logged-in user
+        seller: users[3],
+        items: [{
+            product: products.find(p => p.id === 'prod-8')!,
+            quantity: 1,
+            price: 150,
+            purchaseType: 'RETAIL'
+        }],
+        total: 150,
+        status: 'COMPLETED',
+        orderDate: Date.now() - 5 * 24 * 60 * 60 * 1000, // 5 days ago
+        shippingAddress: { city: 'Киев', postOffice: 'Отделение 1', recipientName: 'Pottery Master', phoneNumber: '123456789' },
+        shippingMethod: 'NOVA_POSHTA',
+        paymentMethod: 'ESCROW',
+    }
+];
 let reviews: Review[] = [];
 let chats: Chat[] = [];
 let notifications: Notification[] = [];
@@ -91,22 +118,58 @@ export const apiService = {
       body: JSON.stringify({ initData }),
     });
   },
+  
+  // AI Service Methods (delegated to backend)
+  generateListingWithAi: async (imageBase64: string, userDescription: string): Promise<GeneratedListing> => {
+    return apiFetch('/ai/generate-listing', {
+      method: 'POST',
+      body: JSON.stringify({ imageBase64, userDescription }),
+    });
+  },
+  editImageWithAi: async (imageBase64: string, mimeType: string, prompt: string): Promise<{ base64Image: string }> => {
+    return apiFetch('/ai/edit-image', {
+      method: 'POST',
+      body: JSON.stringify({ imageBase64, mimeType, prompt }),
+    });
+  },
+  analyzeDocumentForVerificationWithAi: async (imageBase64: string): Promise<VerificationAnalysis> => {
+    return apiFetch('/ai/analyze-document', {
+      method: 'POST',
+      body: JSON.stringify({ imageBase64 }),
+    });
+  },
+  getAnalyticsInsightsWithAi: async (analyticsData: SellerAnalytics): Promise<AiInsight[]> => {
+      return apiFetch('/ai/analytics-insights', {
+          method: 'POST',
+          body: JSON.stringify({ analyticsData }),
+      });
+  },
+  generateDashboardFocusWithAi: async (dashboardData: SellerDashboardData): Promise<AiFocus> => {
+      return apiFetch('/ai/dashboard-focus', {
+          method: 'POST',
+          body: JSON.stringify({ dashboardData }),
+      });
+  },
+  processImportedHtmlWithAi: async (html: string): Promise<ImportedListingData> => {
+      return apiFetch('/ai/process-html', {
+          method: 'POST',
+          body: JSON.stringify({ html }),
+      });
+  },
+
 
   // Products
   getProducts: async (filters: any): Promise<Product[]> => {
-    // TODO: Backend filtering is not fully implemented yet for dynamic attributes etc.
-    // Fetching all and filtering on client for now.
-    const allProducts: Product[] = await apiFetch('/products');
+    // MOCKED: Reverted from real API call to mock data
+    await new Promise(res => setTimeout(res, 500)); // Simulate latency
     
-    // Fetch real orders to determine sold products
-    const realOrders: Order[] = await apiFetch('/orders/purchases');
-    const soldProductIds = new Set(realOrders.flatMap(o => o.items.map(i => i.product.id)));
+    const soldProductIds = new Set(orders.flatMap(o => o.items.map(i => i.product.id)));
     
     let baseProducts: Product[];
     if (filters.specialFilter === 'sold') {
-        baseProducts = allProducts.filter(p => soldProductIds.has(p.id));
+        baseProducts = products.filter(p => soldProductIds.has(p.id));
     } else {
-        baseProducts = allProducts.filter(p => !soldProductIds.has(p.id));
+        baseProducts = products.filter(p => !soldProductIds.has(p.id));
     }
 
     const filtered = baseProducts.filter(p => {
@@ -135,56 +198,62 @@ export const apiService = {
         const priceB = b.salePrice ?? b.price ?? 0;
         switch (filters.sortBy) {
             case 'priceAsc': return priceA - priceB;
-            case 'priceDesc': return priceB - a.price;
-            case 'rating': return b.seller.rating - a.seller.rating;
-            default: return 0; // Backend returns sorted by creation date
+            case 'priceDesc': return priceB - a.seller.rating;
+            default: return 0;
         }
     });
   },
   getProductById: async (id: string): Promise<Product | undefined> => {
-    try {
-        return await apiFetch(`/products/${id}`);
-    } catch (e) {
-        console.error(`Failed to fetch product ${id}`, e);
-        return undefined; // Return undefined on 404 or other errors
+    // MOCKED: Reverted from real API call to mock data
+    await new Promise(res => setTimeout(res, 200));
+    const product = products.find(p => p.id === id);
+    if (product) {
+        // Return a copy to prevent direct mutation of mock data
+        return { ...product };
     }
+    return undefined;
   },
   createListing: async (data: Partial<Product>, imageUrls: string[], videoUrl: string | undefined, seller: User): Promise<Product> => {
-    const payload = {
+    // MOCKED: This simulates creating a new product.
+    await new Promise(res => setTimeout(res, 800));
+    const newProduct: Product = {
+        id: `prod-${Date.now()}`,
         ...data,
-        sellerId: seller.id,
-        imageUrls: imageUrls,
-        videoUrl: videoUrl,
-    };
-    return apiFetch('/products', {
-        method: 'POST',
-        body: JSON.stringify(payload)
-    });
+        seller,
+        imageUrls,
+        videoUrl,
+        dynamicAttributes: data.dynamicAttributes || {},
+    } as Product;
+    products.unshift(newProduct);
+    return newProduct;
   },
   updateListing: async (id: string, data: Partial<Product>): Promise<Product> => {
-    return apiFetch(`/products/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data)
-    });
+    // MOCKED: This simulates updating a product.
+    await new Promise(res => setTimeout(res, 500));
+    const productIndex = products.findIndex(p => p.id === id);
+    if (productIndex === -1) throw new Error("Product not found");
+    products[productIndex] = { ...products[productIndex], ...data };
+    return products[productIndex];
   },
 
   // Users
   getUsers: async (): Promise<User[]> => {
-    return apiFetch('/users');
+    // MOCKED
+    await new Promise(res => setTimeout(res, 100));
+    return users;
   },
   getUserById: async (id: string): Promise<User | undefined> => {
-    try {
-        return await apiFetch(`/users/${id}`);
-    } catch (e) {
-        console.error(`Failed to fetch user ${id}`, e);
-        return undefined;
-    }
+    // MOCKED
+     await new Promise(res => setTimeout(res, 100));
+    return users.find(u => u.id === id);
   },
   updateUser: async (userId: string, data: Partial<User>): Promise<User> => {
-    return apiFetch(`/users/${userId}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-    });
+    // MOCKED
+    await new Promise(res => setTimeout(res, 300));
+    const userIndex = users.findIndex(u => u.id === userId);
+    if (userIndex === -1) throw new Error("User not found");
+    users[userIndex] = { ...users[userIndex], ...data };
+    return users[userIndex];
   },
   
   // File Upload
@@ -192,7 +261,6 @@ export const apiService = {
     const formData = new FormData();
     formData.append('file', file);
     
-    // apiFetch is not used here because we are sending FormData, not JSON.
     const token = localStorage.getItem('authToken');
     const headers: HeadersInit = {};
     if (token) {
@@ -209,6 +277,7 @@ export const apiService = {
         const errorData = await response.json().catch(() => ({ message: response.statusText }));
         throw new Error(errorData.message || 'File upload failed');
     }
+
     return response.json();
   },
 
@@ -220,54 +289,45 @@ export const apiService = {
   },
 
   // Orders - REAL IMPLEMENTATION
-// FIX: Update function signature to accept all 8 arguments passed from CheckoutPage.tsx.
-  createOrdersFromCart: async (cartItems: CartItem[], user: User, paymentMethod: 'ESCROW' | 'DIRECT', shippingMethod: 'NOVA_POSHTA' | 'UKRPOSHTA', shippingAddress: ShippingAddress, requestAuthentication: boolean, appliedPromos: any, shippingCosts: any) => {
-    const payload = {
-      cartItems: cartItems.map(item => ({
-        product: {
-          id: item.product.id,
-          seller: { id: item.product.seller.id },
-        },
-        quantity: item.quantity,
-        priceAtTimeOfAddition: item.priceAtTimeOfAddition,
-        variant: item.variant,
-        purchaseType: item.purchaseType,
-      })),
-      paymentMethod,
-      shippingMethod,
-      shippingAddress,
-      requestAuthentication,
-      appliedPromos,
-      shippingCosts,
-    };
-    return apiFetch('/orders', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
+  createOrdersFromCart: async (cartItems: CartItem[], user: User, paymentMethod: 'ESCROW' | 'DIRECT', shippingMethod: 'NOVA_POSHTA' | 'UKRPOSHTA', shippingAddress: ShippingAddress, requestAuthentication: boolean, appliedPromos: any, shippingCosts: any, transactionHash?: string): Promise<{success: boolean}> => {
+    // MOCKED
+    await new Promise(res => setTimeout(res, 1000));
+    console.log("Simulating order creation with transaction hash:", transactionHash);
+    return { success: true };
   },
   getPurchasesByBuyerId: async (): Promise<Order[]> => {
-    return apiFetch('/orders/purchases');
+    // MOCKED
+    await new Promise(res => setTimeout(res, 300));
+    return orders.filter(o => o.buyer.id === users[0].id); // Logged in user is users[0]
   },
   getSalesBySellerId: async (): Promise<Order[]> => {
-    return apiFetch('/orders/sales');
+    // MOCKED
+    await new Promise(res => setTimeout(res, 300));
+    return orders.filter(o => o.seller.id === users[0].id);
   },
   updateOrder: async (orderId: string, updates: Partial<Order>): Promise<Order> => {
-    return apiFetch(`/orders/${orderId}`, {
-      method: 'PATCH',
-      body: JSON.stringify(updates),
-    });
+    // MOCKED
+    await new Promise(res => setTimeout(res, 300));
+    const orderIndex = orders.findIndex(o => o.id === orderId);
+    if (orderIndex === -1) throw new Error("Order not found");
+    orders[orderIndex] = { ...orders[orderIndex], ...updates };
+    return orders[orderIndex];
   },
   generateWaybill: async (orderId: string): Promise<Order> => {
-    return apiFetch(`/orders/${orderId}/generate-waybill`, {
-        method: 'POST'
-    });
+    // MOCKED
+    await new Promise(res => setTimeout(res, 800));
+    const orderIndex = orders.findIndex(o => o.id === orderId);
+    if (orderIndex === -1) throw new Error("Order not found");
+    orders[orderIndex].status = 'SHIPPED';
+    orders[orderIndex].trackingNumber = `59000${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+    return orders[orderIndex];
   },
 
   // Scraping
   scrapeUrl: async (url: string): Promise<{ cleanText: string }> => {
     return apiFetch('/scrape', {
-      method: 'POST',
-      body: JSON.stringify({ url }),
+        method: 'POST',
+        body: JSON.stringify({ url }),
     });
   },
   
@@ -307,12 +367,10 @@ export const apiService = {
   // This is a mocked function, but it uses the real getProducts as its data source.
   getPromotedProducts: async function(): Promise<Product[]> {
     const allProducts = await this.getProducts({});
-    // In a real scenario, the backend would have a flag for this. We'll mock it.
-    return allProducts.slice(0, 2).map(p => ({ ...p, isPromoted: true }));
+    return allProducts.filter(p => p.isPromoted);
   },
   getAuctions: async function(): Promise<Product[]> {
     const allProducts = await this.getProducts({});
-    // Mocking auctions
     return allProducts.filter(p => p.isAuction);
   },
   placeBid: async (productId: string, amount: number, userId: string): Promise<Product> => {
@@ -326,10 +384,8 @@ export const apiService = {
       return product;
   },
   getProductsByIds: async function(ids: string[]): Promise<Product[]> {
-    // This now calls the real endpoint in a loop. Not efficient, but works for now.
-    const productPromises = ids.map(id => this.getProductById(id));
-    const resolvedProducts = await Promise.all(productPromises);
-    return resolvedProducts.filter((p): p is Product => p !== undefined);
+    const allProducts = await this.getProducts({});
+    return allProducts.filter(p => ids.includes(p.id));
   },
 
   getReviewsByUserId: async (userId: string): Promise<Review[]> => {
@@ -595,8 +651,7 @@ export const apiService = {
   },
   getAuthenticationOrders: async (userId: string): Promise<Order[]> => {
       await new Promise(res => setTimeout(res, 500));
-      const allOrders: Order[] = await apiFetch('/orders/purchases');
-      return allOrders.filter(o => o.authenticationRequested && (o.buyer.id === userId || o.seller.id === userId));
+      return orders.filter(o => o.authenticationRequested && (o.buyer.id === userId || o.seller.id === userId));
   },
   getDisputeById: async (orderId: string): Promise<Dispute | null> => {
       await new Promise(res => setTimeout(res, 500));
