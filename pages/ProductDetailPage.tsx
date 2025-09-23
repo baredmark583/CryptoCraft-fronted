@@ -1,284 +1,170 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { apiService } from '../services/apiService';
-import type { Product, ProductVariant, Review } from '../types';
+import type { Proposal, VoteChoice } from '../types';
 import Spinner from '../components/Spinner';
 import { useAuth } from '../hooks/useAuth';
-import { useCurrency } from '../hooks/useCurrency';
-import { useCart } from '../hooks/useCart';
-import StarRating from '../components/StarRating';
-import VerifiedBadge from '../components/VerifiedBadge';
 import { useCountdown } from '../hooks/useCountdown';
-import BidModal from '../components/BidModal';
 import { useTelegramBackButton } from '../hooks/useTelegram';
-import AuthenticatedBadge from '../components/AuthenticatedBadge';
-import NFTCertificateModal from '../components/NFTCertificateModal';
+
+const statusMap: Record<Proposal['status'], { text: string; color: string }> = {
+    ACTIVE: { text: 'Активно', color: 'bg-sky-500/20 text-sky-300' },
+    PASSED: { text: 'Принято', color: 'bg-green-500/20 text-green-300' },
+    REJECTED: { text: 'Отклонено', color: 'bg-red-500/20 text-red-300' },
+    EXECUTED: { text: 'Исполнено', color: 'bg-purple-500/20 text-purple-300' },
+};
+
+const CountdownTimer: React.FC<{ endDate: number }> = ({ endDate }) => {
+    const { days, hours, minutes, isFinished } = useCountdown(endDate);
+    if (isFinished) {
+        return <span className="text-base-content/70">Голосование завершено</span>;
+    }
+    return <span className="font-mono text-primary">{`${days}д ${hours}ч ${minutes}м`}</span>;
+};
 
 
-// ... (вспомогательные компоненты Countdown и ReviewCard остаются без изменений)
-
-const ProductDetailPage: React.FC = () => {
+const ProposalDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const { user } = useAuth();
-    const navigate = useNavigate();
+    const [proposal, setProposal] = useState<Proposal | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isVoting, setIsVoting] = useState(false);
+
     useTelegramBackButton(true);
 
-    const [product, setProduct] = useState<Product | null>(null);
-    const [reviews, setReviews] = useState<Review[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-    const [quantity, setQuantity] = useState(1);
-    const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
-    const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
-    const [isBidModalOpen, setIsBidModalOpen] = useState(false);
-    const [isNftModalOpen, setIsNftModalOpen] = useState(false);
-    
-    const { getFormattedPrice } = useCurrency();
-    const { addToCart } = useCart();
-    
-    // ... (вся ваша логика: fetch, useEffects, handlers - остается без изменений)
     useEffect(() => {
         if (!id) return;
-        setIsLoading(true);
-        apiService.getProductById(id)
-            .then(data => {
-                if (data) {
-                    setProduct(data);
-                    // Инициализация атрибутов
-                    if (data.variantAttributes && data.variantAttributes.length > 0) {
-                        const initialAttrs: Record<string, string> = {};
-                        data.variantAttributes.forEach(attr => {
-                            if(attr.options.length > 0) {
-                                initialAttrs[attr.name] = attr.options[0];
-                            }
-                        });
-                        setSelectedAttributes(initialAttrs);
-                    }
-                    return apiService.getReviewsByUserId(data.seller.id);
-                }
-                return Promise.resolve([]);
-            })
-            .then(reviewData => {
-                setReviews(reviewData);
-            })
-            .finally(() => setIsLoading(false));
+        const fetchProposal = async () => {
+            setIsLoading(true);
+            try {
+                const data = await apiService.getProposalById(id);
+                setProposal(data);
+            } catch (error) {
+                console.error("Failed to fetch proposal:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchProposal();
     }, [id]);
 
-    useEffect(() => {
-        if (product?.variants && Object.keys(selectedAttributes).length > 0) {
-            const foundVariant = product.variants.find(variant => 
-                Object.entries(selectedAttributes).every(([key, value]) => variant.attributes[key] === value)
-            );
-            setSelectedVariant(foundVariant || null);
+    const userVote = useMemo(() => {
+        if (!proposal) return null;
+        return proposal.voters[user.id];
+    }, [proposal, user.id]);
+
+    const handleVote = async (choice: VoteChoice) => {
+        if (!id || !proposal || proposal.status !== 'ACTIVE' || userVote) return;
+        setIsVoting(true);
+
+        const originalProposal = { ...proposal };
+
+        // Optimistic update
+        const newProposal = { ...proposal, voters: { ...proposal.voters, [user.id]: choice } };
+        if (!originalProposal.voters[user.id]) { // Only update counts if user hasn't voted before
+            if (choice === 'FOR') newProposal.votesFor += 1;
+            if (choice === 'AGAINST') newProposal.votesAgainst += 1;
         }
-    }, [selectedAttributes, product]);
-    
-    const handleAttributeSelect = (attributeName: string, option: string) => {
-        setSelectedAttributes(prev => ({ ...prev, [attributeName]: option }));
-    };
+        setProposal(newProposal);
 
-    const handleAddToCart = () => {
-        if (!product || !user) return;
-        const price = selectedVariant?.salePrice || selectedVariant?.price || product.salePrice || product.price || 0;
-        addToCart(product, quantity, selectedVariant || undefined, price, 'RETAIL');
-    };
-
-    const handlePlaceBid = async (amount: number) => {
-        if (!product || !user) return;
-        const updatedProduct = await apiService.placeBid(product.id, amount, user.id);
-        setProduct(updatedProduct);
-        setIsBidModalOpen(false);
-    }
-    
-    const handleContactSeller = async () => {
-        if (!product || !user) return;
-        const chat = await apiService.findOrCreateChat(user.id, product.seller.id);
-        navigate(`/chat/${chat.id}?productId=${product.id}`);
+        try {
+            await apiService.castVote(id, user.id, choice);
+        } catch (error) {
+            console.error("Failed to cast vote:", error);
+            alert("Не удалось проголосовать.");
+            setProposal(originalProposal); // Revert on failure
+        } finally {
+            setIsVoting(false);
+        }
     };
     
-    const displayedImage = useMemo(() => {
-        if (selectedVariant?.imageUrl) return selectedVariant.imageUrl;
-        return product?.imageUrls[selectedImageIndex] || '';
-    }, [selectedVariant, product, selectedImageIndex]);
-
-    // ... (Компонент displayPrice убираем отсюда, его JSX будет прямо в сайдбаре)
-
     if (isLoading) {
         return <div className="flex justify-center items-center h-96"><Spinner /></div>;
     }
 
-    if (!product || !user) {
-        return <div className="text-center text-xl text-base-content/70">Товар не найден.</div>;
+    if (!proposal) {
+        return <div className="text-center text-xl text-base-content/70">Предложение не найдено.</div>;
     }
 
-    const isOwner = product.seller.id === user.id;
-    const hasVariants = product.variantAttributes && product.variantAttributes.length > 0;
-    const isVariantInStock = hasVariants ? (selectedVariant ? selectedVariant.stock > 0 : false) : product.stock > 0;
-    const stockCount = hasVariants ? (selectedVariant?.stock ?? 0) : product.stock;
-    
+    const totalVotes = proposal.votesFor + proposal.votesAgainst;
+    const forPercentage = totalVotes > 0 ? (proposal.votesFor / totalVotes) * 100 : 0;
+    const againstPercentage = totalVotes > 0 ? 100 - forPercentage : 0;
+    const status = statusMap[proposal.status];
+
     return (
-    <>
-        <div className="container mx-auto px-4 py-8">
-            {/* --- ОСНОВНАЯ СЕТКА --- */}
-            {/* Меняем grid-cols-2 на grid-cols-3 для более гибкого сайдбара */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
-
-                {/* --- ЛЕВАЯ КОЛОНКА (Основной контент) --- */}
-                {/* На мобильных этот блок будет ВТОРЫМ (`order-2`), после сайдбара */}
-                <div className="lg:col-span-2 order-2 lg:order-1">
-                    {/* -- ГАЛЕРЕЯ -- */}
-                    <div className="space-y-4 mb-8">
-                        <div className="relative">
-                            <img className="w-full h-auto aspect-square object-cover rounded-2xl" src={displayedImage} alt={product.title}/>
-                        </div>
-                        <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide">
-                            {product.imageUrls.map((url, index) => (
-                                <img key={index} onClick={() => setSelectedImageIndex(index)} className={`flex-shrink-0 w-20 h-20 object-cover rounded-lg border-2 cursor-pointer transition duration-200 ${selectedImageIndex === index && !selectedVariant?.imageUrl ? 'border-primary' : 'border-transparent hover:border-primary'}`} src={url} alt={`Thumbnail ${index + 1}`}/>
-                            ))}
-                        </div>
+        <div className="max-w-4xl mx-auto">
+            <div className="mb-6">
+                <Link to="/governance" className="text-sm text-secondary hover:text-primary mb-4 block">&larr; Вернуться к управлению</Link>
+                <div className="flex justify-between items-start">
+                    <div>
+                        <span className={`text-sm font-bold px-3 py-1.5 rounded-full ${status.color}`}>{status.text}</span>
+                        <h1 className="text-3xl font-bold text-white mt-3">{proposal.title}</h1>
                     </div>
-                    
-                    {/* -- ИНФО О ПРОДАВЦЕ -- */}
-                    <div className="bg-base-200 rounded-2xl p-6 mb-8">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                                <img className="w-16 h-16 rounded-full object-cover" src={product.seller.avatarUrl} alt={product.seller.name}/>
-                                <div>
-                                    <h3 className="font-bold text-xl">{product.seller.name}</h3>
-                                    <div className="flex items-center gap-1 mt-1">
-                                        <VerifiedBadge level={product.seller.verificationLevel} />
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <StarRating rating={product.seller.rating} />
-                                <Link to={`/seller/${product.seller.id}/reviews`} className="text-sm text-base-content/60 hover:text-primary mt-1">
-                                    {reviews.length} отзывов
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* -- ОПИСАНИЕ И ХАРАКТЕРИСТИКИ -- */}
-                    <div className="bg-base-200 rounded-2xl p-6">
-                        <h2 className="text-2xl font-bold mb-4">Описание</h2>
-                        <p className="text-base-content/80 whitespace-pre-wrap leading-relaxed mb-8">{product.description}</p>
-                        
-                        <h3 className="text-xl font-bold mb-4 border-t border-base-300 pt-6">Характеристики</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
-                            {Object.entries(product.dynamicAttributes).map(([key, value]) => (
-                                <div key={key} className="flex justify-between border-b border-base-300/50 py-2">
-                                    <span className="text-base-content/60">{key}:</span>
-                                    <span className="font-medium text-right">{value}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* --- ПРАВАЯ КОЛОНКА (Сайдбар с действиями) --- */}
-                {/* Этот блок на мобильных будет ПЕРВЫМ (`order-1`) после галереи */}
-                {/* `lg:sticky lg:top-8` делает его "липким" на десктопе */}
-                <div className="lg:col-span-1 order-1 lg:order-2 lg:sticky lg:top-8 self-start">
-                    <div className="bg-base-200 rounded-2xl p-6 space-y-6">
-                        <div>
-                            <h1 className="font-bold text-3xl tracking-tight mb-2">{product.title}</h1>
-                        </div>
-                        
-                        {/* -- ЦЕНА -- */}
-                        <div>
-                            {(() => {
-                                const price = selectedVariant?.price ?? product?.price ?? 0;
-                                const salePrice = selectedVariant?.salePrice ?? product?.salePrice;
-                                if (salePrice && salePrice < price) {
-                                    return (
-                                        <div>
-                                            <span className="text-4xl font-bold text-base-content">{getFormattedPrice(salePrice)}</span>
-                                            <span className="text-xl text-base-content/60 line-through ml-3">{getFormattedPrice(price)}</span>
-                                        </div>
-                                    )
-                                }
-                                return <div><span className="text-4xl font-bold text-base-content">{getFormattedPrice(price)}</span></div>
-                            })()}
-                        </div>
-                        
-                        {/* -- ВАРИАНТЫ -- */}
-                        {hasVariants && (
-                            <div className="space-y-4 border-t border-base-300 pt-6">
-                                {product.variantAttributes?.map(attr => (
-                                    <div key={attr.name}>
-                                        <label className="block text-sm font-medium text-base-content/70 mb-2">{attr.name}</label>
-                                        <div className="flex flex-wrap gap-2">
-                                            {attr.options.map(option => (
-                                                <button 
-                                                    key={option}
-                                                    onClick={() => handleAttributeSelect(attr.name, option)}
-                                                    className={`px-4 py-2 text-sm rounded-lg transition-all duration-200 ${selectedAttributes[attr.name] === option ? 'bg-primary text-primary-content scale-105 shadow-md' : 'bg-base-100 hover:bg-base-300'}`}
-                                                >
-                                                    {option}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                        
-                        {/* -- СТАТУС НАЛИЧИЯ -- */}
-                        <div className="text-sm">
-                            <span className="text-base-content/60">В наличии:</span>
-                            <span className={`font-bold ml-2 ${isVariantInStock ? 'text-green-500' : 'text-red-500'}`}>
-                                {isVariantInStock ? `${stockCount} шт.` : 'Нет в наличии'}
-                            </span>
-                        </div>
-
-                        {/* -- КНОПКИ ДЕЙСТВИЙ -- */}
-                        <div className="space-y-3 pt-4 border-t border-base-300">
-                            <button onClick={handleAddToCart} disabled={isOwner || !isVariantInStock} className="w-full text-center bg-primary text-primary-content py-3.5 px-4 rounded-xl text-lg font-bold hover:bg-primary-focus transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed">
-                                {isOwner ? "Это ваш товар" : (!isVariantInStock ? "Нет в наличии" : "Добавить в корзину")}
-                            </button>
-                            <button onClick={handleContactSeller} disabled={isOwner} className="w-full text-center bg-base-300 py-3.5 px-4 rounded-xl text-lg font-bold hover:bg-base-100 transition-colors disabled:opacity-50">
-                                Написать продавцу
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* -- ОТЗЫВЫ -- */}
-            {reviews.length > 0 && (
-                <div className="mt-12">
-                    <h3 className="text-3xl font-bold mb-6 text-center">Отзывы о продавце</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {reviews.slice(0, 3).map((review) => (
-                            <div key={review.id} className="bg-base-200 p-6 rounded-2xl">
-                                <div className="flex items-center space-x-3 mb-4">
-                                    <img className="w-10 h-10 rounded-full object-cover" src={review.author.avatarUrl} alt={review.author.name}/>
-                                    <div>
-                                        <h4 className="font-bold">{review.author.name}</h4>
-                                        <StarRating rating={review.rating} />
-                                    </div>
-                                </div>
-                                <p className="text-base-content/70 text-sm leading-relaxed">{review.text}</p>
-                                <div className="mt-4 text-xs text-base-content/50">{new Date(review.timestamp).toLocaleDateDateString()}</div>
-                            </div>
-                        ))}
-                    </div>
-                    {reviews.length > 3 && (
-                        <div className="text-center mt-8">
-                             <Link to={`/seller/${product.seller.id}/reviews`} className="btn btn-ghost">
-                                 Показать все отзывы ({reviews.length})
-                            </Link>
+                    {proposal.status === 'ACTIVE' && (
+                        <div className="text-right">
+                             <p className="text-sm text-base-content/70">Завершится через:</p>
+                             <CountdownTimer endDate={proposal.endsAt} />
                         </div>
                     )}
                 </div>
-            )}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 bg-base-100 p-6 rounded-lg space-y-6">
+                    <div>
+                        <h2 className="text-xl font-bold text-white mb-2">Описание предложения</h2>
+                        <p className="text-base-content/80 whitespace-pre-wrap leading-relaxed">{proposal.description}</p>
+                    </div>
+                </div>
+
+                <div className="lg:col-span-1 space-y-6">
+                    <div className="bg-base-100 p-6 rounded-lg">
+                        <h3 className="text-lg font-bold text-white mb-4">Предложено от</h3>
+                        <div className="flex items-center gap-3">
+                            <img src={proposal.proposer.avatarUrl} alt={proposal.proposer.name} className="w-12 h-12 rounded-full"/>
+                            <div>
+                                <p className="font-semibold text-white">{proposal.proposer.name}</p>
+                                <p className="text-xs text-base-content/70">Создано: {new Date(proposal.createdAt).toLocaleDateString()}</p>
+                            </div>
+                        </div>
+                    </div>
+                     <div className="bg-base-100 p-6 rounded-lg">
+                        <h3 className="text-lg font-bold text-white mb-4">Текущие результаты</h3>
+                         <div className="space-y-2 text-sm">
+                            <div className="flex justify-between items-center text-green-400">
+                                <span>За</span>
+                                <span className="font-mono">{proposal.votesFor.toLocaleString()} ({forPercentage.toFixed(1)}%)</span>
+                            </div>
+                            <div className="flex justify-between items-center text-red-400">
+                                <span>Против</span>
+                                <span className="font-mono">{proposal.votesAgainst.toLocaleString()} ({againstPercentage.toFixed(1)}%)</span>
+                            </div>
+                        </div>
+                         <div className="w-full bg-base-200 rounded-full h-2.5 mt-3">
+                            <div className="bg-green-500 h-2.5 rounded-l-full" style={{ width: `${forPercentage}%` }}></div>
+                         </div>
+                    </div>
+                    {proposal.status === 'ACTIVE' && (
+                         <div className="bg-base-100 p-6 rounded-lg">
+                            <h3 className="text-lg font-bold text-white mb-4">Ваш голос</h3>
+                            {userVote ? (
+                                <p className="text-center text-base-content">Вы проголосовали: <span className={`font-bold ${userVote === 'FOR' ? 'text-green-400' : 'text-red-400'}`}>{userVote === 'FOR' ? 'ЗА' : 'ПРОТИВ'}</span></p>
+                            ) : (
+                                <div className="flex gap-4">
+                                    <button onClick={() => handleVote('FOR')} disabled={isVoting} className="w-full flex justify-center py-3 px-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg disabled:bg-gray-500">
+                                        {isVoting ? <Spinner size="sm"/> : 'За'}
+                                    </button>
+                                     <button onClick={() => handleVote('AGAINST')} disabled={isVoting} className="w-full flex justify-center py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg disabled:bg-gray-500">
+                                        {isVoting ? <Spinner size="sm"/> : 'Против'}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
-        
-        {product.isAuction && <BidModal isOpen={isBidModalOpen} onClose={() => setIsBidModalOpen(false)} onSubmit={handlePlaceBid} product={product} />}
-        {isNftModalOpen && <NFTCertificateModal product={product} onClose={() => setIsNftModalOpen(false)} />}
-    </>
     );
 };
 
-export default ProductDetailPage;
+export default ProposalDetailPage;
