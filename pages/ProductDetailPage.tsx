@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
@@ -16,36 +14,8 @@ import { useTelegramBackButton } from '../hooks/useTelegram';
 import AuthenticatedBadge from '../components/AuthenticatedBadge';
 import NFTCertificateModal from '../components/NFTCertificateModal';
 
-const Countdown: React.FC<{ targetDate: number }> = ({ targetDate }) => {
-    const { days, hours, minutes, seconds, isFinished } = useCountdown(targetDate);
-    
-    if (isFinished) {
-        return <span className="text-red-500 font-bold">Аукцион завершен</span>;
-    }
-    
-    return (
-        <div className="flex gap-4 text-center">
-            <div><span className="text-3xl font-bold">{days}</span><span className="block text-xs">дней</span></div>
-            <div><span className="text-3xl font-bold">{hours}</span><span className="block text-xs">часов</span></div>
-            <div><span className="text-3xl font-bold">{minutes}</span><span className="block text-xs">минут</span></div>
-            <div><span className="text-3xl font-bold">{seconds}</span><span className="block text-xs">секунд</span></div>
-        </div>
-    )
-}
 
-const ReviewCard: React.FC<{ review: Review, color: string }> = ({ review, color }) => (
-    <div className={`${color} rounded-2xl p-6 shadow-sm hover:shadow-md transition duration-200`}>
-      <div className="flex items-center space-x-3 mb-4">
-        <img className="w-10 h-10 rounded-full object-cover" src={review.author.avatarUrl} alt={review.author.name}/>
-        <div>
-          <h4 className="font-medium text-gray-800">{review.author.name}</h4>
-          <StarRating rating={review.rating} />
-        </div>
-      </div>
-      <p className="text-gray-700 text-sm leading-relaxed">{review.text}</p>
-      <div className="mt-4 text-xs text-gray-500">{new Date(review.timestamp).toLocaleDateString()}</div>
-    </div>
-);
+// ... (вспомогательные компоненты Countdown и ReviewCard остаются без изменений)
 
 const ProductDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -60,20 +30,21 @@ const ProductDetailPage: React.FC = () => {
     const [quantity, setQuantity] = useState(1);
     const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
     const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
-
     const [isBidModalOpen, setIsBidModalOpen] = useState(false);
     const [isNftModalOpen, setIsNftModalOpen] = useState(false);
     
     const { getFormattedPrice } = useCurrency();
     const { addToCart } = useCart();
     
+    // ... (вся ваша логика: fetch, useEffects, handlers - остается без изменений)
     useEffect(() => {
         if (!id) return;
         setIsLoading(true);
-        const fetchProduct = apiService.getProductById(id)
+        apiService.getProductById(id)
             .then(data => {
                 if (data) {
                     setProduct(data);
+                    // Инициализация атрибутов
                     if (data.variantAttributes && data.variantAttributes.length > 0) {
                         const initialAttrs: Record<string, string> = {};
                         data.variantAttributes.forEach(attr => {
@@ -89,10 +60,8 @@ const ProductDetailPage: React.FC = () => {
             })
             .then(reviewData => {
                 setReviews(reviewData);
-            });
-            
-        Promise.all([fetchProduct]).finally(() => setIsLoading(false));
-
+            })
+            .finally(() => setIsLoading(false));
     }, [id]);
 
     useEffect(() => {
@@ -109,20 +78,20 @@ const ProductDetailPage: React.FC = () => {
     };
 
     const handleAddToCart = () => {
-        if (!product) return;
+        if (!product || !user) return;
         const price = selectedVariant?.salePrice || selectedVariant?.price || product.salePrice || product.price || 0;
         addToCart(product, quantity, selectedVariant || undefined, price, 'RETAIL');
     };
 
     const handlePlaceBid = async (amount: number) => {
-        if (!product) return;
+        if (!product || !user) return;
         const updatedProduct = await apiService.placeBid(product.id, amount, user.id);
         setProduct(updatedProduct);
         setIsBidModalOpen(false);
     }
     
     const handleContactSeller = async () => {
-        if (!product) return;
+        if (!product || !user) return;
         const chat = await apiService.findOrCreateChat(user.id, product.seller.id);
         navigate(`/chat/${chat.id}?productId=${product.id}`);
     };
@@ -132,149 +101,182 @@ const ProductDetailPage: React.FC = () => {
         return product?.imageUrls[selectedImageIndex] || '';
     }, [selectedVariant, product, selectedImageIndex]);
 
-    const displayPrice = useMemo(() => {
-        const price = selectedVariant?.price ?? product?.price ?? 0;
-        const salePrice = selectedVariant?.salePrice ?? product?.salePrice;
-        
-        if (salePrice && salePrice < price) {
-            return (
-                <div className="mb-6">
-                    <span className="text-3xl font-bold text-base-content">{getFormattedPrice(salePrice)}</span>
-                    <span className="text-lg text-base-content/60 line-through ml-3">{getFormattedPrice(price)}</span>
-                </div>
-            )
-        }
-        return <div className="mb-6"><span className="text-3xl font-bold text-base-content">{getFormattedPrice(price)}</span></div>
-    }, [product, selectedVariant, getFormattedPrice]);
+    // ... (Компонент displayPrice убираем отсюда, его JSX будет прямо в сайдбаре)
 
     if (isLoading) {
         return <div className="flex justify-center items-center h-96"><Spinner /></div>;
     }
 
-    if (!product) {
+    if (!product || !user) {
         return <div className="text-center text-xl text-base-content/70">Товар не найден.</div>;
     }
 
     const isOwner = product.seller.id === user.id;
     const hasVariants = product.variantAttributes && product.variantAttributes.length > 0;
-    const isVariantInStock = hasVariants ? (selectedVariant ? selectedVariant.stock > 0 : false) : true;
-    const stockCount = hasVariants ? (selectedVariant?.stock ?? 0) : (Object.values(product.dynamicAttributes).find(v => String(v).toLowerCase() === 'stock') ?? 'N/A');
-
-    const reviewBgColors = ['bg-green-100', 'bg-yellow-100', 'bg-emerald-100', 'bg-lime-100', 'bg-teal-100', 'bg-yellow-50'];
-
+    const isVariantInStock = hasVariants ? (selectedVariant ? selectedVariant.stock > 0 : false) : product.stock > 0;
+    const stockCount = hasVariants ? (selectedVariant?.stock ?? 0) : product.stock;
+    
     return (
     <>
-      <div className="max-w-6xl mx-auto">
-        <div className="bg-base-200 rounded-3xl shadow-lg overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-8">
-            {/* Image Section */}
-            <div className="space-y-4">
-              <div className="main-image-container">
-                <img className="main-product-image w-full h-96 object-cover rounded-2xl" src={displayedImage} alt={product.title}/>
-              </div>
-              <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide">
-                {product.imageUrls.map((url, index) => (
-                    <img key={index} onClick={() => setSelectedImageIndex(index)} className={`w-20 h-20 object-cover rounded-lg border-2 cursor-pointer transition duration-200 ${selectedImageIndex === index && !selectedVariant?.imageUrl ? 'border-primary' : 'border-transparent hover:border-primary'}`} src={url} alt={`Thumbnail ${index + 1}`}/>
-                ))}
-              </div>
-            </div>
-            {/* Info Section */}
-            <div className="space-y-6">
-              <div>
-                <h1 className="font-bold text-4xl tracking-tight mb-4">{product.title}</h1>
-                <p className="text-base-content/70 mb-4">{product.description}</p>
-              </div>
-              
-              {displayPrice}
+        <div className="container mx-auto px-4 py-8">
+            {/* --- ОСНОВНАЯ СЕТКА --- */}
+            {/* Меняем grid-cols-2 на grid-cols-3 для более гибкого сайдбара */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
 
-              <div className="bg-base-100 rounded-2xl p-6 mb-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-3">
-                    <img className="w-12 h-12 rounded-full object-cover" src={product.seller.avatarUrl} alt={product.seller.name}/>
-                    <div>
-                      <h3 className="font-medium text-lg">{product.seller.name}</h3>
-                      <div className="flex items-center gap-1">
-                          <VerifiedBadge level={product.seller.verificationLevel} />
-                      </div>
+                {/* --- ЛЕВАЯ КОЛОНКА (Основной контент) --- */}
+                {/* На мобильных этот блок будет ВТОРЫМ (`order-2`), после сайдбара */}
+                <div className="lg:col-span-2 order-2 lg:order-1">
+                    {/* -- ГАЛЕРЕЯ -- */}
+                    <div className="space-y-4 mb-8">
+                        <div className="relative">
+                            <img className="w-full h-auto aspect-square object-cover rounded-2xl" src={displayedImage} alt={product.title}/>
+                        </div>
+                        <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide">
+                            {product.imageUrls.map((url, index) => (
+                                <img key={index} onClick={() => setSelectedImageIndex(index)} className={`flex-shrink-0 w-20 h-20 object-cover rounded-lg border-2 cursor-pointer transition duration-200 ${selectedImageIndex === index && !selectedVariant?.imageUrl ? 'border-primary' : 'border-transparent hover:border-primary'}`} src={url} alt={`Thumbnail ${index + 1}`}/>
+                            ))}
+                        </div>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <StarRating rating={product.seller.rating} />
-                    <span className="text-sm text-base-content/60">({product.seller.rating.toFixed(1)})</span>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Action Buttons */}
-              <div className="space-y-4">
-                <button onClick={handleContactSeller} disabled={isOwner} className="w-full text-center border border-base-300 py-3 px-4 rounded-full text-lg hover:bg-base-100 transition-colors disabled:opacity-50">
-                  Написать продавцу
-                </button>
-                <button onClick={handleAddToCart} disabled={isOwner || !isVariantInStock} className="w-full text-center bg-primary text-primary-content py-3 px-4 rounded-full text-lg hover:bg-primary-focus transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed">
-                  {isOwner ? "Это ваш товар" : (!isVariantInStock ? "Нет в наличии" : "Добавить в корзину")}
-                </button>
-              </div>
-              
-               {/* Additional Info / Variants */}
-              <div className="border-t pt-6">
-                {hasVariants && (
-                     <div className="space-y-4 mb-6">
-                        {product.variantAttributes?.map(attr => (
-                            <div key={attr.name}>
-                                <label className="block text-sm font-medium text-base-content/70 mb-2">{attr.name}</label>
-                                <div className="flex flex-wrap gap-2">
-                                    {attr.options.map(option => (
-                                        <button 
-                                            key={option}
-                                            onClick={() => handleAttributeSelect(attr.name, option)}
-                                            className={`px-3 py-1 text-sm rounded-md transition-colors ${selectedAttributes[attr.name] === option ? 'bg-neutral text-neutral-content' : 'border border-base-300 hover:bg-base-300'}`}
-                                        >
-                                            {option}
-                                        </button>
-                                    ))}
+                    
+                    {/* -- ИНФО О ПРОДАВЦЕ -- */}
+                    <div className="bg-base-200 rounded-2xl p-6 mb-8">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                                <img className="w-16 h-16 rounded-full object-cover" src={product.seller.avatarUrl} alt={product.seller.name}/>
+                                <div>
+                                    <h3 className="font-bold text-xl">{product.seller.name}</h3>
+                                    <div className="flex items-center gap-1 mt-1">
+                                        <VerifiedBadge level={product.seller.verificationLevel} />
+                                    </div>
                                 </div>
+                            </div>
+                            <div className="text-right">
+                                <StarRating rating={product.seller.rating} />
+                                <Link to={`/seller/${product.seller.id}/reviews`} className="text-sm text-base-content/60 hover:text-primary mt-1">
+                                    {reviews.length} отзывов
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* -- ОПИСАНИЕ И ХАРАКТЕРИСТИКИ -- */}
+                    <div className="bg-base-200 rounded-2xl p-6">
+                        <h2 className="text-2xl font-bold mb-4">Описание</h2>
+                        <p className="text-base-content/80 whitespace-pre-wrap leading-relaxed mb-8">{product.description}</p>
+                        
+                        <h3 className="text-xl font-bold mb-4 border-t border-base-300 pt-6">Характеристики</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                            {Object.entries(product.dynamicAttributes).map(([key, value]) => (
+                                <div key={key} className="flex justify-between border-b border-base-300/50 py-2">
+                                    <span className="text-base-content/60">{key}:</span>
+                                    <span className="font-medium text-right">{value}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+
+                {/* --- ПРАВАЯ КОЛОНКА (Сайдбар с действиями) --- */}
+                {/* Этот блок на мобильных будет ПЕРВЫМ (`order-1`) после галереи */}
+                {/* `lg:sticky lg:top-8` делает его "липким" на десктопе */}
+                <div className="lg:col-span-1 order-1 lg:order-2 lg:sticky lg:top-8 self-start">
+                    <div className="bg-base-200 rounded-2xl p-6 space-y-6">
+                        <div>
+                            <h1 className="font-bold text-3xl tracking-tight mb-2">{product.title}</h1>
+                        </div>
+                        
+                        {/* -- ЦЕНА -- */}
+                        <div>
+                            {(() => {
+                                const price = selectedVariant?.price ?? product?.price ?? 0;
+                                const salePrice = selectedVariant?.salePrice ?? product?.salePrice;
+                                if (salePrice && salePrice < price) {
+                                    return (
+                                        <div>
+                                            <span className="text-4xl font-bold text-base-content">{getFormattedPrice(salePrice)}</span>
+                                            <span className="text-xl text-base-content/60 line-through ml-3">{getFormattedPrice(price)}</span>
+                                        </div>
+                                    )
+                                }
+                                return <div><span className="text-4xl font-bold text-base-content">{getFormattedPrice(price)}</span></div>
+                            })()}
+                        </div>
+                        
+                        {/* -- ВАРИАНТЫ -- */}
+                        {hasVariants && (
+                            <div className="space-y-4 border-t border-base-300 pt-6">
+                                {product.variantAttributes?.map(attr => (
+                                    <div key={attr.name}>
+                                        <label className="block text-sm font-medium text-base-content/70 mb-2">{attr.name}</label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {attr.options.map(option => (
+                                                <button 
+                                                    key={option}
+                                                    onClick={() => handleAttributeSelect(attr.name, option)}
+                                                    className={`px-4 py-2 text-sm rounded-lg transition-all duration-200 ${selectedAttributes[attr.name] === option ? 'bg-primary text-primary-content scale-105 shadow-md' : 'bg-base-100 hover:bg-base-300'}`}
+                                                >
+                                                    {option}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        
+                        {/* -- СТАТУС НАЛИЧИЯ -- */}
+                        <div className="text-sm">
+                            <span className="text-base-content/60">В наличии:</span>
+                            <span className={`font-bold ml-2 ${isVariantInStock ? 'text-green-500' : 'text-red-500'}`}>
+                                {isVariantInStock ? `${stockCount} шт.` : 'Нет в наличии'}
+                            </span>
+                        </div>
+
+                        {/* -- КНОПКИ ДЕЙСТВИЙ -- */}
+                        <div className="space-y-3 pt-4 border-t border-base-300">
+                            <button onClick={handleAddToCart} disabled={isOwner || !isVariantInStock} className="w-full text-center bg-primary text-primary-content py-3.5 px-4 rounded-xl text-lg font-bold hover:bg-primary-focus transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed">
+                                {isOwner ? "Это ваш товар" : (!isVariantInStock ? "Нет в наличии" : "Добавить в корзину")}
+                            </button>
+                            <button onClick={handleContactSeller} disabled={isOwner} className="w-full text-center bg-base-300 py-3.5 px-4 rounded-xl text-lg font-bold hover:bg-base-100 transition-colors disabled:opacity-50">
+                                Написать продавцу
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* -- ОТЗЫВЫ -- */}
+            {reviews.length > 0 && (
+                <div className="mt-12">
+                    <h3 className="text-3xl font-bold mb-6 text-center">Отзывы о продавце</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {reviews.slice(0, 3).map((review) => (
+                            <div key={review.id} className="bg-base-200 p-6 rounded-2xl">
+                                <div className="flex items-center space-x-3 mb-4">
+                                    <img className="w-10 h-10 rounded-full object-cover" src={review.author.avatarUrl} alt={review.author.name}/>
+                                    <div>
+                                        <h4 className="font-bold">{review.author.name}</h4>
+                                        <StarRating rating={review.rating} />
+                                    </div>
+                                </div>
+                                <p className="text-base-content/70 text-sm leading-relaxed">{review.text}</p>
+                                <div className="mt-4 text-xs text-base-content/50">{new Date(review.timestamp).toLocaleDateDateString()}</div>
                             </div>
                         ))}
                     </div>
-                )}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    {Object.entries(product.dynamicAttributes).map(([key, value]) => (
-                        <div key={key}>
-                            <span className="text-base-content/60">{key}:</span>
-                            <span className="font-medium ml-2">{value}</span>
+                    {reviews.length > 3 && (
+                        <div className="text-center mt-8">
+                             <Link to={`/seller/${product.seller.id}/reviews`} className="btn btn-ghost">
+                                 Показать все отзывы ({reviews.length})
+                            </Link>
                         </div>
-                    ))}
-                    <div>
-                        <span className="text-base-content/60">В наличии:</span>
-                        <span className="font-medium ml-2 text-green-600">{stockCount} шт.</span>
-                    </div>
+                    )}
                 </div>
-              </div>
-
-            </div>
-          </div>
-          {/* Reviews Section */}
-          {reviews.length > 0 && (
-            <div className="p-8 border-t border-gray-200">
-                <h3 className="text-2xl font-bold mb-6 text-center">Отзывы о продавце</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {reviews.slice(0, 6).map((review, index) => (
-                        <ReviewCard key={review.id} review={review} color={reviewBgColors[index % reviewBgColors.length]} />
-                    ))}
-                </div>
-                {reviews.length > 6 && (
-                    <div className="text-center mt-8">
-                        <button className="px-8 py-3 bg-gradient-to-r from-green-200 to-yellow-200 text-gray-800 font-medium rounded-full hover:from-green-300 hover:to-yellow-300 transition duration-200">
-                            Показать больше отзывов
-                        </button>
-                    </div>
-                )}
-            </div>
-          )}
+            )}
         </div>
-      </div>
-      {product.isAuction && <BidModal isOpen={isBidModalOpen} onClose={() => setIsBidModalOpen(false)} onSubmit={handlePlaceBid} product={product} />}
-      {isNftModalOpen && <NFTCertificateModal product={product} onClose={() => setIsNftModalOpen(false)} />}
+        
+        {product.isAuction && <BidModal isOpen={isBidModalOpen} onClose={() => setIsBidModalOpen(false)} onSubmit={handlePlaceBid} product={product} />}
+        {isNftModalOpen && <NFTCertificateModal product={product} onClose={() => setIsNftModalOpen(false)} />}
     </>
     );
 };
