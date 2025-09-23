@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { Product } from '../types';
@@ -10,7 +11,7 @@ const Accordion: React.FC<{ title: string; children: ReactNode; defaultOpen?: bo
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border-b border-brand-border last:border-b-0 py-2">
+    <div className="border-b border-base-300 last:border-b-0 py-2">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex justify-between items-center py-2 text-left font-semibold text-white text-lg"
@@ -22,7 +23,7 @@ const Accordion: React.FC<{ title: string; children: ReactNode; defaultOpen?: bo
           viewBox="0 0 24 24"
           strokeWidth={2}
           stroke="currentColor"
-          className={`w-5 h-5 transform transition-transform text-brand-text-secondary ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-5 h-5 transform transition-transform text-base-content/70 ${isOpen ? 'rotate-180' : ''}`}
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
         </svg>
@@ -102,17 +103,17 @@ const FilterBar: React.FC<FilterBarProps> = ({ filters, setFilters, products, ca
     };
 
     return (
-        <div className="bg-brand-surface p-4 rounded-lg">
+        <div className="bg-base-100 p-4 rounded-lg">
             <Accordion title="Категории" defaultOpen={true}>
                 <ul className="space-y-2 text-sm max-h-60 overflow-y-auto pr-2">
                     <li>
-                         <Link to="/products?category=Все" className={`block p-1 rounded ${filters.category === 'Все' ? 'text-brand-primary font-bold' : 'text-brand-text-secondary hover:text-white'}`}>
+                         <Link to="/products?category=Все" className={`block p-1 rounded ${filters.category === 'Все' ? 'text-primary font-bold' : 'text-base-content/70 hover:text-white'}`}>
                             Все категории
                         </Link>
                     </li>
                     {categories.map(cat => (
                         <li key={cat.name}>
-                            <Link to={`/products?category=${encodeURIComponent(cat.name)}`} className={`block p-1 rounded ${filters.category === cat.name ? 'text-brand-primary font-bold' : 'text-brand-text-secondary hover:text-white'}`}>
+                            <Link to={`/products?category=${encodeURIComponent(cat.name)}`} className={`block p-1 rounded ${filters.category === cat.name ? 'text-primary font-bold' : 'text-base-content/70 hover:text-white'}`}>
                                 {cat.name}
                             </Link>
                         </li>
@@ -122,26 +123,26 @@ const FilterBar: React.FC<FilterBarProps> = ({ filters, setFilters, products, ca
 
             <Accordion title="Цена">
                 <div className="flex items-center gap-2">
-                    <input type="number" placeholder="От" value={localPriceMin} onChange={e => setLocalPriceMin(e.target.value)} className="w-full bg-brand-background border border-brand-border rounded-md p-2" />
-                    <span className="text-brand-text-secondary">-</span>
-                    <input type="number" placeholder="До" value={localPriceMax} onChange={e => setLocalPriceMax(e.target.value)} className="w-full bg-brand-background border border-brand-border rounded-md p-2" />
+                    <input type="number" placeholder="От" value={localPriceMin} onChange={e => setLocalPriceMin(e.target.value)} className="w-full bg-base-200 border border-base-300 rounded-md p-2" />
+                    <span className="text-base-content/70">-</span>
+                    <input type="number" placeholder="До" value={localPriceMax} onChange={e => setLocalPriceMax(e.target.value)} className="w-full bg-base-200 border border-base-300 rounded-md p-2" />
                 </div>
-                <button onClick={handleApplyPriceFilter} className="text-sm w-full mt-2 bg-brand-primary hover:bg-brand-primary-hover text-white py-2 rounded">Применить</button>
+                <button onClick={handleApplyPriceFilter} className="text-sm w-full mt-2 bg-primary hover:bg-primary-focus text-white py-2 rounded">Применить</button>
             </Accordion>
 
             {Object.entries(dynamicFilterOptions).map(([key, values]) => (
                 <Accordion key={key} title={key}>
                     <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
                         {Object.entries(values).sort().map(([value, count]) => (
-                            <label key={value} className="flex items-center space-x-2 cursor-pointer p-1 rounded hover:bg-brand-background">
+                            <label key={value} className="flex items-center space-x-2 cursor-pointer p-1 rounded hover:bg-base-200">
                                 <input
                                     type="checkbox"
                                     checked={(filters.dynamic[key] || []).includes(value)}
                                     onChange={(e) => handleDynamicFilterChange(key, value, e.target.checked)}
-                                    className="h-4 w-4 rounded bg-brand-background border-brand-border text-brand-primary focus:ring-brand-primary"
+                                    className="h-4 w-4 rounded bg-base-200 border-base-300 text-primary focus:ring-primary"
                                 />
-                                <span className="text-brand-text-primary text-sm">{value}</span>
-                                <span className="text-brand-text-secondary text-xs ml-auto">({count})</span>
+                                <span className="text-base-content text-sm">{value}</span>
+                                <span className="text-base-content/70 text-xs ml-auto">({count})</span>
                             </label>
                         ))}
                     </div>

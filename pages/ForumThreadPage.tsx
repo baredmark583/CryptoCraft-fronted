@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { apiService } from '../services/apiService';
@@ -64,29 +65,29 @@ const ForumThreadPage: React.FC = () => {
   }
 
   if (!thread) {
-    return <div className="text-center text-2xl text-brand-text-secondary mt-16">Тема не найдена</div>;
+    return <div className="text-center text-2xl text-base-content/70 mt-16">Тема не найдена</div>;
   }
 
   return (
     <div>
       <div className="mb-6">
-        <Link to="/community" className="text-sm text-brand-secondary hover:text-brand-primary mb-4 block">&larr; Вернуться в сообщество</Link>
+        <Link to="/community" className="text-sm text-secondary hover:text-primary mb-4 block">&larr; Вернуться в сообщество</Link>
         <h1 className="text-3xl font-bold text-white">{thread.title}</h1>
       </div>
       
       <div className="space-y-6">
         {posts.map(post => (
-          <div key={post.id} className="bg-brand-surface rounded-lg shadow-md flex p-4">
+          <div key={post.id} className="bg-base-100 rounded-lg shadow-md flex p-4">
             <div className="flex-shrink-0 mr-4 text-center">
               <Link to={`/profile/${post.author.id}`}>
                 <img src={post.author.avatarUrl} alt={post.author.name} className="w-16 h-16 rounded-full mx-auto" />
               </Link>
               <p className="font-bold text-white mt-2">{post.author.name}</p>
-              <p className="text-xs text-brand-text-secondary">{post.author.id === thread.author.id ? 'Автор темы' : ''}</p>
+              <p className="text-xs text-base-content/70">{post.author.id === thread.author.id ? 'Автор темы' : ''}</p>
             </div>
-            <div className="flex-grow border-l border-brand-border pl-4">
-               <p className="text-xs text-brand-text-secondary mb-2">{new Date(post.createdAt).toLocaleString()}</p>
-               <div className="text-brand-text-primary leading-relaxed whitespace-pre-wrap">
+            <div className="flex-grow border-l border-base-300 pl-4">
+               <p className="text-xs text-base-content/70 mb-2">{new Date(post.createdAt).toLocaleString()}</p>
+               <div className="text-base-content leading-relaxed whitespace-pre-wrap">
                    {post.content}
                </div>
             </div>
@@ -95,7 +96,7 @@ const ForumThreadPage: React.FC = () => {
         <div ref={messagesEndRef} />
       </div>
       
-       <div className="mt-8 bg-brand-surface p-6 rounded-lg">
+       <div className="mt-8 bg-base-100 p-6 rounded-lg">
           <h3 className="text-xl font-bold text-white mb-4">Ваш ответ</h3>
           <form onSubmit={handleReplySubmit}>
             <div className="flex items-start gap-4">
@@ -104,7 +105,7 @@ const ForumThreadPage: React.FC = () => {
                     rows={5} 
                     value={replyContent}
                     onChange={(e) => setReplyContent(e.target.value)}
-                    className="w-full bg-brand-background border border-brand-border rounded-md p-3"
+                    className="w-full bg-base-200 border border-base-300 rounded-md p-3"
                     placeholder="Введите ваше сообщение..."
                     disabled={isSubmitting}
                 />
@@ -113,7 +114,7 @@ const ForumThreadPage: React.FC = () => {
                 <button 
                     type="submit"
                     disabled={isSubmitting || !replyContent.trim()}
-                    className="mt-4 bg-brand-primary hover:bg-brand-primary-hover text-white font-bold py-2 px-6 rounded-lg disabled:bg-gray-500 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px] ml-auto"
+                    className="mt-4 bg-primary hover:bg-primary-focus text-white font-bold py-2 px-6 rounded-lg disabled:bg-gray-500 disabled:cursor-not-allowed flex items-center justify-center min-w-[120px] ml-auto"
                 >
                     {isSubmitting ? <Spinner size="sm" /> : 'Отправить'}
                 </button>

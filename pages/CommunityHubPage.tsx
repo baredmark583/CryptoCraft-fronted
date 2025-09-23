@@ -39,8 +39,8 @@ const LiveStreamsSection: React.FC = () => {
       <h2 className="text-3xl font-bold text-white mb-4">Прямые эфиры</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {streams.map(stream => (
-          <Link to={`/live/${stream.id}`} key={stream.id} className="block bg-brand-surface rounded-lg group overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-brand-primary/20 hover:-translate-y-1">
-            <div className="relative aspect-video bg-brand-background">
+          <Link to={`/live/${stream.id}`} key={stream.id} className="block bg-base-100 rounded-lg group overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1">
+            <div className="relative aspect-video bg-base-200">
                 <img src={stream.seller.headerImageUrl || 'https://picsum.photos/seed/livebg/600/400'} alt="Live Stream Background" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent p-4 flex flex-col justify-between">
                   <div>
@@ -58,10 +58,10 @@ const LiveStreamsSection: React.FC = () => {
                     )}
                   </div>
                    <div className="flex items-center gap-3">
-                      <img src={stream.seller.avatarUrl} alt={stream.seller.name} className="w-10 h-10 rounded-full border-2 border-brand-primary"/>
+                      <img src={stream.seller.avatarUrl} alt={stream.seller.name} className="w-10 h-10 rounded-full border-2 border-primary"/>
                       <div>
                           <p className="font-bold text-white leading-tight">{stream.title}</p>
-                          <p className="text-sm text-brand-text-secondary">{stream.seller.name}</p>
+                          <p className="text-sm text-base-content/70">{stream.seller.name}</p>
                       </div>
                    </div>
                 </div>
@@ -115,31 +115,31 @@ const CommunityHubPage: React.FC = () => {
 
     if(threads.length === 0) {
         return (
-            <div className="text-center py-16 bg-brand-surface rounded-lg">
+            <div className="text-center py-16 bg-base-100 rounded-lg">
                 <h2 className="text-2xl font-bold text-white mb-2">На форуме пока тихо</h2>
-                <p className="text-brand-text-secondary">Станьте первым, кто создаст новую тему для обсуждения!</p>
+                <p className="text-base-content/70">Станьте первым, кто создаст новую тему для обсуждения!</p>
             </div>
         )
     }
 
     return (
-      <div className="bg-brand-surface rounded-lg shadow-lg">
+      <div className="bg-base-100 rounded-lg shadow-lg">
         <ul>
           {threads.map((thread, index) => (
-            <li key={thread.id} className={`flex items-center p-4 ${index < threads.length - 1 ? 'border-b border-brand-border' : ''}`}>
+            <li key={thread.id} className={`flex items-center p-4 ${index < threads.length - 1 ? 'border-b border-base-300' : ''}`}>
               <div className="flex-shrink-0 mr-4">
                 <img src={thread.author.avatarUrl} alt={thread.author.name} className="w-12 h-12 rounded-full" />
               </div>
               <div className="flex-grow">
-                <Link to={`/thread/${thread.id}`} className="font-semibold text-white hover:text-brand-primary text-lg leading-tight">
+                <Link to={`/thread/${thread.id}`} className="font-semibold text-white hover:text-primary text-lg leading-tight">
                   {thread.isPinned && <span className="text-yellow-400 mr-2" title="Закреплено">📌</span>}
                   {thread.title}
                 </Link>
-                <p className="text-sm text-brand-text-secondary mt-1">
+                <p className="text-sm text-base-content/70 mt-1">
                   Автор: {thread.author.name} &bull; Создана: {new Date(thread.createdAt).toLocaleDateString()}
                 </p>
               </div>
-              <div className="text-right text-sm text-brand-text-secondary hidden sm:block">
+              <div className="text-right text-sm text-base-content/70 hidden sm:block">
                 <p>{thread.replyCount} ответов</p>
                 <p>Последний: {new Date(thread.lastReplyAt).toLocaleDateString()}</p>
               </div>
@@ -155,14 +155,14 @@ const CommunityHubPage: React.FC = () => {
         <div>
           <section className="text-center mb-8">
             <h1 className="text-4xl font-bold text-white mb-2">Центр сообщества</h1>
-            <p className="text-lg text-brand-text-secondary">Обсуждения, вопросы и ответы от мастеров и покупателей.</p>
+            <p className="text-lg text-base-content/70">Обсуждения, вопросы и ответы от мастеров и покупателей.</p>
           </section>
 
           <LiveStreamsSection />
           
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-3xl font-bold text-white">Форум</h2>
-            <button onClick={() => setIsModalOpen(true)} className="bg-brand-primary hover:bg-brand-primary-hover text-white font-bold py-2 px-4 rounded-lg">
+            <button onClick={() => setIsModalOpen(true)} className="bg-primary hover:bg-primary-focus text-white font-bold py-2 px-4 rounded-lg">
                 Создать новую тему
             </button>
           </div>

@@ -27,7 +27,7 @@ const CurrencySwitcher: React.FC = () => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center w-20 h-10 bg-brand-surface border border-brand-border rounded-lg text-sm font-semibold"
+        className="flex items-center justify-center w-20 h-10 bg-base-100 border border-base-300 rounded-lg text-sm font-semibold"
       >
         {currency}
         <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ml-1 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -35,13 +35,13 @@ const CurrencySwitcher: React.FC = () => {
         </svg>
       </button>
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 w-28 bg-brand-surface rounded-lg shadow-2xl border border-brand-border z-50 animate-fade-in-down">
+        <div className="absolute top-full right-0 mt-2 w-28 bg-base-100 rounded-lg shadow-2xl border border-base-300 z-50 animate-fade-in-down">
           <ul className="py-1">
             {currencies.map(c => (
               <li key={c}>
                 <button
                   onClick={() => handleSelect(c)}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-brand-primary/20 ${currency === c ? 'text-brand-primary' : 'text-brand-text-primary'}`}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-primary/20 ${currency === c ? 'text-primary' : 'text-base-content'}`}
                 >
                   {c}
                 </button>

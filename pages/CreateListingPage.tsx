@@ -80,34 +80,34 @@ const AIGenerateForm: React.FC<{ onGenerated: (data: GeneratedListing, file: Fil
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
              <div>
-                <label className="block text-sm font-medium text-brand-text-secondary mb-2">1. Загрузите фото товара</label>
-                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-brand-border border-dashed rounded-md">
+                <label className="block text-sm font-medium text-base-content/70 mb-2">1. Загрузите фото товара</label>
+                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-base-300 border-dashed rounded-md">
                     <div className="space-y-1 text-center">
                         {preview ? (
                             <img src={preview} alt="Preview" className="mx-auto h-48 w-auto rounded-md"/>
                         ) : (
-                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="mx-auto h-12 w-12 text-brand-text-secondary">
+                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="mx-auto h-12 w-12 text-base-content/70">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                             </svg>
                         )}
-                        <div className="flex text-sm text-brand-text-secondary">
-                            <label htmlFor="file-upload" className="relative cursor-pointer bg-brand-surface rounded-md font-medium text-brand-primary hover:text-brand-primary-hover focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-brand-primary focus-within:ring-offset-brand-background px-1">
+                        <div className="flex text-sm text-base-content/70">
+                            <label htmlFor="file-upload" className="relative cursor-pointer bg-base-100 rounded-md font-medium text-primary hover:text-primary-focus focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary focus-within:ring-offset-base-200 px-1">
                                 <span>Выберите файл</span>
                                 <input id="file-upload" name="file-upload" type="file" className="sr-only" accept="image/*" onChange={handleImageChange} />
                             </label>
                             <p className="pl-1">или перетащите сюда</p>
                         </div>
-                        <p className="text-xs text-brand-text-secondary">PNG, JPG, GIF до 10MB</p>
+                        <p className="text-xs text-base-content/70">PNG, JPG, GIF до 10MB</p>
                     </div>
                 </div>
             </div>
 
             <div>
-                <label htmlFor="description" className="block text-sm font-medium text-brand-text-secondary">2. Кратко опишите товар</label>
+                <label htmlFor="description" className="block text-sm font-medium text-base-content/70">2. Кратко опишите товар</label>
                 <textarea
                     id="description"
                     rows={3}
-                    className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-brand-primary focus:border-brand-primary sm:text-sm"
+                    className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
                     placeholder="Например: 'керамическая ваза ручной работы, бежевая'"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
@@ -116,7 +116,7 @@ const AIGenerateForm: React.FC<{ onGenerated: (data: GeneratedListing, file: Fil
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
             <div>
-                <button type="submit" disabled={isLoading || disabled} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-brand-primary hover:bg-brand-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:bg-gray-500">
+                <button type="submit" disabled={isLoading || disabled} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-primary hover:bg-primary-focus focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:bg-gray-500">
                     {isLoading ? <Spinner size="sm" /> : 'Добавить товар в пакет'}
                 </button>
             </div>
@@ -130,7 +130,7 @@ const DynamicField: React.FC<{ field: CategoryField, value: any, onChange: (name
         id: field.name,
         value: value || '',
         onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => onChange(field.name, e.target.value),
-        className: "mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3",
+        className: "mt-1 block w-full bg-base-200 border border-base-300 rounded-md shadow-sm py-2 px-3",
         required: field.required,
     };
 
@@ -206,15 +206,15 @@ const ListingReviewCard: React.FC<{ item: BatchItem; onUpdate: (id: string, data
         }
         
         return (
-             <div className="absolute inset-0 bg-brand-background/80 backdrop-blur-sm flex items-center justify-center text-white font-bold rounded-lg z-10">
+             <div className="absolute inset-0 bg-base-200/80 backdrop-blur-sm flex items-center justify-center text-white font-bold rounded-lg z-10">
                 {content}
             </div>
         );
     }, [item.status, isPublishing]);
 
     return (
-        <details className="border border-brand-border rounded-lg overflow-hidden group">
-            <summary className="p-4 flex items-center justify-between cursor-pointer bg-brand-surface group-hover:bg-brand-border/50">
+        <details className="border border-base-300 rounded-lg overflow-hidden group">
+            <summary className="p-4 flex items-center justify-between cursor-pointer bg-base-100 group-hover:bg-base-300/50">
                 <div className="flex items-center gap-4">
                     <img src={item.previewUrl} alt="Preview" className="w-12 h-12 rounded-md object-cover"/>
                     <span className="font-semibold text-white">{formData.title || "Новый товар"}</span>
@@ -223,44 +223,44 @@ const ListingReviewCard: React.FC<{ item: BatchItem; onUpdate: (id: string, data
                     <button type="button" onClick={(e) => { e.preventDefault(); onRemove(item.id); }} disabled={isPublishing} className="text-red-500 hover:text-red-400 p-1 disabled:opacity-50">
                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
                     </button>
-                    <span className="transform transition-transform group-open:rotate-180 text-brand-text-secondary">▼</span>
+                    <span className="transform transition-transform group-open:rotate-180 text-base-content/70">▼</span>
                 </div>
             </summary>
             <div className="p-4 space-y-4 relative">
                 {statusOverlay}
                  <div>
-                    <label className="block text-sm font-medium text-brand-text-secondary">Заголовок</label>
-                    <input type="text" name="title" value={formData.title} onChange={handleChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3"/>
+                    <label className="block text-sm font-medium text-base-content/70">Заголовок</label>
+                    <input type="text" name="title" value={formData.title} onChange={handleChange} className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md shadow-sm py-2 px-3"/>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-brand-text-secondary">Описание</label>
-                    <textarea name="description" value={formData.description} onChange={handleChange} rows={6} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3"/>
+                    <label className="block text-sm font-medium text-base-content/70">Описание</label>
+                    <textarea name="description" value={formData.description} onChange={handleChange} rows={6} className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md shadow-sm py-2 px-3"/>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-sm font-medium text-brand-text-secondary">Цена (USDT)</label>
-                        <input type="number" name="price" value={formData.price} onChange={handleChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3"/>
+                        <label className="block text-sm font-medium text-base-content/70">Цена (USDT)</label>
+                        <input type="number" name="price" value={formData.price} onChange={handleChange} className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md shadow-sm py-2 px-3"/>
                     </div>
                      <div>
-                        <label className="block text-sm font-medium text-brand-text-secondary">Цена со скидкой (USDT)</label>
-                         <input type="number" name="salePrice" placeholder="Не обязательно" value={formData.salePrice || ''} onChange={handleChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3"/>
+                        <label className="block text-sm font-medium text-base-content/70">Цена со скидкой (USDT)</label>
+                         <input type="number" name="salePrice" placeholder="Не обязательно" value={formData.salePrice || ''} onChange={handleChange} className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md shadow-sm py-2 px-3"/>
                     </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-sm font-medium text-brand-text-secondary">Категория</label>
-                        <select name="category" value={formData.category} onChange={handleChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3">
+                        <label className="block text-sm font-medium text-base-content/70">Категория</label>
+                        <select name="category" value={formData.category} onChange={handleChange} className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md shadow-sm py-2 px-3">
                              {getCategoryNames().map(cat => <option key={cat} value={cat}>{cat}</option>)}
                         </select>
                     </div>
                 </div>
 
                 {categorySchema && categorySchema.fields.length > 0 && (
-                    <div className="border-t border-brand-border/50 pt-6 space-y-4">
+                    <div className="border-t border-base-300/50 pt-6 space-y-4">
                          <h3 className="text-lg font-semibold text-white">Характеристики категории "{formData.category}"</h3>
                          {categorySchema.fields.map(field => (
                              <div key={field.name}>
-                                 <label htmlFor={`${item.id}-${field.name}`} className="block text-sm font-medium text-brand-text-secondary">{field.label}</label>
+                                 <label htmlFor={`${item.id}-${field.name}`} className="block text-sm font-medium text-base-content/70">{field.label}</label>
                                  <DynamicField field={{...field, name: `${item.id}-${field.name}`}} value={formData.dynamicAttributes?.[field.label]} onChange={(name, value) => handleDynamicAttrChange(field.label, value)} />
                              </div>
                          ))}
@@ -342,14 +342,14 @@ const CreateListingPage: React.FC = () => {
 
     return (
         <div className="max-w-4xl mx-auto space-y-8">
-            <div className="bg-brand-surface p-6 sm:p-8 rounded-lg shadow-xl">
+            <div className="bg-base-100 p-6 sm:p-8 rounded-lg shadow-xl">
                 <h1 className="text-3xl font-bold text-center mb-2 text-white">Групповое создание объявлений</h1>
-                <p className="text-center text-brand-text-secondary mb-8">Подготовьте несколько товаров и опубликуйте их все разом.</p>
+                <p className="text-center text-base-content/70 mb-8">Подготовьте несколько товаров и опубликуйте их все разом.</p>
                 <AIGenerateForm onGenerated={handleAddItemToBatch} disabled={isPublishing} />
             </div>
 
             {batchItems.length > 0 && (
-                <div className="bg-brand-surface p-6 sm:p-8 rounded-lg shadow-xl">
+                <div className="bg-base-100 p-6 sm:p-8 rounded-lg shadow-xl">
                     <h2 className="text-2xl font-bold text-white mb-4">Пакет для публикации ({batchItems.length})</h2>
                     <div className="space-y-4 mb-6">
                         {batchItems.map(item => (

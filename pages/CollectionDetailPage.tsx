@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { apiService } from '../services/apiService';
@@ -41,15 +42,15 @@ const CollectionDetailPage: React.FC = () => {
   }
 
   if (!collection) {
-    return <div className="text-center text-2xl text-brand-text-secondary mt-16">Коллекция не найдена</div>;
+    return <div className="text-center text-2xl text-base-content/70 mt-16">Коллекция не найдена</div>;
   }
 
   return (
     <div>
       <div className="mb-8">
-        <Link to="/profile" className="text-sm text-brand-secondary hover:text-brand-primary mb-4 block">&larr; Вернуться в профиль</Link>
+        <Link to="/profile" className="text-sm text-secondary hover:text-primary mb-4 block">&larr; Вернуться в профиль</Link>
         <h1 className="text-4xl font-bold text-white mb-2">{collection.name}</h1>
-        <p className="text-brand-text-secondary">{products.length} товаров</p>
+        <p className="text-base-content/70">{products.length} товаров</p>
       </div>
 
       {products.length > 0 ? (
@@ -59,9 +60,9 @@ const CollectionDetailPage: React.FC = () => {
           ))}
         </div>
       ) : (
-        <div className="text-center py-16 bg-brand-surface rounded-lg">
+        <div className="text-center py-16 bg-base-100 rounded-lg">
           <h2 className="text-2xl font-bold text-white mb-2">В этой коллекции пока пусто</h2>
-          <p className="text-brand-text-secondary">Нажмите кнопку "Сохранить" на товарах, чтобы добавить их сюда.</p>
+          <p className="text-base-content/70">Нажмите кнопку "Сохранить" на товарах, чтобы добавить их сюда.</p>
         </div>
       )}
     </div>

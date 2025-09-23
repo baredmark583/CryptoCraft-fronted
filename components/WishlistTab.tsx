@@ -36,9 +36,9 @@ const WishlistTab: React.FC = () => {
 
     if (products.length === 0) {
         return (
-            <div className="text-center py-16 bg-brand-surface rounded-lg">
-                <p className="text-brand-text-secondary">Ваш список избранного пуст.</p>
-                <p className="text-brand-text-secondary text-sm mt-2">Нажимайте на сердечко на товарах, чтобы добавить их сюда.</p>
+            <div className="text-center py-16 bg-base-100 rounded-lg">
+                <p className="text-base-content/70">Ваш список избранного пуст.</p>
+                <p className="text-base-content/70 text-sm mt-2">Нажимайте на сердечко на товарах, чтобы добавить их сюда.</p>
             </div>
         );
     }

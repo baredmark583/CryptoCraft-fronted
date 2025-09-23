@@ -20,7 +20,7 @@ const DynamicField: React.FC<{ field: CategoryField, value: any, onChange: (name
         id: field.name,
         value: value || '',
         onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => onChange(field.name, e.target.value),
-        className: "mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3",
+        className: "mt-1 block w-full bg-base-200 border border-base-300 rounded-md shadow-sm py-2 px-3",
         required: field.required,
     };
 
@@ -149,14 +149,14 @@ const VariantEditor: React.FC<{
                 <h4 className="font-semibold text-white mb-2">1. Определите атрибуты</h4>
                 <div className="space-y-4">
                     {attributes.map(attr => (
-                        <div key={attr.name} className="bg-brand-background/50 p-3 rounded-md">
+                        <div key={attr.name} className="bg-base-200/50 p-3 rounded-md">
                             <div className="flex justify-between items-center mb-2">
-                                <h5 className="font-medium text-brand-text-primary">{attr.name}</h5>
+                                <h5 className="font-medium text-base-content">{attr.name}</h5>
                                 <button type="button" onClick={() => removeAttribute(attr.name)} className="text-red-500 hover:text-red-400 text-xs font-bold">Удалить</button>
                             </div>
                             <div className="flex flex-wrap gap-2 mb-2">
                                 {attr.options.map(opt => (
-                                    <span key={opt} className="bg-brand-secondary/80 text-white text-sm px-2 py-1 rounded-md flex items-center gap-1">
+                                    <span key={opt} className="bg-secondary/80 text-white text-sm px-2 py-1 rounded-md flex items-center gap-1">
                                         {opt}
                                         <button type="button" onClick={() => removeOption(attr.name, opt)} className="font-bold text-white/70 hover:text-white">&times;</button>
                                     </span>
@@ -169,9 +169,9 @@ const VariantEditor: React.FC<{
                                     value={newOptionInputs[attr.name] || ''}
                                     onChange={(e) => setNewOptionInputs(prev => ({...prev, [attr.name]: e.target.value}))}
                                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addOption(attr.name); } }}
-                                    className="flex-grow bg-brand-surface border border-brand-border rounded-md p-1.5 text-sm"
+                                    className="flex-grow bg-base-100 border border-base-300 rounded-md p-1.5 text-sm"
                                 />
-                                <button type="button" onClick={() => addOption(attr.name)} className="bg-brand-secondary text-white px-3 text-sm rounded-md">+</button>
+                                <button type="button" onClick={() => addOption(attr.name)} className="bg-secondary text-white px-3 text-sm rounded-md">+</button>
                             </div>
                         </div>
                     ))}
@@ -183,9 +183,9 @@ const VariantEditor: React.FC<{
                         value={newAttributeName}
                         onChange={(e) => setNewAttributeName(e.target.value)}
                          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAttribute(); } }}
-                        className="flex-grow bg-brand-surface border border-brand-border rounded-md p-2"
+                        className="flex-grow bg-base-100 border border-base-300 rounded-md p-2"
                     />
-                    <button type="button" onClick={addAttribute} className="bg-brand-primary hover:bg-brand-primary-hover text-white font-bold py-2 px-4 rounded-lg">Добавить атрибут</button>
+                    <button type="button" onClick={addAttribute} className="bg-primary hover:bg-primary-focus text-white font-bold py-2 px-4 rounded-lg">Добавить атрибут</button>
                 </div>
             </div>
 
@@ -194,7 +194,7 @@ const VariantEditor: React.FC<{
                     <h4 className="font-semibold text-white mb-2">2. Настройте варианты</h4>
                     <div className="overflow-x-auto scrollbar-hide">
                         <table className="w-full text-sm text-left">
-                            <thead className="bg-brand-background text-xs text-brand-text-secondary uppercase">
+                            <thead className="bg-base-200 text-xs text-base-content/70 uppercase">
                                 <tr>
                                     <th scope="col" className="px-4 py-3">Вариант</th>
                                     <th scope="col" className="px-4 py-3">Цена (USDT)</th>
@@ -204,16 +204,16 @@ const VariantEditor: React.FC<{
                             </thead>
                             <tbody>
                                 {variants.map(variant => (
-                                    <tr key={variant.id} className="border-b border-brand-border">
+                                    <tr key={variant.id} className="border-b border-base-300">
                                         <td className="px-4 py-3 font-medium text-white whitespace-nowrap">{Object.values(variant.attributes).join(' / ')}</td>
                                         <td className="px-4 py-3">
-                                            <input type="number" value={variant.price} onChange={e => handleVariantChange(variant.id, 'price', e.target.value)} className="w-24 bg-brand-surface border border-brand-border rounded-md p-1.5" />
+                                            <input type="number" value={variant.price} onChange={e => handleVariantChange(variant.id, 'price', e.target.value)} className="w-24 bg-base-100 border border-base-300 rounded-md p-1.5" />
                                         </td>
                                         <td className="px-4 py-3">
-                                            <input type="number" value={variant.stock} onChange={e => handleVariantChange(variant.id, 'stock', e.target.value)} className="w-20 bg-brand-surface border border-brand-border rounded-md p-1.5" />
+                                            <input type="number" value={variant.stock} onChange={e => handleVariantChange(variant.id, 'stock', e.target.value)} className="w-20 bg-base-100 border border-base-300 rounded-md p-1.5" />
                                         </td>
                                         <td className="px-4 py-3">
-                                            <input type="text" value={variant.sku} onChange={e => handleVariantChange(variant.id, 'sku', e.target.value)} className="w-28 bg-brand-surface border border-brand-border rounded-md p-1.5" />
+                                            <input type="text" value={variant.sku} onChange={e => handleVariantChange(variant.id, 'sku', e.target.value)} className="w-28 bg-base-100 border border-base-300 rounded-md p-1.5" />
                                         </td>
                                     </tr>
                                 ))}
@@ -400,12 +400,12 @@ const EditListingPage: React.FC = () => {
     }
 
     return (
-        <div className="max-w-4xl mx-auto bg-brand-surface p-6 sm:p-8 rounded-lg shadow-xl">
+        <div className="max-w-4xl mx-auto bg-base-100 p-6 sm:p-8 rounded-lg shadow-xl">
             <h1 className="text-3xl font-bold text-center mb-2 text-white">Редактировать объявление</h1>
             <div className="space-y-6 mt-8">
                 {/* Image Management */}
                 <div>
-                    <label className="block text-sm font-medium text-brand-text-secondary mb-2">Изображения</label>
+                    <label className="block text-sm font-medium text-base-content/70 mb-2">Изображения</label>
                     <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
                         {imageUrls.map((url, index) => (
                             <div key={index} className="relative group">
@@ -419,35 +419,35 @@ const EditListingPage: React.FC = () => {
                                 <button onClick={() => handleRemoveNewImage(index)} className="absolute top-1 right-1 bg-red-600/80 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">&times;</button>
                             </div>
                         ))}
-                         <label htmlFor="image-upload" className="cursor-pointer w-full aspect-square bg-brand-background border-2 border-dashed border-brand-border rounded-lg flex flex-col items-center justify-center text-brand-text-secondary hover:border-brand-primary hover:text-brand-primary transition-colors">
+                         <label htmlFor="image-upload" className="cursor-pointer w-full aspect-square bg-base-200 border-2 border-dashed border-base-300 rounded-lg flex flex-col items-center justify-center text-base-content/70 hover:border-primary hover:text-primary transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                             <span className="text-xs mt-1">Добавить</span>
                             <input id="image-upload" type="file" multiple onChange={handleImageFileChange} className="hidden" accept="image/*" />
                         </label>
                     </div>
-                     <Link to={`/studio/${product.id}`} className="mt-4 inline-flex items-center gap-2 text-sm text-brand-secondary hover:text-brand-primary">
+                     <Link to={`/studio/${product.id}`} className="mt-4 inline-flex items-center gap-2 text-sm text-secondary hover:text-primary">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
                         Улучшить фото в AI Студии
                     </Link>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-brand-text-secondary">Заголовок</label>
-                    <input type="text" name="title" value={formData.title} onChange={handleChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3"/>
+                    <label className="block text-sm font-medium text-base-content/70">Заголовок</label>
+                    <input type="text" name="title" value={formData.title} onChange={handleChange} className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md shadow-sm py-2 px-3"/>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-brand-text-secondary">Описание</label>
-                    <textarea name="description" value={formData.description} onChange={handleChange} rows={6} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3"/>
+                    <label className="block text-sm font-medium text-base-content/70">Описание</label>
+                    <textarea name="description" value={formData.description} onChange={handleChange} rows={6} className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md shadow-sm py-2 px-3"/>
                 </div>
 
-                <div className="border-t border-b border-brand-border/50 py-6 space-y-4">
-                    <label className="block text-sm font-medium text-brand-text-secondary mb-2">Тип продажи</label>
-                    <div className="flex gap-2 p-1 bg-brand-background rounded-lg">
-                        <label className={`flex-1 text-center cursor-pointer p-2 rounded-md transition-colors ${formData.saleType === 'FIXED_PRICE' ? 'bg-brand-primary text-white' : 'hover:bg-brand-surface'}`}>
+                <div className="border-t border-b border-base-300/50 py-6 space-y-4">
+                    <label className="block text-sm font-medium text-base-content/70 mb-2">Тип продажи</label>
+                    <div className="flex gap-2 p-1 bg-base-200 rounded-lg">
+                        <label className={`flex-1 text-center cursor-pointer p-2 rounded-md transition-colors ${formData.saleType === 'FIXED_PRICE' ? 'bg-primary text-white' : 'hover:bg-base-100'}`}>
                             <input type="radio" name="saleType" value="FIXED_PRICE" checked={formData.saleType === 'FIXED_PRICE'} onChange={handleChange} className="hidden"/>
                             <span>Фиксированная цена</span>
                         </label>
-                        <label className={`flex-1 text-center cursor-pointer p-2 rounded-md transition-colors ${formData.saleType === 'AUCTION' ? 'bg-brand-primary text-white' : 'hover:bg-brand-surface'}`}>
+                        <label className={`flex-1 text-center cursor-pointer p-2 rounded-md transition-colors ${formData.saleType === 'AUCTION' ? 'bg-primary text-white' : 'hover:bg-base-100'}`}>
                             <input type="radio" name="saleType" value="AUCTION" checked={formData.saleType === 'AUCTION'} onChange={handleChange} className="hidden"/>
                             <span>Аукцион</span>
                         </label>
@@ -456,13 +456,13 @@ const EditListingPage: React.FC = () => {
                     {formData.saleType === 'AUCTION' ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-fade-in-down">
                             <div>
-                                <label className="block text-sm font-medium text-brand-text-secondary">Стартовая цена (USDT)</label>
-                                <input type="number" name="startingBid" value={formData.startingBid || ''} onChange={handleChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3"/>
+                                <label className="block text-sm font-medium text-base-content/70">Стартовая цена (USDT)</label>
+                                <input type="number" name="startingBid" value={formData.startingBid || ''} onChange={handleChange} className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md shadow-sm py-2 px-3"/>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-brand-text-secondary">Длительность аукциона</label>
-                                <p className="text-xs text-brand-text-secondary">Изменение сбросит таймер</p>
-                                <select name="auctionDurationDays" value={formData.auctionDurationDays || ''} onChange={handleChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3">
+                                <label className="block text-sm font-medium text-base-content/70">Длительность аукциона</label>
+                                <p className="text-xs text-base-content/70">Изменение сбросит таймер</p>
+                                <select name="auctionDurationDays" value={formData.auctionDurationDays || ''} onChange={handleChange} className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md shadow-sm py-2 px-3">
                                     <option value="" disabled>Выберите длительность</option>
                                     <option value={1}>1 день</option>
                                     <option value={3}>3 дня</option>
@@ -473,43 +473,43 @@ const EditListingPage: React.FC = () => {
                     ) : (
                          <div className={`grid grid-cols-1 sm:grid-cols-2 gap-6 animate-fade-in-down ${formData.hasVariants ? 'opacity-50' : ''}`}>
                             <div>
-                                <label className="block text-sm font-medium text-brand-text-secondary">Цена (USDT)</label>
-                                <input type="number" name="price" value={formData.price || ''} onChange={handleChange} disabled={formData.hasVariants} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3 disabled:cursor-not-allowed"/>
+                                <label className="block text-sm font-medium text-base-content/70">Цена (USDT)</label>
+                                <input type="number" name="price" value={formData.price || ''} onChange={handleChange} disabled={formData.hasVariants} className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md shadow-sm py-2 px-3 disabled:cursor-not-allowed"/>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-brand-text-secondary">Цена со скидкой (USDT)</label>
-                                <input type="number" name="salePrice" placeholder="Не обязательно" value={formData.salePrice || ''} onChange={handleChange} disabled={formData.hasVariants} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3 disabled:cursor-not-allowed"/>
+                                <label className="block text-sm font-medium text-base-content/70">Цена со скидкой (USDT)</label>
+                                <input type="number" name="salePrice" placeholder="Не обязательно" value={formData.salePrice || ''} onChange={handleChange} disabled={formData.hasVariants} className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md shadow-sm py-2 px-3 disabled:cursor-not-allowed"/>
                             </div>
                         </div>
                     )}
                 </div>
 
-                 <div className="bg-brand-background/50 p-4 rounded-lg">
-                    <label htmlFor="video-upload" className="block text-sm font-medium text-brand-text-secondary mb-2">Видеообзор (необязательно)</label>
+                 <div className="bg-base-200/50 p-4 rounded-lg">
+                    <label htmlFor="video-upload" className="block text-sm font-medium text-base-content/70 mb-2">Видеообзор (необязательно)</label>
                     {formData.videoUrl && !videoFile && (
                         <div className="mb-2 text-sm">
-                            <span className="text-brand-text-secondary">Текущее видео: </span>
-                            <a href={formData.videoUrl} target="_blank" rel="noopener noreferrer" className="text-brand-primary hover:underline truncate">{formData.videoUrl}</a>
+                            <span className="text-base-content/70">Текущее видео: </span>
+                            <a href={formData.videoUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate">{formData.videoUrl}</a>
                         </div>
                     )}
                     <input 
                         id="video-upload" 
                         type="file" 
                         onChange={(e) => setVideoFile(e.target.files ? e.target.files[0] : null)}
-                        className="block w-full text-sm text-brand-text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-primary/20 file:text-brand-primary hover:file:bg-brand-primary/30"
+                        className="block w-full text-sm text-base-content/70 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/20 file:text-primary hover:file:bg-primary/30"
                         accept="video/*"
                     />
-                    <p className="text-xs text-brand-text-secondary mt-1">Загрузите новое видео, чтобы заменить текущее.</p>
+                    <p className="text-xs text-base-content/70 mt-1">Загрузите новое видео, чтобы заменить текущее.</p>
                 </div>
 
                 {/* Variant Section */}
-                <div className="border-t border-brand-border/50 pt-6 space-y-4">
+                <div className="border-t border-base-300/50 pt-6 space-y-4">
                     <label className="flex items-center space-x-3 cursor-pointer">
-                        <input type="checkbox" name="hasVariants" checked={!!formData.hasVariants} onChange={handleChange} className="h-5 w-5 rounded bg-brand-background border-brand-border text-brand-primary focus:ring-brand-primary"/>
+                        <input type="checkbox" name="hasVariants" checked={!!formData.hasVariants} onChange={handleChange} className="h-5 w-5 rounded bg-base-200 border-base-300 text-primary focus:ring-primary"/>
                         <span className="font-semibold text-lg text-white">У товара есть несколько вариантов (размер, цвет и т.д.)</span>
                     </label>
                     {formData.hasVariants && (
-                        <div className="p-4 bg-brand-background rounded-lg animate-fade-in-down">
+                        <div className="p-4 bg-base-200 rounded-lg animate-fade-in-down">
                             <VariantEditor
                                 attributes={formData.variantAttributes || []}
                                 variants={formData.variants || []}
@@ -521,20 +521,20 @@ const EditListingPage: React.FC = () => {
                 </div>
                 
                 {/* B2B Section */}
-                <div className="border-t border-brand-border/50 pt-6 space-y-4">
+                <div className="border-t border-base-300/50 pt-6 space-y-4">
                     <label className="flex items-center space-x-3 cursor-pointer">
-                        <input type="checkbox" name="isB2BEnabled" checked={!!formData.isB2BEnabled} onChange={handleChange} className="h-5 w-5 rounded bg-brand-background border border-brand-border text-brand-primary focus:ring-brand-primary"/>
+                        <input type="checkbox" name="isB2BEnabled" checked={!!formData.isB2BEnabled} onChange={handleChange} className="h-5 w-5 rounded bg-base-200 border-base-300 text-primary focus:ring-primary"/>
                         <span className="font-semibold text-lg text-white">Включить оптовые продажи (B2B)</span>
                     </label>
                     {formData.isB2BEnabled && (
-                        <div className="p-4 bg-brand-background rounded-lg animate-fade-in-down grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div className="p-4 bg-base-200 rounded-lg animate-fade-in-down grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-sm font-medium text-brand-text-secondary">Минимальное кол-во для опта</label>
-                                <input type="number" name="b2bMinQuantity" value={formData.b2bMinQuantity || ''} onChange={handleChange} placeholder="Например: 10" className="mt-1 block w-full bg-brand-surface border border-brand-border rounded-md shadow-sm py-2 px-3"/>
+                                <label className="block text-sm font-medium text-base-content/70">Минимальное кол-во для опта</label>
+                                <input type="number" name="b2bMinQuantity" value={formData.b2bMinQuantity || ''} onChange={handleChange} placeholder="Например: 10" className="mt-1 block w-full bg-base-100 border border-base-300 rounded-md shadow-sm py-2 px-3"/>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-brand-text-secondary">Оптовая цена за шт. (USDT)</label>
-                                <input type="number" name="b2bPrice" value={formData.b2bPrice || ''} onChange={handleChange} placeholder="Например: 25.00" className="mt-1 block w-full bg-brand-surface border border-brand-border rounded-md shadow-sm py-2 px-3"/>
+                                <label className="block text-sm font-medium text-base-content/70">Оптовая цена за шт. (USDT)</label>
+                                <input type="number" name="b2bPrice" value={formData.b2bPrice || ''} onChange={handleChange} placeholder="Например: 25.00" className="mt-1 block w-full bg-base-100 border border-base-300 rounded-md shadow-sm py-2 px-3"/>
                             </div>
                         </div>
                     )}
@@ -542,36 +542,36 @@ const EditListingPage: React.FC = () => {
 
 
                  <div>
-                    <label className="block text-sm font-medium text-brand-text-secondary">Категория</label>
-                    <select name="category" value={formData.category} onChange={handleChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3">
+                    <label className="block text-sm font-medium text-base-content/70">Категория</label>
+                    <select name="category" value={formData.category} onChange={handleChange} className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md shadow-sm py-2 px-3">
                         {getCategoryNames().map(cat => <option key={cat} value={cat}>{cat}</option>)}
                     </select>
                 </div>
 
                 {categorySchema?.name === 'Электроника' && (
-                    <div className="bg-brand-background/50 p-4 rounded-lg">
+                    <div className="bg-base-200/50 p-4 rounded-lg">
                         <label className="flex items-center space-x-3 cursor-pointer">
                             <input 
                                 type="checkbox"
                                 name="isAuthenticationAvailable"
                                 checked={!!formData.isAuthenticationAvailable}
                                 onChange={handleChange}
-                                className="h-4 w-4 rounded bg-brand-background border-brand-border text-brand-primary focus:ring-brand-primary"
+                                className="h-4 w-4 rounded bg-base-200 border-base-300 text-primary focus:ring-primary"
                             />
                             <span className="font-medium text-white">Предложить проверку подлинности для этого товара</span>
                         </label>
-                        <p className="text-xs text-brand-text-secondary mt-2 pl-7">
+                        <p className="text-xs text-base-content/70 mt-2 pl-7">
                             Позволяет покупателям быть уверенными в вашем товаре. Услуга платная. Вы сможете запросить ее после сохранения.
                         </p>
                     </div>
                 )}
 
                 {categorySchema && categorySchema.fields.length > 0 && (
-                <div className="border-t border-brand-border/50 pt-6 space-y-4">
+                <div className="border-t border-base-300/50 pt-6 space-y-4">
                      <h3 className="text-lg font-semibold text-white">Характеристики категории "{formData.category}"</h3>
                      {categorySchema.fields.map(field => (
                          <div key={field.name}>
-                             <label htmlFor={field.name} className="block text-sm font-medium text-brand-text-secondary">{field.label}</label>
+                             <label htmlFor={field.name} className="block text-sm font-medium text-base-content/70">{field.label}</label>
                              <DynamicField field={field} value={formData.dynamicAttributes?.[field.label]} onChange={(name, value) => handleDynamicAttrChange(field.label, value)} />
                          </div>
                      ))}
@@ -580,47 +580,47 @@ const EditListingPage: React.FC = () => {
 
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
-                        <label className="block text-sm font-medium text-brand-text-secondary">Закупочная стоимость (USDT)</label>
-                        <input type="number" name="purchaseCost" value={formData.purchaseCost || ''} onChange={handleChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3" placeholder="Для вашей аналитики"/>
+                        <label className="block text-sm font-medium text-base-content/70">Закупочная стоимость (USDT)</label>
+                        <input type="number" name="purchaseCost" value={formData.purchaseCost || ''} onChange={handleChange} className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md shadow-sm py-2 px-3" placeholder="Для вашей аналитики"/>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-brand-text-secondary">Вес в упаковке (г)</label>
-                        <input type="number" name="weight" value={formData.weight || ''} onChange={handleChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md shadow-sm py-2 px-3" placeholder="Например: 500"/>
+                        <label className="block text-sm font-medium text-base-content/70">Вес в упаковке (г)</label>
+                        <input type="number" name="weight" value={formData.weight || ''} onChange={handleChange} className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md shadow-sm py-2 px-3" placeholder="Например: 500"/>
                     </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-brand-text-secondary mb-2">Тип товара</label>
+                  <label className="block text-sm font-medium text-base-content/70 mb-2">Тип товара</label>
                   <div className="flex gap-4">
                       <label className="flex items-center space-x-2 cursor-pointer">
-                          <input type="radio" name="productType" value="PHYSICAL" checked={formData.productType === 'PHYSICAL'} onChange={handleChange} className="h-4 w-4 text-brand-primary border-brand-border focus:ring-brand-primary"/>
+                          <input type="radio" name="productType" value="PHYSICAL" checked={formData.productType === 'PHYSICAL'} onChange={handleChange} className="h-4 w-4 text-primary border-base-300 focus:ring-primary"/>
                           <span>Физический</span>
                       </label>
                        <label className="flex items-center space-x-2 cursor-pointer">
-                          <input type="radio" name="productType" value="DIGITAL" checked={formData.productType === 'DIGITAL'} onChange={handleChange} className="h-4 w-4 text-brand-primary border-brand-border focus:ring-brand-primary"/>
+                          <input type="radio" name="productType" value="DIGITAL" checked={formData.productType === 'DIGITAL'} onChange={handleChange} className="h-4 w-4 text-primary border-base-300 focus:ring-primary"/>
                           <span>Цифровой</span>
                       </label>
                   </div>
                 </div>
 
                 {formData.productType === 'DIGITAL' && (
-                  <div className="bg-brand-background/50 p-4 rounded-lg">
-                      <p className="text-sm text-brand-text-secondary">Текущий файл: <span className="font-mono text-brand-primary">{product.digitalFileUrl || 'Не загружен'}</span></p>
-                      <label htmlFor="digital-file-upload" className="block text-sm font-medium text-brand-text-secondary mt-2 mb-2">Загрузить новый файл</label>
-                      <input id="digital-file-upload" type="file" className="block w-full text-sm text-brand-text-secondary file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-primary/20 file:text-brand-primary hover:file:bg-brand-primary/30" />
+                  <div className="bg-base-200/50 p-4 rounded-lg">
+                      <p className="text-sm text-base-content/70">Текущий файл: <span className="font-mono text-primary">{product.digitalFileUrl || 'Не загружен'}</span></p>
+                      <label htmlFor="digital-file-upload" className="block text-sm font-medium text-base-content/70 mt-2 mb-2">Загрузить новый файл</label>
+                      <input id="digital-file-upload" type="file" className="block w-full text-sm text-base-content/70 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/20 file:text-primary hover:file:bg-primary/30" />
                   </div>
                 )}
             
                 {formData.productType === 'PHYSICAL' && (
-                    <div className="space-y-4 bg-brand-background/50 p-4 rounded-lg">
+                    <div className="space-y-4 bg-base-200/50 p-4 rounded-lg">
                       <label className="flex items-center space-x-3 cursor-pointer">
-                          <input type="checkbox" name="giftWrapAvailable" checked={!!formData.giftWrapAvailable} onChange={handleChange} className="h-4 w-4 rounded bg-brand-background border-brand-border text-brand-primary focus:ring-brand-primary"/>
+                          <input type="checkbox" name="giftWrapAvailable" checked={!!formData.giftWrapAvailable} onChange={handleChange} className="h-4 w-4 rounded bg-base-200 border-base-300 text-primary focus:ring-primary"/>
                           <span className="font-medium text-white">Доступна подарочная упаковка</span>
                       </label>
                       {formData.giftWrapAvailable && (
                           <div className="pl-7">
-                              <label className="block text-sm font-medium text-brand-text-secondary">Стоимость упаковки (USDT)</label>
-                              <input type="number" name="giftWrapPrice" value={formData.giftWrapPrice || ''} onChange={handleChange} placeholder="Например: 5" className="mt-1 block w-full bg-brand-surface border border-brand-border rounded-md shadow-sm py-2 px-3"/>
+                              <label className="block text-sm font-medium text-base-content/70">Стоимость упаковки (USDT)</label>
+                              <input type="number" name="giftWrapPrice" value={formData.giftWrapPrice || ''} onChange={handleChange} placeholder="Например: 5" className="mt-1 block w-full bg-base-100 border border-base-300 rounded-md shadow-sm py-2 px-3"/>
                           </div>
                       )}
                   </div>

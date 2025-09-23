@@ -9,9 +9,8 @@ const Spinner: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }) => {
   };
 
   return (
-    <div className={`animate-spin rounded-full border-4 border-brand-surface border-t-brand-primary ${sizeClasses[size]}`}></div>
+    <div className={`animate-spin rounded-full border-4 border-base-100 border-t-primary ${sizeClasses[size]}`}></div>
   );
 };
 
 export default Spinner;
-   

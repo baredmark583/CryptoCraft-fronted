@@ -82,7 +82,7 @@ const PurchasesTab: React.FC = () => {
     };
 
     if (isLoading) return <div className="flex justify-center py-8"><Spinner /></div>;
-    if (purchases.length === 0) return <div className="text-center py-16 bg-brand-surface rounded-lg"><p className="text-brand-text-secondary">У вас пока нет покупок.</p></div>;
+    if (purchases.length === 0) return <div className="text-center py-16 bg-base-100 rounded-lg"><p className="text-base-content/70">У вас пока нет покупок.</p></div>;
 
     return (
         <>
@@ -92,27 +92,27 @@ const PurchasesTab: React.FC = () => {
                     const canViewNft = order.authenticationRequested && product.nftTokenId && ['SHIPPED', 'DELIVERED', 'COMPLETED', 'NFT_ISSUED'].includes(order.status);
 
                     return (
-                        <div key={order.id} className="bg-brand-surface p-4 rounded-lg">
+                        <div key={order.id} className="bg-base-100 p-4 rounded-lg">
                             <div className="flex justify-between items-start mb-2">
                                 <div>
-                                    <p className="text-sm text-brand-text-secondary">Заказ #{order.id} от {new Date(order.orderDate).toLocaleDateString()}</p>
-                                    <p className="text-sm">Продавец: <Link to={`/profile/${order.seller.id}`} className="text-brand-primary hover:underline">{order.seller.name}</Link></p>
+                                    <p className="text-sm text-base-content/70">Заказ #{order.id} от {new Date(order.orderDate).toLocaleDateString()}</p>
+                                    <p className="text-sm">Продавец: <Link to={`/profile/${order.seller.id}`} className="text-primary hover:underline">{order.seller.name}</Link></p>
                                 </div>
                                 <span className="text-sm font-semibold">{order.status}</span>
                             </div>
                             {order.items.map(item => (
-                                 <div key={item.product.id} className="flex items-center gap-4 py-2 border-b border-brand-border last:border-b-0">
+                                 <div key={item.product.id} className="flex items-center gap-4 py-2 border-b border-base-300 last:border-b-0">
                                      <img src={item.product.imageUrls[0]} alt={item.product.title} className="w-16 h-16 object-cover rounded-md"/>
                                      <div className="flex-grow">
                                         <p className="font-semibold text-white">{item.product.title}</p>
-                                        <p className="text-sm text-brand-text-secondary">{item.quantity} x {item.price.toFixed(2)} USDT</p>
+                                        <p className="text-sm text-base-content/70">{item.quantity} x {item.price.toFixed(2)} USDT</p>
                                      </div>
                                  </div>
                             ))}
                             <div className="flex flex-wrap gap-2 mt-3 justify-end">
                                 {canViewNft && <button onClick={() => setViewingNftForProduct(product)} className="text-sm bg-purple-600 hover:bg-purple-700 text-white font-semibold py-1 px-3 rounded-md">Посмотреть NFT</button>}
                                 {order.status === 'SHIPPED' && <button onClick={() => handleConfirmDelivery(order.id)} className="text-sm bg-green-600 hover:bg-green-700 text-white font-semibold py-1 px-3 rounded-md">Подтвердить получение</button>}
-                                {order.status === 'DELIVERED' && <button onClick={() => setReviewingOrder(order)} className="text-sm bg-brand-secondary hover:bg-brand-primary-hover text-white font-semibold py-1 px-3 rounded-md">Оставить отзыв</button>}
+                                {order.status === 'DELIVERED' && <button onClick={() => setReviewingOrder(order)} className="text-sm bg-secondary hover:bg-primary-focus text-white font-semibold py-1 px-3 rounded-md">Оставить отзыв</button>}
                                 {(order.status === 'DELIVERED' || order.status === 'SHIPPED') && <button onClick={() => setDisputingOrder(order)} className="text-sm bg-red-600 hover:bg-red-700 text-white font-semibold py-1 px-3 rounded-md">Открыть спор</button>}
                                 {order.status === 'DISPUTED' && <Link to={`/dispute/${order.id}`} className="text-sm bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-1 px-3 rounded-md">Перейти к спору</Link>}
                                  {order.trackingNumber && (
@@ -122,13 +122,13 @@ const PurchasesTab: React.FC = () => {
                                 )}
                             </div>
                             {expandedTrackingOrderId === order.id && (
-                                <div className="mt-4 p-4 bg-brand-background rounded-lg">
+                                <div className="mt-4 p-4 bg-base-200 rounded-lg">
                                     {isLoadingHistory ? <div className="flex justify-center"><Spinner /></div> : (
                                         trackingHistory.length > 0 ? (
-                                            <ol className="relative border-l-2 border-brand-border ml-2">
+                                            <ol className="relative border-l-2 border-base-300 ml-2">
                                                 {trackingHistory.map((event, index) => (
                                                      <li key={index} className="mb-6 ml-6">
-                                                        <span className="absolute flex items-center justify-center w-6 h-6 bg-brand-secondary rounded-full -left-3 ring-4 ring-brand-background">
+                                                        <span className="absolute flex items-center justify-center w-6 h-6 bg-secondary rounded-full -left-3 ring-4 ring-base-200">
                                                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-white">
                                                                 <path d="M3.5 3.75a.75.75 0 00-1.5 0v1.5c0 .414.336.75.75.75h1.5a.75.75 0 000-1.5H3.5v-1.5z" />
                                                                 <path d="M6.25 7.5a.75.75 0 000 1.5h7.5a.75.75 0 000-1.5h-7.5z" />
@@ -137,17 +137,17 @@ const PurchasesTab: React.FC = () => {
                                                               </svg>
                                                         </span>
                                                         <h3 className="font-semibold text-white">{event.status}</h3>
-                                                        <p className="text-sm text-brand-text-secondary">{event.location}</p>
-                                                        <time className="block text-xs font-normal text-brand-text-secondary">{new Date(event.timestamp).toLocaleString()}</time>
+                                                        <p className="text-sm text-base-content/70">{event.location}</p>
+                                                        <time className="block text-xs font-normal text-base-content/70">{new Date(event.timestamp).toLocaleString()}</time>
                                                     </li>
                                                 ))}
                                             </ol>
-                                        ) : <p className="text-brand-text-secondary">Нет данных для отслеживания.</p>
+                                        ) : <p className="text-base-content/70">Нет данных для отслеживания.</p>
                                     )}
                                 </div>
                             )}
                             {order.smartContractAddress && (
-                                <div className="mt-3 pt-3 border-t border-brand-border/50 flex items-center justify-between">
+                                <div className="mt-3 pt-3 border-t border-base-300/50 flex items-center justify-between">
                                     <div className="flex items-center gap-2 text-sm text-sky-400">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.286zm0 13.036h.008v.008h-.008v-.008z" />
@@ -156,7 +156,7 @@ const PurchasesTab: React.FC = () => {
                                     </div>
                                     <button
                                         onClick={() => alert(`Адрес контракта: ${order.smartContractAddress}\nХэш транзакции: ${order.transactionHash}`)}
-                                        className="text-xs bg-brand-surface hover:bg-brand-border border border-brand-border text-white font-semibold py-1 px-2 rounded-md"
+                                        className="text-xs bg-base-100 hover:bg-base-300 border border-base-300 text-white font-semibold py-1 px-2 rounded-md"
                                     >
                                         Посмотреть транзакцию
                                     </button>
@@ -199,26 +199,26 @@ const SalesTab: React.FC = () => {
     };
 
     if (isLoading) return <div className="flex justify-center py-8"><Spinner /></div>;
-    if (sales.length === 0) return <div className="text-center py-16 bg-brand-surface rounded-lg"><p className="text-brand-text-secondary">У вас пока нет продаж.</p></div>;
+    if (sales.length === 0) return <div className="text-center py-16 bg-base-100 rounded-lg"><p className="text-base-content/70">У вас пока нет продаж.</p></div>;
 
     return (
         <>
             <div className="space-y-4">
                 {sales.map(order => (
-                     <div key={order.id} className="bg-brand-surface p-4 rounded-lg">
+                     <div key={order.id} className="bg-base-100 p-4 rounded-lg">
                         <div className="flex justify-between items-start mb-2">
                              <div>
-                                <p className="text-sm text-brand-text-secondary">Заказ #{order.id} от {new Date(order.orderDate).toLocaleDateString()}</p>
+                                <p className="text-sm text-base-content/70">Заказ #{order.id} от {new Date(order.orderDate).toLocaleDateString()}</p>
                                 <p className="text-sm">Покупатель: <span className="text-white">{order.buyer.name}</span></p>
                             </div>
                             <span className="text-sm font-semibold">{order.status}</span>
                         </div>
                         {order.items.map(item => (
-                            <div key={item.product.id} className="flex items-center gap-4 py-2 border-b border-brand-border last:border-b-0">
+                            <div key={item.product.id} className="flex items-center gap-4 py-2 border-b border-base-300 last:border-b-0">
                                 <img src={item.product.imageUrls[0]} alt={item.product.title} className="w-16 h-16 object-cover rounded-md"/>
                                  <div className="flex-grow">
                                     <p className="font-semibold text-white">{item.product.title}</p>
-                                    <p className="text-sm text-brand-text-secondary">{item.quantity} x {item.price.toFixed(2)} USDT</p>
+                                    <p className="text-sm text-base-content/70">{item.quantity} x {item.price.toFixed(2)} USDT</p>
                                  </div>
                                  <p className="font-bold text-lg text-white">{order.total.toFixed(2)} USDT</p>
                              </div>
@@ -228,7 +228,7 @@ const SalesTab: React.FC = () => {
                                 <button 
                                     onClick={() => handleGenerateWaybill(order.id)}
                                     disabled={generatingWaybill === order.id}
-                                    className="text-sm bg-brand-primary hover:bg-brand-primary-hover text-white font-semibold py-1 px-3 rounded-md flex items-center justify-center w-40 disabled:bg-gray-500"
+                                    className="text-sm bg-primary hover:bg-primary-focus text-white font-semibold py-1 px-3 rounded-md flex items-center justify-center w-40 disabled:bg-gray-500"
                                 >
                                     {generatingWaybill === order.id ? <Spinner size="sm"/> : 'Сгенерировать ТТН'}
                                 </button>
@@ -236,7 +236,7 @@ const SalesTab: React.FC = () => {
                             {order.status === 'DISPUTED' && <Link to={`/dispute/${order.id}`} className="text-sm bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-1 px-3 rounded-md">Перейти к спору</Link>}
                         </div>
                         {order.smartContractAddress && (
-                            <div className="mt-3 pt-3 border-t border-brand-border/50 flex items-center justify-between">
+                            <div className="mt-3 pt-3 border-t border-base-300/50 flex items-center justify-between">
                                 <div className="flex items-center gap-2 text-sm text-sky-400">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
                                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.286zm0 13.036h.008v.008h-.008v-.008z" />
@@ -245,7 +245,7 @@ const SalesTab: React.FC = () => {
                                 </div>
                                 <button
                                     onClick={() => alert(`Адрес контракта: ${order.smartContractAddress}\nХэш транзакции: ${order.transactionHash}`)}
-                                    className="text-xs bg-brand-surface hover:bg-brand-border border border-brand-border text-white font-semibold py-1 px-2 rounded-md"
+                                    className="text-xs bg-base-100 hover:bg-base-300 border border-base-300 text-white font-semibold py-1 px-2 rounded-md"
                                 >
                                     Посмотреть транзакцию
                                 </button>
@@ -270,7 +270,7 @@ const ListingsTab: React.FC<{ products: Product[], isOwnProfile: boolean, onProd
         setPromotingProduct(null);
     }
     
-    if (products.length === 0) return <div className="text-center py-16 bg-brand-surface rounded-lg"><p className="text-brand-text-secondary">У этого пользователя пока нет товаров.</p></div>
+    if (products.length === 0) return <div className="text-center py-16 bg-base-100 rounded-lg"><p className="text-base-content/70">У этого пользователя пока нет товаров.</p></div>
     
     return (
         <>
@@ -280,11 +280,11 @@ const ListingsTab: React.FC<{ products: Product[], isOwnProfile: boolean, onProd
                         <ProductCard product={product} />
                         {isOwnProfile && (
                             <div className="mt-2 flex gap-2">
-                                <Link to={`/edit/${product.id}`} className="flex-1 text-center text-sm bg-brand-surface hover:bg-brand-border text-white font-semibold py-2 px-3 rounded-lg transition-colors">
+                                <Link to={`/edit/${product.id}`} className="flex-1 text-center text-sm bg-base-100 hover:bg-base-300 text-white font-semibold py-2 px-3 rounded-lg transition-colors">
                                     Редактировать
                                 </Link>
-                                <button onClick={() => setAnalyticsProduct(product)} className="text-sm p-2 rounded-lg bg-brand-surface hover:bg-brand-border" title="Аналитика"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path d="M11 2a1 1 0 10-2 0v1a1 1 0 102 0V2zM15.657 5.657a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 14.95a1 1 0 001.414 1.414l.707-.707a1 1 0 00-1.414-1.414l-.707.707zM2 10a1 1 0 011-1h1a1 1 0 110 2H3a1 1 0 01-1-1zM10 4a6 6 0 100 12 6 6 0 000-12zM10 16a6 6 0 01-6-6 6 6 0 1112 0 6 6 0 01-6 6z" /></svg></button>
-                                <button onClick={() => setPromotingProduct(product)} className="text-sm p-2 rounded-lg bg-brand-surface hover:bg-brand-border" title="Продвигать"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-yellow-400"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 00-1.5 0v4.59L7.3 9.24a.75.75 0 00-1.1 1.02l3.25 3.5a.75.75 0 001.1 0l3.25-3.5a.75.75 0 10-1.1-1.02l-1.95 2.1V6.75z" clipRule="evenodd" /></svg></button>
+                                <button onClick={() => setAnalyticsProduct(product)} className="text-sm p-2 rounded-lg bg-base-100 hover:bg-base-300" title="Аналитика"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path d="M11 2a1 1 0 10-2 0v1a1 1 0 102 0V2zM15.657 5.657a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 14.95a1 1 0 001.414 1.414l.707-.707a1 1 0 00-1.414-1.414l-.707.707zM2 10a1 1 0 011-1h1a1 1 0 110 2H3a1 1 0 01-1-1zM10 4a6 6 0 100 12 6 6 0 000-12zM10 16a6 6 0 01-6-6 6 6 0 1112 0 6 6 0 01-6 6z" /></svg></button>
+                                <button onClick={() => setPromotingProduct(product)} className="text-sm p-2 rounded-lg bg-base-100 hover:bg-base-300" title="Продвигать"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-yellow-400"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 00-1.5 0v4.59L7.3 9.24a.75.75 0 00-1.1 1.02l3.25 3.5a.75.75 0 001.1 0l3.25-3.5a.75.75 0 10-1.1-1.02l-1.95 2.1V6.75z" clipRule="evenodd" /></svg></button>
                             </div>
                         )}
                     </div>
@@ -315,11 +315,11 @@ const TabContent: React.FC<TabContentProps> = ({ activeTab, user, isOwnProfile, 
         case 'listings':
             return <ListingsTab products={products} isOwnProfile={isOwnProfile} onProductUpdate={onProductUpdate} setActiveTab={setActiveTab} />;
         case 'workshop':
-            return <div className="text-center py-16 bg-brand-surface rounded-lg"><p className="text-brand-text-secondary">Content for Workshop coming soon.</p></div>;
+            return <div className="text-center py-16 bg-base-100 rounded-lg"><p className="text-base-content/70">Content for Workshop coming soon.</p></div>;
         case 'wishlist':
             return <WishlistTab />;
         case 'collections':
-             return <div className="text-center py-16 bg-brand-surface rounded-lg"><p className="text-brand-text-secondary">Content for Collections coming soon.</p></div>;
+             return <div className="text-center py-16 bg-base-100 rounded-lg"><p className="text-base-content/70">Content for Collections coming soon.</p></div>;
         case 'purchases':
             return isOwnProfile ? <PurchasesTab /> : null;
         case 'sales':
@@ -412,7 +412,7 @@ const ProfilePage: React.FC = () => {
         ];
 
         return (
-            <div className="border-b border-brand-border mb-6">
+            <div className="border-b border-base-300 mb-6">
                 <nav className="-mb-px flex space-x-6 overflow-x-auto">
                     {tabs.filter(t => t.visible).map(tab => (
                         <button
@@ -420,8 +420,8 @@ const ProfilePage: React.FC = () => {
                             onClick={() => setActiveTab(tab.id)}
                             className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
                                 activeTab === tab.id
-                                    ? 'border-brand-primary text-brand-primary'
-                                    : 'border-transparent text-brand-text-secondary hover:text-white hover:border-gray-300'
+                                    ? 'border-primary text-primary'
+                                    : 'text-base-content/70 hover:text-white hover:border-gray-300'
                             }`}
                         >
                             {tab.label}
@@ -433,7 +433,7 @@ const ProfilePage: React.FC = () => {
     };
 
     if (isLoading) return <div className="flex justify-center items-center h-96"><Spinner /></div>;
-    if (!profileUser) return <div className="text-center text-xl text-brand-text-secondary">Профиль не найден.</div>;
+    if (!profileUser) return <div className="text-center text-xl text-base-content/70">Профиль не найден.</div>;
 
     return (
         <div>
@@ -467,15 +467,15 @@ interface ProfileHeaderProps {
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, isOwnProfile, onContactSeller, isContacting }) => {
     return (
         <div className="mb-8">
-            <div className="h-48 bg-brand-surface rounded-lg overflow-hidden mb-[-4rem] sm:mb-[-5rem]">
+            <div className="h-48 bg-base-100 rounded-lg overflow-hidden mb-[-4rem] sm:mb-[-5rem]">
                 {user.headerImageUrl ? (
                     <img src={user.headerImageUrl} alt={`${user.name}'s header`} className="w-full h-full object-cover" />
                 ) : (
-                    <div className="w-full h-full bg-gradient-to-r from-brand-surface via-brand-border to-brand-surface"></div>
+                    <div className="w-full h-full bg-gradient-to-r from-base-100 via-base-300 to-base-100"></div>
                 )}
             </div>
             <div className="relative flex flex-col sm:flex-row items-center gap-6 px-6">
-                <img src={user.avatarUrl} alt={user.name} className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-brand-background bg-brand-background ring-2 ring-brand-primary"/>
+                <img src={user.avatarUrl} alt={user.name} className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-base-200 bg-base-200 ring-2 ring-primary"/>
                 
                 <div className="flex-1 flex flex-col sm:flex-row items-center justify-center sm:justify-between w-full pt-4 sm:pt-12">
                     <div className="text-center sm:text-left">
@@ -485,7 +485,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, isOwnProfile, onCon
                         </h1>
                         <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
                             <StarRating rating={user.rating} />
-                            <span className="text-brand-text-secondary">{user.rating.toFixed(1)}</span>
+                            <span className="text-base-content/70">{user.rating.toFixed(1)}</span>
                         </div>
                          {isOwnProfile && (
                             <div className="mt-2 text-sm flex gap-4 justify-center sm:justify-start">
@@ -526,7 +526,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, isOwnProfile, onCon
                             </Link>
                         )}
                         {!isOwnProfile && (
-                            <button onClick={onContactSeller} disabled={isContacting} className="bg-brand-primary hover:bg-brand-primary-hover text-white font-bold py-2 px-4 rounded-lg">
+                            <button onClick={onContactSeller} disabled={isContacting} className="bg-primary hover:bg-primary-focus text-white font-bold py-2 px-4 rounded-lg">
                                 {isContacting ? <Spinner size="sm" /> : 'Написать'}
                             </button>
                         )}

@@ -37,29 +37,29 @@ const OpenDisputeModal: React.FC<OpenDisputeModalProps> = ({ isOpen, onClose, on
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-brand-surface rounded-2xl shadow-2xl w-full max-w-lg border border-brand-border">
+      <div className="bg-base-100 rounded-2xl shadow-2xl w-full max-w-lg border border-base-300">
         <form onSubmit={handleSubmit} className="p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold text-white">Открыть спор</h2>
-            <button type="button" onClick={onClose} className="text-brand-text-secondary hover:text-white text-3xl leading-none">&times;</button>
+            <button type="button" onClick={onClose} className="text-base-content/70 hover:text-white text-3xl leading-none">&times;</button>
           </div>
           
-          <div className="flex items-center bg-brand-background p-3 rounded-lg mb-6">
+          <div className="flex items-center bg-base-200 p-3 rounded-lg mb-6">
             <img src={firstProduct.imageUrls[0]} alt={firstProduct.title} className="w-16 h-16 object-cover rounded-md mr-4"/>
             <div>
-              <p className="text-brand-text-secondary text-sm">Спор по заказу:</p>
+              <p className="text-base-content/70 text-sm">Спор по заказу:</p>
               <p className="font-semibold text-white">{firstProduct.title} {order.items.length > 1 ? `и еще ${order.items.length - 1}` : ''}</p>
             </div>
           </div>
           
           <div className="mb-6">
-            <label htmlFor="dispute-reason" className="block text-sm font-medium text-brand-text-secondary mb-2">Опишите проблему</label>
+            <label htmlFor="dispute-reason" className="block text-sm font-medium text-base-content/70 mb-2">Опишите проблему</label>
             <textarea
               id="dispute-reason"
               rows={5}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className="w-full bg-brand-background border border-brand-border rounded-md shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-brand-primary"
+              className="w-full bg-base-200 border border-base-300 rounded-md shadow-sm p-3 focus:outline-none focus:ring-2 focus:ring-primary"
               placeholder="Например: товар не пришел, товар поврежден, не соответствует описанию..."
             />
           </div>

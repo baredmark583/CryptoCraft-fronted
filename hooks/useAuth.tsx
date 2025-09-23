@@ -51,7 +51,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   if (isLoading) {
     return (
-      <div className="bg-brand-background min-h-screen flex items-center justify-center">
+      <div className="bg-base-200 min-h-screen flex items-center justify-center">
         <Spinner size="lg" />
       </div>
     );

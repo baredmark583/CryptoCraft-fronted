@@ -79,7 +79,7 @@ const SearchResultsPage: React.FC = () => {
   const renderContent = () => {
     if (isLoading) {
       return (
-        <div className="flex flex-col justify-center items-center h-64 bg-brand-surface rounded-lg">
+        <div className="flex flex-col justify-center items-center h-64 bg-base-100 rounded-lg">
           {isAiProcessing ? (
              <>
                 <h2 className="text-xl font-bold text-white mb-4">🤖 Анализируем ваш запрос с помощью ИИ...</h2>
@@ -94,9 +94,9 @@ const SearchResultsPage: React.FC = () => {
 
     if (products.length === 0) {
       return (
-        <div className="text-center py-16 bg-brand-surface rounded-lg">
+        <div className="text-center py-16 bg-base-100 rounded-lg">
           <h2 className="text-2xl font-bold text-white mb-2">Ничего не найдено</h2>
-          <p className="text-brand-text-secondary">Попробуйте изменить ваш поисковый запрос или фильтры.</p>
+          <p className="text-base-content/70">Попробуйте изменить ваш поисковый запрос или фильтры.</p>
         </div>
       );
     }
@@ -114,17 +114,17 @@ const SearchResultsPage: React.FC = () => {
     <div>
       <section className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">
-            Результаты поиска по запросу: <span className="text-brand-primary">"{query}"</span>
+            Результаты поиска по запросу: <span className="text-primary">"{query}"</span>
         </h1>
-         {!isLoading && <p className="text-brand-text-secondary">Найдено товаров: {products.length}</p>}
+         {!isLoading && <p className="text-base-content/70">Найдено товаров: {products.length}</p>}
       </section>
       
       {aiResponse && !isAiProcessing && (
-        <div className="mb-6 p-4 bg-brand-surface rounded-lg">
-            <h3 className="text-sm font-semibold text-brand-text-secondary mb-2">Результаты по теме:</h3>
+        <div className="mb-6 p-4 bg-base-100 rounded-lg">
+            <h3 className="text-sm font-semibold text-base-content/70 mb-2">Результаты по теме:</h3>
             <div className="flex flex-wrap gap-2">
                 {aiResponse.keywords.map(keyword => (
-                    <span key={keyword} className="px-3 py-1 text-sm bg-brand-primary/20 text-brand-primary rounded-full">{keyword}</span>
+                    <span key={keyword} className="px-3 py-1 text-sm bg-primary/20 text-primary rounded-full">{keyword}</span>
                 ))}
             </div>
         </div>
