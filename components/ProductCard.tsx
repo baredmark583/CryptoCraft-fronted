@@ -1,114 +1,126 @@
-
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import type { Product } from '../types';
-import { useCurrency } from '../hooks/useCurrency';
-import { useWishlist } from '../hooks/useWishlist';
-import { useCollections } from '../hooks/useCollections';
-import CollectionSelectModal from './CollectionSelectModal';
-import VerifiedBadge from './VerifiedBadge';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Heart, ShoppingCart, Tag } from "lucide-react";
 
 interface ProductCardProps {
-  product: Product;
-  isSoldView?: boolean;
+  product: {
+    id: string;
+    title: string;
+    description: string;
+    price: number;
+    discountPrice?: number;
+    seller: string;
+    images: string[];
+    isFavorite?: boolean;
+    badges?: string[];
+    features?: string[];
+  };
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, isSoldView }) => {
-  const { getFormattedPrice } = useCurrency();
-  const { isWishlisted, addToWishlist, removeFromWishlist } = useWishlist();
-  const { isSavedInAnyCollection } = useCollections();
-  
-  const [isCollectionModalOpen, setIsCollectionModalOpen] = useState(false);
-
-  const hasSale = product.salePrice && product.price && product.salePrice < product.price;
-  const inWishlist = isWishlisted(product.id);
-  const inCollection = isSavedInAnyCollection(product.id);
-
-  const handleWishlistToggle = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    inWishlist ? removeFromWishlist(product.id) : addToWishlist(product.id);
-  };
-  
-  const handleCollectionToggle = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsCollectionModalOpen(true);
-  };
+export default function ProductCard({ product }: ProductCardProps) {
+  const [currentImage, setCurrentImage] = useState(product.images[0]);
 
   return (
-    <>
-      <div className="bg-base-100 rounded-xl shadow-md group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex flex-col h-full">
-        <Link to={isSoldView ? '#' : `/product/${product.id}`} className={`flex flex-col h-full ${isSoldView ? 'pointer-events-none cursor-default' : ''}`}>
-          <figure className="relative">
+    <div className="max-w-6xl mx-auto p-6 grid md:grid-cols-2 gap-8">
+      {/* ЛЕВАЯ СТОРОНА - ФОТО */}
+      <div>
+        <div className="rounded-2xl border shadow-sm overflow-hidden">
+          <img
+            src={currentImage}
+            alt={product.title}
+            className="w-full h-[400px] object-cover"
+          />
+        </div>
+
+        {/* Миниатюры */}
+        <div className="flex gap-3 mt-4">
+          {product.images.map((img, i) => (
             <img
-              src={product.imageUrls[0]}
-              alt={product.title}
-              className={`w-full h-52 object-cover group-hover:scale-105 transition-transform duration-300 rounded-t-xl ${isSoldView ? 'grayscale' : ''}`}
+              key={i}
+              src={img}
+              onClick={() => setCurrentImage(img)}
+              className={`h-20 w-20 object-cover rounded-xl cursor-pointer border ${
+                currentImage === img ? "border-blue-500" : "border-transparent"
+              }`}
             />
-            {isSoldView && (
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                <span className="text-white text-3xl font-bold tracking-widest border-4 border-white px-6 py-3 rotate-[-10deg] opacity-90 select-none">ПРОДАНО</span>
-              </div>
-            )}
-            {hasSale && !isSoldView && (
-              <div className="absolute top-3 left-3 shadow-lg inline-flex items-center justify-center px-2.5 py-1 rounded-full text-xs font-semibold bg-primary/80 backdrop-blur-sm text-primary-content">
-                -{Math.round(((product.price! - product.salePrice!) / product.price!) * 100)}%
-              </div>
-            )}
-            {!isSoldView && (
-                <div className="absolute top-2 right-2 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                   <button onClick={handleWishlistToggle} className={`flex items-center justify-center rounded-full h-9 w-9 transition-colors border-none ${inWishlist ? 'bg-error text-white' : 'bg-black/50 hover:bg-red-500/80 text-white/80 hover:text-white'}`} title={inWishlist ? "Удалить из избранного" : "Добавить в избранное"}>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                          <path d="M9.653 16.915l-.005-.003-.019-.01a20.759 20.759 0 01-1.162-.682 22.045 22.045 0 01-2.582-1.9-22.348 22.348 0 01-2.949-2.582 20.759 20.759 0 01-1.162-.682 1.348 1.348 0 00-.03-.028 1.348 1.348 0 00-.03-.028 1.348 1.348 0 00-.03-.028l-.005-.003A9.96 9.96 0 012 10V6.652a2.492 2.492 0 011.666-2.311 2.493 2.493 0 012.134.12l.28.168.026.016.026.016.025.015.025.015.025.015.025.015.025.015.025.015.025.015.025.015.025.015.025.015.025.015.025.015.025.015.025.015c.002 0 .003.001.005.002l.004.002c.002 0 .003.001.005.002l.005.002c.002 0 .003.001.004.002l.005.002.009.004.01.004.01.004.01.003.01.003.01.003.01.002.01.002.01.002.004.001.004.001.004.001.004.001c.002 0 .003 0 .005 0a.002.002 0 00.005 0c.002 0 .003 0 .005 0l.004-.001.004-.001.004-.001.004-.001.01-.002.01-.002.01-.002.01-.003.01-.003.01-.003.01-.004.01-.004.009-.004.005-.002.004-.002c.002-.001.003-.002.005-.002l.004-.002.005-.003.025-.015.025-.015.025-.015.025-.015.025-.015.025-.015.025-.015.025-.015.025-.015.025-.015.026-.016.026-.016.28-.168a2.493 2.493 0 012.134-.12 2.492 2.492 0 011.666 2.311V10c0 1.638-.403 3.228-1.162 4.682-.01.012-.02.023-.03.034l-.005.003z" />
-                        </svg>
-                    </button>
-                     <button onClick={handleCollectionToggle} className={`flex items-center justify-center rounded-full h-9 w-9 transition-colors border-none ${inCollection ? 'bg-info text-white' : 'bg-black/50 hover:bg-sky-500/80 text-white/80 hover:text-white'}`} title="Сохранить в коллекцию">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /><path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" /></svg>
-                    </button>
-                </div>
-            )}
-          </figure>
-
-          <div className="p-4 flex flex-col flex-grow">
-            <h2 className="font-bold text-lg text-base-content mb-2 leading-tight" title={product.title}>
-              {product.title}
-            </h2>
-            
-            <div className="mt-auto">
-                <div className="bg-primary/10 rounded-lg p-3 mb-4">
-                  <div className="flex items-center">
-                    <img src={product.seller.avatarUrl} alt={product.seller.name} className="w-8 h-8 rounded-full mr-2" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-base-content/70 truncate">{product.seller.name}</p>
-                      {product.seller.verificationLevel && product.seller.verificationLevel !== 'NONE' && (
-                          <VerifiedBadge level={product.seller.verificationLevel} />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              
-                <div className="flex justify-between items-baseline">
-                    <div className="flex items-baseline gap-2">
-                         {isSoldView ? (
-                            <p className="text-2xl font-bold text-primary">{getFormattedPrice(product.salePrice || product.price || 0)}</p>
-                         ) : (
-                            <>
-                                <p className="text-2xl font-bold text-primary">{getFormattedPrice(hasSale ? product.salePrice! : (product.price || 0))}</p>
-                                {hasSale && <p className="text-md text-base-content/60 line-through">{getFormattedPrice(product.price || 0)}</p>}
-                            </>
-                         )}
-                    </div>
-                </div>
-            </div>
-          </div>
-        </Link>
+          ))}
+        </div>
       </div>
-      {isCollectionModalOpen && (
-          <CollectionSelectModal productId={product.id} onClose={() => setIsCollectionModalOpen(false)} />
-      )}
-    </>
-  );
-};
 
-export default ProductCard;
+      {/* ПРАВАЯ СТОРОНА - ИНФО */}
+      <div className="flex flex-col gap-4">
+        {/* Заголовок и продавец */}
+        <div>
+          <h1 className="text-2xl font-bold">{product.title}</h1>
+          <p className="text-gray-500">Продавец: {product.seller}</p>
+        </div>
+
+        {/* Цена */}
+        <div className="flex items-center gap-3">
+          {product.discountPrice ? (
+            <>
+              <span className="text-2xl font-bold text-red-500">
+                {product.discountPrice} ₴
+              </span>
+              <span className="line-through text-gray-400">
+                {product.price} ₴
+              </span>
+            </>
+          ) : (
+            <span className="text-2xl font-bold">{product.price} ₴</span>
+          )}
+        </div>
+
+        {/* Бейджи */}
+        <div className="flex gap-2">
+          {product.badges?.map((badge, i) => (
+            <span
+              key={i}
+              className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
+            >
+              {badge}
+            </span>
+          ))}
+        </div>
+
+        {/* Характеристики */}
+        {product.features && (
+          <Card>
+            <CardContent className="p-4">
+              <h2 className="font-semibold mb-2">Характеристики</h2>
+              <ul className="list-disc list-inside space-y-1 text-gray-700">
+                {product.features.map((feature, i) => (
+                  <li key={i}>{feature}</li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Кнопки действий */}
+        <div className="flex gap-3">
+          <Button className="flex items-center gap-2">
+            <ShoppingCart className="h-5 w-5" /> Добавить в корзину
+          </Button>
+          <Button variant="outline" className="flex items-center gap-2">
+            <Tag className="h-5 w-5" /> Купить сейчас
+          </Button>
+          <Button variant="ghost">
+            <Heart
+              className={`h-5 w-5 ${
+                product.isFavorite ? "fill-red-500 text-red-500" : ""
+              }`}
+            />
+          </Button>
+        </div>
+      </div>
+
+      {/* НИЖНЯЯ ЧАСТЬ - ОПИСАНИЕ */}
+      <div className="md:col-span-2 mt-10">
+        <h2 className="text-xl font-semibold mb-2">Описание</h2>
+        <p className="text-gray-700">{product.description}</p>
+      </div>
+    </div>
+  );
+}
