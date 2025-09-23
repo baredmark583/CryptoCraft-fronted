@@ -6,34 +6,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CryptoCraft Marketplace</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.js"></script>
     <script>
       tailwind.config = {
-        daisyui: {
-          themes: [
-            {
-              cryptocraft: {
-                "primary": "#30f0a5",
-                "primary-content": "#0a120d",
-                "secondary": "#2c996b",
-                "secondary-content": "#e2f4ed",
-                "accent": "#2fffaf",
-                "accent-content": "#0a120d",
-                "neutral": "#1f4b36",
-                "neutral-content": "#e2f4ed",
-                "base-100": "#111d17",
-                "base-200": "#0a120d",
-                "base-300": "#193326",
-                "base-content": "#e2f4ed",
-                "info": "#3ABFF8",
-                "success": "#36D399",
-                "warning": "#FBBD23",
-                "error": "#F87272",
-                "--rounded-box": "1rem",
-                "--rounded-btn": "9999px",
-              },
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#30f0a5",
+              "primary-focus": "#29cf8c",
+              "primary-content": "#0a120d",
+              "secondary": "#2c996b",
+              "secondary-focus": "#227a57",
+              "secondary-content": "#e2f4ed",
+              "accent": "#2fffaf",
+              "accent-content": "#0a120d",
+              "neutral": "#1f4b36",
+              "neutral-content": "#e2f4ed",
+              "base-100": "#111d17",
+              "base-200": "#0a120d",
+              "base-300": "#193326",
+              "base-content": "#e2f4ed",
+              "info": "#3ABFF8",
+              "success": "#36D399",
+              "warning": "#FBBD23",
+              "error": "#F87272",
             },
-          ],
+          },
         },
       }
     </script>

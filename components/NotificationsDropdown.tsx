@@ -92,7 +92,7 @@ const NotificationIcon: React.FC<{ type: Notification['type'] }> = ({ type }) =>
                 <div className="w-8 h-8 rounded-full bg-pink-500/20 text-pink-400 flex items-center justify-center flex-shrink-0">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
                         <path d="M10 4a2 2 0 100 4 2 2 0 000-4z" />
-                        <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V5zm3.293 3.293a1 1 0 011.414 0L10 11.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                        <path fillRule="evenodd" d="M2 5a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2-2H4a2 2 0 01-2-2V5zm3.293 3.293a1 1 0 011.414 0L10 11.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
                     </svg>
                 </div>
             );
@@ -106,29 +106,29 @@ const NotificationsDropdown: React.FC<{ onClose: () => void }> = ({ onClose }) =
   const { notifications } = useNotifications();
 
   return (
-    <div className="absolute top-full right-0 mt-2 w-80 sm:w-96 bg-brand-surface rounded-lg shadow-2xl border border-brand-border z-50 animate-fade-in-down">
-      <div className="p-3 border-b border-brand-border flex justify-between items-center">
+    <div className="absolute top-full right-0 mt-2 w-80 sm:w-96 bg-base-100 rounded-lg shadow-2xl border border-base-300 z-50 animate-fade-in-down">
+      <div className="p-3 border-b border-base-300 flex justify-between items-center">
         <h3 className="font-bold text-white">Уведомления</h3>
       </div>
       <div className="max-h-96 overflow-y-auto">
         {notifications.length > 0 ? (
           <ul>
             {notifications.map(notification => (
-              <li key={notification.id} className={`${!notification.read ? 'bg-brand-primary/10' : ''}`}>
-                <Link to={notification.link} onClick={onClose} className="flex items-start p-3 hover:bg-brand-border/50">
+              <li key={notification.id} className={`${!notification.read ? 'bg-primary/10' : ''}`}>
+                <Link to={notification.link} onClick={onClose} className="flex items-start p-3 hover:bg-base-300/50">
                   <div className="mr-3">
                     <NotificationIcon type={notification.type} />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm text-brand-text-primary">{notification.text}</p>
-                    <p className="text-xs text-brand-text-secondary mt-1">{timeSince(notification.timestamp)}</p>
+                    <p className="text-sm text-base-content">{notification.text}</p>
+                    <p className="text-xs text-base-content/70 mt-1">{timeSince(notification.timestamp)}</p>
                   </div>
                 </Link>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="p-8 text-center text-brand-text-secondary">У вас нет новых уведомлений.</p>
+          <p className="p-8 text-center text-base-content/70">У вас нет новых уведомлений.</p>
         )}
       </div>
     </div>

@@ -95,7 +95,7 @@ const Header: React.FC = () => {
                   <CurrencySwitcher />
                 </div>
     
-                <Link to="/create" className="btn btn-primary btn-sm text-white">
+                <Link to="/create" className="inline-block bg-primary text-primary-content font-semibold text-center rounded-full px-4 py-1.5 text-sm hover:bg-primary-focus transition-colors">
                   Продать
                 </Link>
                 

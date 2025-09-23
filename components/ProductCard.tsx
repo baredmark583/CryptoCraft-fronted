@@ -39,13 +39,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSoldView }) => {
 
   return (
     <>
-      <div className="card card-compact bg-base-100 shadow-xl group transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1">
+      <div className="bg-base-100 rounded-lg shadow-xl group transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1 flex flex-col">
         <Link to={isSoldView ? '#' : `/product/${product.id}`} className={`block ${isSoldView ? 'pointer-events-none cursor-default' : ''}`}>
           <figure className="relative">
             <img
               src={product.imageUrls[0]}
               alt={product.title}
-              className={`w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300 ${isSoldView ? 'grayscale' : ''}`}
+              className={`w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300 rounded-t-lg ${isSoldView ? 'grayscale' : ''}`}
             />
             {isSoldView && (
               <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -53,23 +53,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSoldView }) => {
               </div>
             )}
             {product.productType === 'SERVICE' && !isSoldView && (
-              <div className="badge badge-info absolute top-2 left-2 shadow-lg">
+              <div className="absolute top-2 left-2 shadow-lg inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-info text-info-content">
                 Услуга
               </div>
             )}
             {hasSale && !isSoldView && product.productType !== 'SERVICE' && (
-              <div className="badge badge-error text-white absolute top-2 left-2 shadow-lg">
+              <div className="absolute top-2 left-2 shadow-lg inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-error text-white">
                 SALE
               </div>
             )}
             {!isSoldView && (
                 <div className="absolute top-2 right-2 flex flex-col gap-2">
-                   <button onClick={handleWishlistToggle} className={`btn btn-circle btn-sm ${inWishlist ? 'btn-error text-white' : 'bg-black/50 hover:bg-red-500/80 text-white/80 hover:text-white border-none'}`} title={inWishlist ? "Удалить из избранного" : "Добавить в избранное"}>
+                   <button onClick={handleWishlistToggle} className={`flex items-center justify-center rounded-full h-8 w-8 transition-colors border-none ${inWishlist ? 'bg-error text-white' : 'bg-black/50 hover:bg-red-500/80 text-white/80 hover:text-white'}`} title={inWishlist ? "Удалить из избранного" : "Добавить в избранное"}>
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
                           <path d="M9.653 16.915l-.005-.003-.019-.01a20.759 20.759 0 01-1.162-.682 22.045 22.045 0 01-2.582-1.9-22.348 22.348 0 01-2.949-2.582 20.759 20.759 0 01-1.162-.682 1.348 1.348 0 00-.03-.028 1.348 1.348 0 00-.03-.028 1.348 1.348 0 00-.03-.028l-.005-.003A9.96 9.96 0 012 10V6.652a2.492 2.492 0 011.666-2.311 2.493 2.493 0 012.134.12l.28.168.026.016.026.016.025.015.025.015.025.015.025.015.025.015.025.015.025.015.025.015.025.015.025.015.025.015.025.015.025.015.025.015c.002 0 .003.001.005.002l.004.002c.002 0 .003.001.005.002l.005.002c.002 0 .003.001.004.002l.005.002.009.004.01.004.01.004.01.003.01.003.01.003.01.002.01.002.01.002.004.001.004.001.004.001.004.001c.002 0 .003 0 .005 0a.002.002 0 00.005 0c.002 0 .003 0 .005 0l.004-.001.004-.001.004-.001.004-.001.01-.002.01-.002.01-.002.01-.003.01-.003.01-.003.01-.004.01-.004.009-.004.005-.002.004-.002c.002-.001.003-.002.005-.002l.004-.002.005-.003.025-.015.025-.015.025-.015.025-.015.025-.015.025-.015.025-.015.025-.015.025-.015.025-.015.026-.016.026-.016.28-.168a2.493 2.493 0 012.134-.12 2.492 2.492 0 011.666 2.311V10c0 1.638-.403 3.228-1.162 4.682-.01.012-.02.023-.03.034l-.005.003z" />
                         </svg>
                     </button>
-                     <button onClick={handleCollectionToggle} className={`btn btn-circle btn-sm ${inCollection ? 'btn-info text-white' : 'bg-black/50 hover:bg-sky-500/80 text-white/80 hover:text-white border-none'}`} title="Сохранить в коллекцию">
+                     <button onClick={handleCollectionToggle} className={`flex items-center justify-center rounded-full h-8 w-8 transition-colors border-none ${inCollection ? 'bg-info text-white' : 'bg-black/50 hover:bg-sky-500/80 text-white/80 hover:text-white'}`} title="Сохранить в коллекцию">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
                           <path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" />
                           <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0010 3H4.75A2.75 2.75 0 002 5.75v9.5A2.75 2.75 0 004.75 18h9.5A2.75 2.75 0 0017 15.25V10a.75.75 0 00-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5z" />
@@ -79,8 +79,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSoldView }) => {
             )}
           </figure>
 
-          <div className="card-body">
-            <h2 className="card-title text-base text-base-content truncate" title={product.title}>
+          <div className="p-4">
+            <h2 className="font-semibold text-base text-base-content truncate" title={product.title}>
               {product.title}
             </h2>
             <div className="flex items-center mt-1">
@@ -92,7 +92,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSoldView }) => {
                 </div>
               )}
             </div>
-            <div className="card-actions justify-between items-baseline mt-2">
+            <div className="flex justify-between items-baseline mt-2">
               <div className="flex items-baseline gap-2">
                  {isSoldView ? (
                     <p className="text-xl font-bold text-primary">{getFormattedPrice(product.salePrice || product.price || 0)}</p>

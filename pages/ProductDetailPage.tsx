@@ -207,10 +207,10 @@ const ProductDetailPage: React.FC = () => {
               
               {/* Action Buttons */}
               <div className="space-y-4">
-                <button onClick={handleContactSeller} disabled={isOwner} className="btn btn-outline w-full rounded-full text-lg h-auto py-3">
+                <button onClick={handleContactSeller} disabled={isOwner} className="w-full text-center border border-gray-300 text-neutral py-3 px-4 rounded-full text-lg hover:bg-gray-100 transition-colors disabled:opacity-50">
                   Написать продавцу
                 </button>
-                <button onClick={handleAddToCart} disabled={isOwner || !isVariantInStock} className="btn btn-neutral w-full rounded-full text-lg h-auto py-3 text-white">
+                <button onClick={handleAddToCart} disabled={isOwner || !isVariantInStock} className="w-full text-center bg-neutral text-white py-3 px-4 rounded-full text-lg hover:bg-opacity-90 transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed">
                   {isOwner ? "Это ваш товар" : (!isVariantInStock ? "Нет в наличии" : "Добавить в корзину")}
                 </button>
               </div>
@@ -227,7 +227,7 @@ const ProductDetailPage: React.FC = () => {
                                         <button 
                                             key={option}
                                             onClick={() => handleAttributeSelect(attr.name, option)}
-                                            className={`btn btn-sm ${selectedAttributes[attr.name] === option ? 'btn-neutral text-white' : 'btn-outline'}`}
+                                            className={`px-3 py-1 text-sm rounded-md transition-colors ${selectedAttributes[attr.name] === option ? 'bg-neutral text-white' : 'border border-gray-300 hover:bg-gray-100'}`}
                                         >
                                             {option}
                                         </button>
