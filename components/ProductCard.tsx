@@ -39,7 +39,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSoldView }) => {
 
   return (
     <>
-      <div className="bg-base-100 rounded-lg shadow-xl group transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1 flex flex-col">
+      <div className="bg-base-200 rounded-lg shadow-lg group transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1 flex flex-col">
         <Link to={isSoldView ? '#' : `/product/${product.id}`} className={`block ${isSoldView ? 'pointer-events-none cursor-default' : ''}`}>
           <figure className="relative">
             <img

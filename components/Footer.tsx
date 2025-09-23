@@ -4,8 +4,8 @@ import React from 'react';
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-base-200">
-      <div className="container mx-auto px-4 py-6 text-center text-neutral/60">
+    <footer className="bg-base-300">
+      <div className="container mx-auto px-4 py-6 text-center text-base-content/70">
         <p>&copy; {new Date().getFullYear()} CryptoCraft. Все права защищены.</p>
         <div className="mt-2 space-x-4">
           <a href="#" className="hover:text-primary">О нас</a>

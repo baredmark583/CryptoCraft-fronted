@@ -139,12 +139,12 @@ const ProductDetailPage: React.FC = () => {
         if (salePrice && salePrice < price) {
             return (
                 <div className="mb-6">
-                    <span className="text-3xl font-bold text-neutral">{getFormattedPrice(salePrice)}</span>
-                    <span className="text-lg text-neutral/60 line-through ml-3">{getFormattedPrice(price)}</span>
+                    <span className="text-3xl font-bold text-base-content">{getFormattedPrice(salePrice)}</span>
+                    <span className="text-lg text-base-content/60 line-through ml-3">{getFormattedPrice(price)}</span>
                 </div>
             )
         }
-        return <div className="mb-6"><span className="text-3xl font-bold text-neutral">{getFormattedPrice(price)}</span></div>
+        return <div className="mb-6"><span className="text-3xl font-bold text-base-content">{getFormattedPrice(price)}</span></div>
     }, [product, selectedVariant, getFormattedPrice]);
 
     if (isLoading) {
@@ -152,7 +152,7 @@ const ProductDetailPage: React.FC = () => {
     }
 
     if (!product) {
-        return <div className="text-center text-xl text-neutral/70">Товар не найден.</div>;
+        return <div className="text-center text-xl text-base-content/70">Товар не найден.</div>;
     }
 
     const isOwner = product.seller.id === user.id;
@@ -165,7 +165,7 @@ const ProductDetailPage: React.FC = () => {
     return (
     <>
       <div className="max-w-6xl mx-auto">
-        <div className="bg-base-100 rounded-3xl shadow-lg overflow-hidden">
+        <div className="bg-base-200 rounded-3xl shadow-lg overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-8">
             {/* Image Section */}
             <div className="space-y-4">
@@ -174,7 +174,7 @@ const ProductDetailPage: React.FC = () => {
               </div>
               <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide">
                 {product.imageUrls.map((url, index) => (
-                    <img key={index} onClick={() => setSelectedImageIndex(index)} className={`w-20 h-20 object-cover rounded-lg border-2 cursor-pointer transition duration-200 ${selectedImageIndex === index && !selectedVariant?.imageUrl ? 'border-neutral' : 'border-transparent hover:border-neutral'}`} src={url} alt={`Thumbnail ${index + 1}`}/>
+                    <img key={index} onClick={() => setSelectedImageIndex(index)} className={`w-20 h-20 object-cover rounded-lg border-2 cursor-pointer transition duration-200 ${selectedImageIndex === index && !selectedVariant?.imageUrl ? 'border-primary' : 'border-transparent hover:border-primary'}`} src={url} alt={`Thumbnail ${index + 1}`}/>
                 ))}
               </div>
             </div>
@@ -182,12 +182,12 @@ const ProductDetailPage: React.FC = () => {
             <div className="space-y-6">
               <div>
                 <h1 className="font-bold text-4xl tracking-tight mb-4">{product.title}</h1>
-                <p className="text-neutral/70 mb-4">{product.description}</p>
+                <p className="text-base-content/70 mb-4">{product.description}</p>
               </div>
               
               {displayPrice}
 
-              <div className="bg-stone-50 rounded-2xl p-6 mb-6">
+              <div className="bg-base-100 rounded-2xl p-6 mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
                     <img className="w-12 h-12 rounded-full object-cover" src={product.seller.avatarUrl} alt={product.seller.name}/>
@@ -200,17 +200,17 @@ const ProductDetailPage: React.FC = () => {
                   </div>
                   <div className="flex items-center space-x-2">
                     <StarRating rating={product.seller.rating} />
-                    <span className="text-sm text-neutral/60">({product.seller.rating.toFixed(1)})</span>
+                    <span className="text-sm text-base-content/60">({product.seller.rating.toFixed(1)})</span>
                   </div>
                 </div>
               </div>
               
               {/* Action Buttons */}
               <div className="space-y-4">
-                <button onClick={handleContactSeller} disabled={isOwner} className="w-full text-center border border-gray-300 text-neutral py-3 px-4 rounded-full text-lg hover:bg-gray-100 transition-colors disabled:opacity-50">
+                <button onClick={handleContactSeller} disabled={isOwner} className="w-full text-center border border-base-300 py-3 px-4 rounded-full text-lg hover:bg-base-100 transition-colors disabled:opacity-50">
                   Написать продавцу
                 </button>
-                <button onClick={handleAddToCart} disabled={isOwner || !isVariantInStock} className="w-full text-center bg-neutral text-white py-3 px-4 rounded-full text-lg hover:bg-opacity-90 transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed">
+                <button onClick={handleAddToCart} disabled={isOwner || !isVariantInStock} className="w-full text-center bg-primary text-primary-content py-3 px-4 rounded-full text-lg hover:bg-primary-focus transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed">
                   {isOwner ? "Это ваш товар" : (!isVariantInStock ? "Нет в наличии" : "Добавить в корзину")}
                 </button>
               </div>
@@ -221,13 +221,13 @@ const ProductDetailPage: React.FC = () => {
                      <div className="space-y-4 mb-6">
                         {product.variantAttributes?.map(attr => (
                             <div key={attr.name}>
-                                <label className="block text-sm font-medium text-neutral/70 mb-2">{attr.name}</label>
+                                <label className="block text-sm font-medium text-base-content/70 mb-2">{attr.name}</label>
                                 <div className="flex flex-wrap gap-2">
                                     {attr.options.map(option => (
                                         <button 
                                             key={option}
                                             onClick={() => handleAttributeSelect(attr.name, option)}
-                                            className={`px-3 py-1 text-sm rounded-md transition-colors ${selectedAttributes[attr.name] === option ? 'bg-neutral text-white' : 'border border-gray-300 hover:bg-gray-100'}`}
+                                            className={`px-3 py-1 text-sm rounded-md transition-colors ${selectedAttributes[attr.name] === option ? 'bg-neutral text-neutral-content' : 'border border-base-300 hover:bg-base-300'}`}
                                         >
                                             {option}
                                         </button>
@@ -240,12 +240,12 @@ const ProductDetailPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     {Object.entries(product.dynamicAttributes).map(([key, value]) => (
                         <div key={key}>
-                            <span className="text-neutral/60">{key}:</span>
+                            <span className="text-base-content/60">{key}:</span>
                             <span className="font-medium ml-2">{value}</span>
                         </div>
                     ))}
                     <div>
-                        <span className="text-neutral/60">В наличии:</span>
+                        <span className="text-base-content/60">В наличии:</span>
                         <span className="font-medium ml-2 text-green-600">{stockCount} шт.</span>
                     </div>
                 </div>
