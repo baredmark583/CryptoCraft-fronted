@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -105,9 +104,9 @@ const CreateLiveStreamPage: React.FC = () => {
 
     if (user.verificationLevel !== 'PRO') {
         return (
-            <div className="text-center py-20 bg-brand-surface rounded-lg">
+            <div className="text-center py-20 bg-base-100 rounded-lg">
                 <h1 className="text-3xl font-bold text-white mb-4">Доступ для Pro-продавцов</h1>
-                <p className="text-brand-text-secondary mb-8">Возможность начинать прямые эфиры доступна только для пользователей со статусом PRO.</p>
+                <p className="text-base-content/70 mb-8">Возможность начинать прямые эфиры доступна только для пользователей со статусом PRO.</p>
                 <Link to="/verify" className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-6 rounded-lg transition-colors">
                     Стать Pro-продавцом
                 </Link>
@@ -117,15 +116,15 @@ const CreateLiveStreamPage: React.FC = () => {
 
     return (
         <div className="max-w-3xl mx-auto py-8">
-            <div className="bg-brand-surface p-6 sm:p-8 rounded-2xl shadow-2xl border border-brand-border">
+            <div className="bg-base-100 p-6 sm:p-8 rounded-2xl shadow-2xl border border-base-300">
                 <div className="text-center">
                     <h1 className="text-4xl font-bold text-white mb-4">Настройки трансляции</h1>
-                    <p className="text-lg text-brand-text-secondary mb-8">
+                    <p className="text-lg text-base-content/70 mb-8">
                         Продемонстрируйте свои товары в реальном времени и общайтесь с покупателями.
                     </p>
                 </div>
 
-                <div className="aspect-video bg-brand-background rounded-lg mb-8 flex items-center justify-center overflow-hidden">
+                <div className="aspect-video bg-base-200 rounded-lg mb-8 flex items-center justify-center overflow-hidden">
                     {error && !stream ? (
                         <div className="p-4 text-red-400">{error}</div>
                     ) : (
@@ -135,17 +134,17 @@ const CreateLiveStreamPage: React.FC = () => {
 
                 <form onSubmit={handleGoLive} className="space-y-8 text-left">
                     {/* Section 1: Basic Info */}
-                    <div className="bg-brand-background/50 p-6 rounded-lg">
+                    <div className="bg-base-200/50 p-6 rounded-lg">
                         <h2 className="text-xl font-semibold text-white mb-4">1. Основная информация</h2>
                         <div className="space-y-4">
                             <div>
-                                <label htmlFor="stream-title" className="block text-sm font-medium text-brand-text-secondary mb-2">Название трансляции*</label>
-                                <input id="stream-title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Например, 'Новая коллекция керамики!'" className="w-full bg-brand-background border border-brand-border rounded-md p-3" required />
+                                <label htmlFor="stream-title" className="block text-sm font-medium text-base-content/70 mb-2">Название трансляции*</label>
+                                <input id="stream-title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Например, 'Новая коллекция керамики!'" className="w-full bg-base-200 border border-base-300 rounded-md p-3" required />
                             </div>
                             <div>
-                                <label htmlFor="featured-product" className="block text-sm font-medium text-brand-text-secondary mb-2">Главный товар в эфире*</label>
+                                <label htmlFor="featured-product" className="block text-sm font-medium text-base-content/70 mb-2">Главный товар в эфире*</label>
                                 {isLoading ? <Spinner /> : (
-                                    <select id="featured-product" value={featuredProductId} onChange={(e) => setFeaturedProductId(e.target.value)} className="w-full bg-brand-background border border-brand-border rounded-md p-3" required>
+                                    <select id="featured-product" value={featuredProductId} onChange={(e) => setFeaturedProductId(e.target.value)} className="w-full bg-base-200 border border-base-300 rounded-md p-3" required>
                                         {sellerProducts.length > 0 ? sellerProducts.map(p => (<option key={p.id} value={p.id}>{p.title}</option>)) : <option disabled>У вас нет товаров для показа</option>}
                                     </select>
                                 )}
@@ -154,50 +153,50 @@ const CreateLiveStreamPage: React.FC = () => {
                     </div>
 
                     {/* Section 2: Moderation */}
-                     <div className="bg-brand-background/50 p-6 rounded-lg">
+                     <div className="bg-base-200/50 p-6 rounded-lg">
                          <h2 className="text-xl font-semibold text-white mb-4">2. Модерация</h2>
                         <div className="space-y-6">
                             <div>
-                                <label htmlFor="moderator-select" className="block text-sm font-medium text-brand-text-secondary mb-2">Назначить модератора (необязательно)</label>
-                                <select id="moderator-select" value={moderatorId} onChange={(e) => setModeratorId(e.target.value)} className="w-full bg-brand-background border border-brand-border rounded-md p-3">
+                                <label htmlFor="moderator-select" className="block text-sm font-medium text-base-content/70 mb-2">Назначить модератора (необязательно)</label>
+                                <select id="moderator-select" value={moderatorId} onChange={(e) => setModeratorId(e.target.value)} className="w-full bg-base-200 border border-base-300 rounded-md p-3">
                                     <option value="">Без модератора</option>
                                     {allUsers.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                                 </select>
-                                <p className="text-xs text-brand-text-secondary mt-1">Модератор сможет блокировать пользователей и отправлять скидки от вашего имени.</p>
+                                <p className="text-xs text-base-content/70 mt-1">Модератор сможет блокировать пользователей и отправлять скидки от вашего имени.</p>
                             </div>
                             <div>
                                 <label className="flex items-center justify-between cursor-pointer">
                                     <div className="flex items-center gap-3">
-                                        <span className="text-sm font-medium text-brand-text-primary">Активировать AI-модератора</span>
-                                        <span className="bg-brand-primary text-white text-xs font-bold px-2 py-0.5 rounded-full">3 USDT</span>
+                                        <span className="text-sm font-medium text-base-content">Активировать AI-модератора</span>
+                                        <span className="bg-primary text-primary-content text-xs font-bold px-2 py-0.5 rounded-full">3 USDT</span>
                                     </div>
                                     <div className="relative">
                                         <input type="checkbox" checked={enableAiModerator} onChange={(e) => setEnableAiModerator(e.target.checked)} className="sr-only" />
-                                        <div className="block bg-brand-border w-14 h-8 rounded-full"></div>
+                                        <div className="block bg-base-300 w-14 h-8 rounded-full"></div>
                                         <div className={`dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${enableAiModerator ? 'translate-x-6 bg-green-400' : ''}`}></div>
                                     </div>
                                 </label>
-                                <p className="text-xs text-brand-text-secondary mt-1">AI будет фильтровать спам и отвечать на частые вопросы о товаре.</p>
+                                <p className="text-xs text-base-content/70 mt-1">AI будет фильтровать спам и отвечать на частые вопросы о товаре.</p>
                             </div>
                         </div>
                     </div>
 
                     {/* Section 3: Advanced */}
-                     <div className="bg-brand-background/50 p-6 rounded-lg">
+                     <div className="bg-base-200/50 p-6 rounded-lg">
                         <h2 className="text-xl font-semibold text-white mb-4">3. Расширенные настройки</h2>
                         <div className="space-y-6">
                             <div>
                                 <label className="flex items-center cursor-pointer">
-                                    <input type="checkbox" checked={isScheduled} onChange={(e) => setIsScheduled(e.target.checked)} className="h-4 w-4 rounded bg-brand-background border-brand-border text-brand-primary focus:ring-brand-primary"/>
-                                    <span className="ml-2 text-sm font-medium text-brand-text-primary">Запланировать трансляцию</span>
+                                    <input type="checkbox" checked={isScheduled} onChange={(e) => setIsScheduled(e.target.checked)} className="h-4 w-4 rounded bg-base-200 border-base-300 text-primary focus:ring-primary"/>
+                                    <span className="ml-2 text-sm font-medium text-base-content">Запланировать трансляцию</span>
                                 </label>
                                 {isScheduled && (
-                                    <input type="datetime-local" value={scheduleDateTime} onChange={e => setScheduleDateTime(e.target.value)} className="mt-2 w-full bg-brand-background border border-brand-border rounded-md p-3"/>
+                                    <input type="datetime-local" value={scheduleDateTime} onChange={e => setScheduleDateTime(e.target.value)} className="mt-2 w-full bg-base-200 border border-base-300 rounded-md p-3"/>
                                 )}
                             </div>
                             <div>
-                                <label htmlFor="welcome-message" className="block text-sm font-medium text-brand-text-secondary mb-2">Приветственное сообщение в чате</label>
-                                <textarea id="welcome-message" value={welcomeMessage} onChange={e => setWelcomeMessage(e.target.value)} rows={2} placeholder="Например: 'Всем привет! Сегодня показываю новые поступления, задавайте вопросы!'" className="w-full bg-brand-background border border-brand-border rounded-md p-3"/>
+                                <label htmlFor="welcome-message" className="block text-sm font-medium text-base-content/70 mb-2">Приветственное сообщение в чате</label>
+                                <textarea id="welcome-message" value={welcomeMessage} onChange={e => setWelcomeMessage(e.target.value)} rows={2} placeholder="Например: 'Всем привет! Сегодня показываю новые поступления, задавайте вопросы!'" className="w-full bg-base-200 border border-base-300 rounded-md p-3"/>
                             </div>
                         </div>
                     </div>

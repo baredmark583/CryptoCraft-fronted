@@ -83,9 +83,9 @@ const ProductListPage: React.FC = () => {
     }
     if (products.length === 0) {
         return (
-            <div className="text-center py-16 bg-brand-surface rounded-lg">
+            <div className="text-center py-16 bg-base-100 rounded-lg">
                 <h2 className="text-2xl font-bold text-white mb-2">Товары не найдены</h2>
-                <p className="text-brand-text-secondary">Попробуйте изменить фильтры или загляните позже.</p>
+                <p className="text-base-content/70">Попробуйте изменить фильтры или загляните позже.</p>
             </div>
         );
     }
@@ -121,7 +121,7 @@ const ProductListPage: React.FC = () => {
              <div className="fixed inset-0 bg-black/60 z-40 lg:hidden" onClick={() => setIsFilterOpen(false)}></div>
         )}
         
-        <aside className={`w-full max-w-xs lg:w-1/4 lg:flex-shrink-0 lg:sticky lg:top-24 self-start transform transition-transform duration-300 ${isFilterOpen ? 'translate-x-0' : '-translate-x-full'} fixed top-0 left-0 h-full bg-brand-surface p-4 z-50 lg:z-30 lg:relative lg:translate-x-0 lg:p-0 overflow-y-auto scrollbar-hide`}>
+        <aside className={`w-full max-w-xs lg:w-1/4 lg:flex-shrink-0 lg:sticky lg:top-24 self-start transform transition-transform duration-300 ${isFilterOpen ? 'translate-x-0' : '-translate-x-full'} fixed top-0 left-0 h-full bg-base-100 p-4 z-50 lg:z-30 lg:relative lg:translate-x-0 lg:p-0 overflow-y-auto scrollbar-hide`}>
              <div className="flex justify-between items-center lg:hidden mb-4">
                 <h2 className="text-xl font-bold">Фильтры</h2>
                 <button onClick={() => setIsFilterOpen(false)} className="p-2 text-white text-2xl">&times;</button>
@@ -133,15 +133,15 @@ const ProductListPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-2">
                 <h1 className="text-3xl font-bold text-white">{pageTitle}</h1>
                  <div className="flex items-center gap-2">
-                    <div className="flex items-center p-1 bg-brand-surface rounded-lg">
-                        <button onClick={() => setActiveTab('catalog')} className={`py-2 px-4 text-sm font-bold transition-colors rounded-md ${activeTab === 'catalog' ? 'bg-brand-primary text-white' : 'text-brand-text-secondary hover:text-white'}`}>
+                    <div className="flex items-center p-1 bg-base-100 rounded-lg">
+                        <button onClick={() => setActiveTab('catalog')} className={`py-2 px-4 text-sm font-bold transition-colors rounded-md ${activeTab === 'catalog' ? 'bg-primary text-primary-content' : 'text-base-content/70 hover:text-white'}`}>
                             Каталог
                         </button>
-                        <button onClick={() => setActiveTab('auctions')} className={`py-2 px-4 text-sm font-bold transition-colors rounded-md ${activeTab === 'auctions' ? 'bg-brand-primary text-white' : 'text-brand-text-secondary hover:text-white'}`}>
+                        <button onClick={() => setActiveTab('auctions')} className={`py-2 px-4 text-sm font-bold transition-colors rounded-md ${activeTab === 'auctions' ? 'bg-primary text-primary-content' : 'text-base-content/70 hover:text-white'}`}>
                             Аукцион
                         </button>
                     </div>
-                     <button onClick={() => setIsFilterOpen(true)} className="lg:hidden p-2 bg-brand-surface rounded-md">
+                     <button onClick={() => setIsFilterOpen(true)} className="lg:hidden p-2 bg-base-100 rounded-md">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0h9.75m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
                         </svg>
@@ -150,18 +150,18 @@ const ProductListPage: React.FC = () => {
             </div>
 
             {/* Top controls */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-6 p-4 bg-brand-surface rounded-lg">
+            <div className="flex flex-col sm:flex-row gap-4 mb-6 p-4 bg-base-100 rounded-lg">
                 <div className="flex-1">
-                     <label className="block text-sm font-medium text-brand-text-secondary mb-1">Показать</label>
-                     <select value={filters.specialFilter} onChange={handleSpecialFilterChange} className="w-full bg-brand-background border border-brand-border rounded-md p-2">
+                     <label className="block text-sm font-medium text-base-content/70 mb-1">Показать</label>
+                     <select value={filters.specialFilter} onChange={handleSpecialFilterChange} className="w-full bg-base-200 border border-base-300 rounded-md p-2">
                         <option value="all">Все доступные</option>
                         <option value="sold">Проданные</option>
                         <option value="verified">От проверенных мастеров</option>
                     </select>
                 </div>
                  <div className="flex-1">
-                     <label className="block text-sm font-medium text-brand-text-secondary mb-1">Сортировать по</label>
-                    <select value={filters.sortBy} onChange={handleSortChange} className="w-full bg-brand-background border border-brand-border rounded-md p-2">
+                     <label className="block text-sm font-medium text-base-content/70 mb-1">Сортировать по</label>
+                    <select value={filters.sortBy} onChange={handleSortChange} className="w-full bg-base-200 border border-base-300 rounded-md p-2">
                         <option value="newest">Новизне</option>
                         <option value="priceAsc">Цене (по возрастанию)</option>
                         <option value="priceDesc">Цене (по убыванию)</option>

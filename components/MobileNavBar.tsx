@@ -12,7 +12,7 @@ const NavItem: React.FC<NavItemProps> = ({ to, children, exact = false }) => (
         to={to} 
         end={exact}
         className={({ isActive }) => 
-            `flex flex-col items-center justify-center w-full text-xs transition-colors ${isActive ? 'text-brand-primary' : 'text-brand-text-secondary hover:text-white'}`
+            `flex flex-col items-center justify-center w-full text-xs transition-colors ${isActive ? 'text-primary' : 'text-base-content/70 hover:text-white'}`
         }
     >
         {children}
@@ -24,8 +24,8 @@ const MobileNavBar: React.FC = () => {
     const navigate = useNavigate();
 
     return (
-        <nav className="block md:hidden fixed bottom-0 left-0 right-0 h-16 bg-brand-surface/90 backdrop-blur-lg border-t border-brand-border z-40 flex items-center justify-around px-2">
-            <button onClick={() => navigate(-1)} className="flex flex-col items-center justify-center w-full text-xs text-brand-text-secondary hover:text-white transition-colors">
+        <nav className="block md:hidden fixed bottom-0 left-0 right-0 h-16 bg-base-100/90 backdrop-blur-lg border-t border-base-300 z-40 flex items-center justify-around px-2">
+            <button onClick={() => navigate(-1)} className="flex flex-col items-center justify-center w-full text-xs text-base-content/70 hover:text-white transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                 </svg>
@@ -35,7 +35,7 @@ const MobileNavBar: React.FC = () => {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                 <span>Главная</span>
             </NavItem>
-            <NavLink to="/create" className="flex items-center justify-center w-16 h-16 -mt-8 bg-brand-primary hover:bg-brand-primary-hover rounded-full shadow-lg text-white">
+            <NavLink to="/create" className="flex items-center justify-center w-16 h-16 -mt-8 bg-primary hover:bg-primary-focus rounded-full shadow-lg text-white">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
             </NavLink>
             <NavItem to="/chat">

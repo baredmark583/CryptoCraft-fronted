@@ -58,24 +58,24 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, amount, re
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-brand-surface rounded-2xl shadow-2xl w-full max-w-md border border-brand-border" onClick={e => e.stopPropagation()}>
+      <div className="bg-base-100 rounded-2xl shadow-2xl w-full max-w-md border border-base-300" onClick={e => e.stopPropagation()}>
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-2xl font-bold text-white">Подтверждение платежа</h2>
-            <button type="button" onClick={onClose} disabled={isProcessing} className="text-brand-text-secondary hover:text-white text-3xl leading-none disabled:opacity-50">&times;</button>
+            <button type="button" onClick={onClose} disabled={isProcessing} className="text-base-content/70 hover:text-white text-3xl leading-none disabled:opacity-50">&times;</button>
           </div>
           
-          <div className="text-center bg-brand-background p-4 rounded-lg mb-6">
-              <p className="text-sm text-brand-text-secondary">Сумма к оплате</p>
-              <p className="text-4xl font-bold text-brand-primary">{amount.toFixed(2)} USDT</p>
+          <div className="text-center bg-base-200 p-4 rounded-lg mb-6">
+              <p className="text-sm text-base-content/70">Сумма к оплате</p>
+              <p className="text-4xl font-bold text-primary">{amount.toFixed(2)} USDT</p>
           </div>
            <div className="text-sm space-y-2 mb-6">
               <div className="flex justify-between">
-                <span className="text-brand-text-secondary">Получатель:</span>
+                <span className="text-base-content/70">Получатель:</span>
                 <span className="font-semibold text-white">{recipientName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-brand-text-secondary">Адрес:</span>
+                <span className="text-base-content/70">Адрес:</span>
                 <span className="font-mono text-white text-xs truncate" title={recipientAddress}>
                     {`${recipientAddress.slice(0, 6)}...${recipientAddress.slice(-4)}`}
                 </span>

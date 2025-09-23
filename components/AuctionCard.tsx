@@ -1,5 +1,3 @@
-
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import type { Product } from '../types';
@@ -26,7 +24,7 @@ const Countdown: React.FC<{ targetDate: number }> = ({ targetDate }) => {
 const AuctionCard: React.FC<AuctionCardProps> = ({ product }) => {
 
   return (
-    <div className="bg-brand-surface rounded-lg overflow-hidden group transition-all duration-300 hover:shadow-2xl hover:shadow-brand-primary/20 hover:-translate-y-1">
+    <div className="bg-base-100 rounded-lg overflow-hidden group transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1">
       <Link to={`/product/${product.id}`} className="block">
         <div className="relative">
             <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden">
@@ -42,7 +40,7 @@ const AuctionCard: React.FC<AuctionCardProps> = ({ product }) => {
                         <span className="text-red-400 mr-1">●</span>
                         Live
                     </p>
-                    <p className="text-sm font-mono text-white bg-brand-primary/80 px-2 py-0.5 rounded-full">
+                    <p className="text-sm font-mono text-white bg-primary/80 px-2 py-0.5 rounded-full">
                         <Countdown targetDate={product.auctionEnds || 0} />
                     </p>
                 </div>
@@ -50,14 +48,14 @@ const AuctionCard: React.FC<AuctionCardProps> = ({ product }) => {
         </div>
 
         <div className="p-4">
-            <h3 className="font-semibold text-brand-text-primary truncate" title={product.title}>
+            <h3 className="font-semibold text-base-content truncate" title={product.title}>
             {product.title}
             </h3>
             <div className="flex items-baseline justify-between mt-2">
-                <div className="text-sm text-brand-text-secondary">
+                <div className="text-sm text-base-content/70">
                     Текущая ставка
                 </div>
-                <p className="text-xl font-bold text-brand-primary">{product.currentBid ?? product.startingBid} USDT</p>
+                <p className="text-xl font-bold text-primary">{product.currentBid ?? product.startingBid} USDT</p>
             </div>
         </div>
       </Link>

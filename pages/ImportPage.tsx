@@ -40,34 +40,34 @@ const EditableListingCard: React.FC<EditableListingProps> = ({ item, onUpdate, d
 
 
     return (
-        <div className={`bg-brand-background/50 p-4 rounded-lg space-y-3 ${disabled ? 'opacity-50' : ''}`}>
+        <div className={`bg-base-200/50 p-4 rounded-lg space-y-3 ${disabled ? 'opacity-50' : ''}`}>
             <div>
-                <label className="text-xs text-brand-text-secondary">Заголовок</label>
-                <input name="title" value={item.listing.title} onChange={handleFieldChange} disabled={disabled} className="w-full bg-brand-surface border border-brand-border rounded p-2 text-sm disabled:cursor-not-allowed" />
+                <label className="text-xs text-base-content/70">Заголовок</label>
+                <input name="title" value={item.listing.title} onChange={handleFieldChange} disabled={disabled} className="w-full bg-base-100 border border-base-300 rounded p-2 text-sm disabled:cursor-not-allowed" />
             </div>
             <div>
-                <label className="text-xs text-brand-text-secondary">Описание</label>
-                <textarea name="description" value={item.listing.description} onChange={handleFieldChange} disabled={disabled} rows={4} className="w-full bg-brand-surface border border-brand-border rounded p-2 text-sm disabled:cursor-not-allowed" />
+                <label className="text-xs text-base-content/70">Описание</label>
+                <textarea name="description" value={item.listing.description} onChange={handleFieldChange} disabled={disabled} rows={4} className="w-full bg-base-100 border border-base-300 rounded p-2 text-sm disabled:cursor-not-allowed" />
             </div>
              <div>
-                <label className="text-xs text-brand-text-secondary">Цена (USDT)</label>
-                <input name="price" type="number" value={item.listing.price} onChange={handlePriceChange} disabled={disabled} className="w-full bg-brand-surface border border-brand-border rounded p-2 text-sm disabled:cursor-not-allowed" />
+                <label className="text-xs text-base-content/70">Цена (USDT)</label>
+                <input name="price" type="number" value={item.listing.price} onChange={handlePriceChange} disabled={disabled} className="w-full bg-base-100 border border-base-300 rounded p-2 text-sm disabled:cursor-not-allowed" />
                 {item.listing.originalPrice && item.listing.originalCurrency && (
-                    <p className="text-xs text-brand-text-secondary mt-1">
+                    <p className="text-xs text-base-content/70 mt-1">
                         Оригинал: {item.listing.originalPrice} {item.listing.originalCurrency}
                     </p>
                 )}
             </div>
             <div>
-                <label className="text-xs text-brand-text-secondary mb-2 block">Изображения ({selectedImages.length} / {item.listing.imageUrls?.length || 0} выбрано)</label>
+                <label className="text-xs text-base-content/70 mb-2 block">Изображения ({selectedImages.length} / {item.listing.imageUrls?.length || 0} выбрано)</label>
                 <div className="grid grid-cols-4 gap-2">
                     {item.listing.imageUrls?.map(url => (
                         <div key={url} className={`relative group ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`} onClick={() => toggleImageSelection(url)}>
                             <img src={url} alt="Preview" className="w-full h-full object-cover rounded-md" />
-                            <div className={`absolute inset-0 rounded-md transition-all ${selectedImages.includes(url) ? 'ring-2 ring-brand-primary bg-black/20' : 'bg-black/60 group-hover:bg-black/30'}`}>
+                            <div className={`absolute inset-0 rounded-md transition-all ${selectedImages.includes(url) ? 'ring-2 ring-primary bg-black/20' : 'bg-black/60 group-hover:bg-black/30'}`}>
                                 {selectedImages.includes(url) && (
-                                    <div className="absolute top-1 right-1 bg-brand-primary rounded-full w-5 h-5 flex items-center justify-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-white"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.052-.143z" clipRule="evenodd" /></svg>
+                                    <div className="absolute top-1 right-1 bg-primary rounded-full w-5 h-5 flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-primary-content"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.052-.143z" clipRule="evenodd" /></svg>
                                     </div>
                                 )}
                             </div>
@@ -200,7 +200,7 @@ const ImportPage: React.FC = () => {
 
     const getStatusUI = (item: ImportItem) => {
         switch(item.status) {
-            case 'pending': return <span className="text-xs text-brand-text-secondary">Ожидание</span>;
+            case 'pending': return <span className="text-xs text-base-content/70">Ожидание</span>;
             case 'scraping': return <span className="text-xs text-sky-400 flex items-center gap-1"><Spinner size="sm" /> Сбор HTML...</span>;
             case 'parsing': 
             case 'enriching': return <span className="text-xs text-purple-400 flex items-center gap-1"><Spinner size="sm" /> Анализ AI...</span>;
@@ -218,36 +218,36 @@ const ImportPage: React.FC = () => {
         <div className="max-w-4xl mx-auto">
             <div className="text-center">
                 <h1 className="text-4xl font-bold text-white">Импорт с других платформ</h1>
-                <p className="text-lg text-brand-text-secondary mt-2">Перенесите свой магазин в CryptoCraft за пару кликов.</p>
+                <p className="text-lg text-base-content/70 mt-2">Перенесите свой магазин в CryptoCraft за пару кликов.</p>
             </div>
             
-            <div className="bg-brand-surface p-6 sm:p-8 rounded-lg shadow-xl my-8">
+            <div className="bg-base-100 p-6 sm:p-8 rounded-lg shadow-xl my-8">
                 <h2 className="text-xl font-semibold text-white mb-2">1. Вставьте ссылки на товары</h2>
-                <p className="text-sm text-brand-text-secondary mb-4">Вставьте каждую ссылку на новой строке.</p>
+                <p className="text-sm text-base-content/70 mb-4">Вставьте каждую ссылку на новой строке.</p>
                 <textarea
                     value={urls}
                     onChange={e => setUrls(e.target.value)}
                     rows={6}
                     placeholder="https://www.olx.ua/d/obyavlenie/..."
-                    className="w-full bg-brand-background border border-brand-border rounded-md p-3 font-mono text-sm"
+                    className="w-full bg-base-200 border border-base-300 rounded-md p-3 font-mono text-sm"
                     disabled={isProcessing}
                 />
                 <button
                     onClick={handleStartImport}
                     disabled={isProcessing || !urls.trim()}
-                    className="mt-4 w-full flex justify-center py-3 px-4 text-lg font-medium text-white bg-brand-primary hover:bg-brand-primary-hover disabled:bg-gray-500"
+                    className="mt-4 w-full flex justify-center py-3 px-4 text-lg font-medium text-primary-content bg-primary hover:bg-primary-focus disabled:bg-gray-500"
                 >
                     {isImporting ? <Spinner /> : 'Начать импорт'}
                 </button>
             </div>
             
             {items.length > 0 && (
-                 <div className="bg-brand-surface p-6 sm:p-8 rounded-lg shadow-xl my-8">
+                 <div className="bg-base-100 p-6 sm:p-8 rounded-lg shadow-xl my-8">
                      <h2 className="text-xl font-semibold text-white mb-4">2. Проверка и публикация</h2>
                     <div className="space-y-4">
                         {items.map(item => (
-                            <div key={item.id} className="border border-brand-border rounded-lg">
-                                <div className="p-3 bg-brand-background/30 flex justify-between items-center gap-4">
+                            <div key={item.id} className="border border-base-300 rounded-lg">
+                                <div className="p-3 bg-base-200/30 flex justify-between items-center gap-4">
                                     <div className="flex items-center gap-4 min-w-0">
                                          {(item.status === 'success' || item.status === 'published') && (
                                             <input
@@ -255,10 +255,10 @@ const ImportPage: React.FC = () => {
                                                 checked={selectedItems.has(item.id) || item.status === 'published'}
                                                 onChange={() => toggleItemSelection(item.id)}
                                                 disabled={isProcessing || item.status === 'published'}
-                                                className="flex-shrink-0 h-5 w-5 rounded bg-brand-surface border-brand-border text-brand-primary focus:ring-brand-primary disabled:cursor-not-allowed"
+                                                className="flex-shrink-0 h-5 w-5 rounded bg-base-100 border-base-300 text-primary focus:ring-primary disabled:cursor-not-allowed"
                                             />
                                         )}
-                                        <p className="text-sm text-brand-text-primary truncate">{item.url}</p>
+                                        <p className="text-sm text-base-content truncate">{item.url}</p>
                                     </div>
                                     <div className="flex-shrink-0">{getStatusUI(item)}</div>
                                 </div>
@@ -269,7 +269,7 @@ const ImportPage: React.FC = () => {
                         ))}
                     </div>
                     {items.some(i => i.status === 'success' || i.status === 'published') && (
-                        <div className="mt-6 border-t border-brand-border pt-6">
+                        <div className="mt-6 border-t border-base-300 pt-6">
                             <button
                                 onClick={handlePublish}
                                 disabled={isProcessing || selectedItems.size === 0}
@@ -277,7 +277,7 @@ const ImportPage: React.FC = () => {
                             >
                                 {isPublishing ? <Spinner /> : `Опубликовать выбранное (${selectedItems.size})`}
                             </button>
-                             <p className="text-xs text-brand-text-secondary text-center mt-2">Примечание: Изображения будут скачаны и загружены на наши серверы. Это может занять некоторое время.</p>
+                             <p className="text-xs text-base-content/70 text-center mt-2">Примечание: Изображения будут скачаны и загружены на наши серверы. Это может занять некоторое время.</p>
                         </div>
                     )}
                 </div>

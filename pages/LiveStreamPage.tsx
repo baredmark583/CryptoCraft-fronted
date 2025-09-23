@@ -133,7 +133,7 @@ const LiveStreamPage: React.FC = () => {
   }
 
   if (!stream || !product) {
-    return <div className="text-center text-2xl text-brand-text-secondary mt-16">Трансляция не найдена.</div>;
+    return <div className="text-center text-2xl text-base-content/70 mt-16">Трансляция не найдена.</div>;
   }
   
   return (
@@ -144,7 +144,7 @@ const LiveStreamPage: React.FC = () => {
             <div 
               ref={videoContainerRef}
               onClick={createHeart}
-              className="relative aspect-video bg-brand-background rounded-lg overflow-hidden shadow-lg cursor-pointer"
+              className="relative aspect-video bg-base-200 rounded-lg overflow-hidden shadow-lg cursor-pointer"
             >
                 <video src="https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" autoPlay muted loop className="w-full h-full object-cover"/>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent p-4 flex flex-col justify-between">
@@ -161,10 +161,10 @@ const LiveStreamPage: React.FC = () => {
                         {/* You can add viewer count here */}
                     </div>
                      <div className="flex items-center gap-3">
-                      <img src={stream.seller.avatarUrl} alt={stream.seller.name} className="w-12 h-12 rounded-full border-2 border-brand-primary"/>
+                      <img src={stream.seller.avatarUrl} alt={stream.seller.name} className="w-12 h-12 rounded-full border-2 border-primary"/>
                       <div>
                           <p className="font-bold text-white text-lg leading-tight">{stream.title}</p>
-                          <p className="text-brand-text-secondary">{stream.seller.name}</p>
+                          <p className="text-base-content/70">{stream.seller.name}</p>
                       </div>
                    </div>
                 </div>
@@ -177,45 +177,45 @@ const LiveStreamPage: React.FC = () => {
             </div>
             
             {/* Featured Product */}
-            <div className="bg-brand-surface rounded-lg mt-6 p-4 flex flex-col sm:flex-row items-center gap-4">
+            <div className="bg-base-100 rounded-lg mt-6 p-4 flex flex-col sm:flex-row items-center gap-4">
                 <img src={product.imageUrls[0]} alt={product.title} className="w-24 h-24 object-cover rounded-md"/>
                 <div className="flex-grow text-center sm:text-left">
-                    <p className="text-sm text-brand-text-secondary">Товар в эфире:</p>
-                    <Link to={`/product/${product.id}`} className="font-bold text-xl text-white hover:text-brand-primary">{product.title}</Link>
-                    <p className="text-lg font-bold text-brand-primary mt-1">{product.price?.toFixed(2)} USDT</p>
+                    <p className="text-sm text-base-content/70">Товар в эфире:</p>
+                    <Link to={`/product/${product.id}`} className="font-bold text-xl text-white hover:text-primary">{product.title}</Link>
+                    <p className="text-lg font-bold text-primary mt-1">{product.price?.toFixed(2)} USDT</p>
                 </div>
-                <button onClick={handleAddToCart} className="w-full sm:w-auto bg-brand-primary hover:bg-brand-primary-hover text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                <button onClick={handleAddToCart} className="w-full sm:w-auto bg-primary hover:bg-primary-focus text-primary-content font-bold py-3 px-6 rounded-lg transition-colors">
                     Добавить в корзину
                 </button>
             </div>
         </div>
         
         {/* Live Chat */}
-        <div className="w-full lg:w-96 flex-shrink-0 bg-brand-surface rounded-lg flex flex-col h-full shadow-lg">
-            <h3 className="text-lg font-bold text-white p-4 border-b border-brand-border">Чат трансляции</h3>
+        <div className="w-full lg:w-96 flex-shrink-0 bg-base-100 rounded-lg flex flex-col h-full shadow-lg">
+            <h3 className="text-lg font-bold text-white p-4 border-b border-base-300">Чат трансляции</h3>
             <div className="flex-grow p-4 space-y-4 overflow-y-auto scrollbar-hide">
                 {chatMessages.map(msg => (
                      <div key={msg.id} className="flex items-start gap-3">
                          <img src={msg.senderAvatar} alt={msg.senderName} className="w-8 h-8 rounded-full"/>
                          <div>
-                            <p className="text-sm font-semibold text-brand-text-secondary">{msg.senderName}</p>
-                            <p className="text-white bg-brand-background/50 rounded-lg px-3 py-2 text-sm">{msg.text}</p>
+                            <p className="text-sm font-semibold text-base-content/70">{msg.senderName}</p>
+                            <p className="text-white bg-base-200/50 rounded-lg px-3 py-2 text-sm">{msg.text}</p>
                          </div>
                      </div>
                 ))}
                 <div ref={chatEndRef} />
             </div>
-            <div className="p-4 border-t border-brand-border">
+            <div className="p-4 border-t border-base-300">
                 <form onSubmit={handleSendMessage} className="flex gap-2">
                     <input 
                         type="text"
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         placeholder="Ваше сообщение..."
-                        className="flex-grow bg-brand-background border border-brand-border rounded-full py-2 px-4"
+                        className="flex-grow bg-base-200 border border-base-300 rounded-full py-2 px-4"
                         disabled={stream.status === 'ENDED'}
                     />
-                    <button type="submit" className="bg-brand-primary text-white rounded-full p-2.5 hover:bg-brand-primary-hover transition-colors" disabled={stream.status === 'ENDED'}>
+                    <button type="submit" className="bg-primary text-primary-content rounded-full p-2.5 hover:bg-primary-focus transition-colors" disabled={stream.status === 'ENDED'}>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.789 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
                     </button>
                 </form>
