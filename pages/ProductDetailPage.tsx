@@ -1,10 +1,9 @@
 
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-// FIX: Replaced v6 hooks with v5 equivalents for compatibility.
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
-import type { Product, ProductVariant, VariantAttribute } from '../types';
+import type { Product, ProductVariant, Review } from '../types';
 import Spinner from '../components/Spinner';
 import { useAuth } from '../hooks/useAuth';
 import { useCurrency } from '../hooks/useCurrency';
@@ -34,14 +33,28 @@ const Countdown: React.FC<{ targetDate: number }> = ({ targetDate }) => {
     )
 }
 
+const ReviewCard: React.FC<{ review: Review, color: string }> = ({ review, color }) => (
+    <div className={`${color} rounded-2xl p-6 shadow-sm hover:shadow-md transition duration-200`}>
+      <div className="flex items-center space-x-3 mb-4">
+        <img className="w-10 h-10 rounded-full object-cover" src={review.author.avatarUrl} alt={review.author.name}/>
+        <div>
+          <h4 className="font-medium text-gray-800">{review.author.name}</h4>
+          <StarRating rating={review.rating} />
+        </div>
+      </div>
+      <p className="text-gray-700 text-sm leading-relaxed">{review.text}</p>
+      <div className="mt-4 text-xs text-gray-500">{new Date(review.timestamp).toLocaleDateString()}</div>
+    </div>
+);
+
 const ProductDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const { user } = useAuth();
-    // FIX: Upgraded react-router-dom to v6. Replaced useHistory with useNavigate.
     const navigate = useNavigate();
     useTelegramBackButton(true);
 
     const [product, setProduct] = useState<Product | null>(null);
+    const [reviews, setReviews] = useState<Review[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [quantity, setQuantity] = useState(1);
@@ -57,7 +70,7 @@ const ProductDetailPage: React.FC = () => {
     useEffect(() => {
         if (!id) return;
         setIsLoading(true);
-        apiService.getProductById(id)
+        const fetchProduct = apiService.getProductById(id)
             .then(data => {
                 if (data) {
                     setProduct(data);
@@ -70,9 +83,16 @@ const ProductDetailPage: React.FC = () => {
                         });
                         setSelectedAttributes(initialAttrs);
                     }
+                    return apiService.getReviewsByUserId(data.seller.id);
                 }
+                return Promise.resolve([]);
             })
-            .finally(() => setIsLoading(false));
+            .then(reviewData => {
+                setReviews(reviewData);
+            });
+            
+        Promise.all([fetchProduct]).finally(() => setIsLoading(false));
+
     }, [id]);
 
     useEffect(() => {
@@ -85,17 +105,13 @@ const ProductDetailPage: React.FC = () => {
     }, [selectedAttributes, product]);
     
     const handleAttributeSelect = (attributeName: string, option: string) => {
-        setSelectedAttributes(prev => ({
-            ...prev,
-            [attributeName]: option
-        }));
+        setSelectedAttributes(prev => ({ ...prev, [attributeName]: option }));
     };
 
     const handleAddToCart = () => {
         if (!product) return;
         const price = selectedVariant?.salePrice || selectedVariant?.price || product.salePrice || product.price || 0;
         addToCart(product, quantity, selectedVariant || undefined, price, 'RETAIL');
-        alert(`${product.title} добавлен в корзину!`);
     };
 
     const handlePlaceBid = async (amount: number) => {
@@ -108,7 +124,6 @@ const ProductDetailPage: React.FC = () => {
     const handleContactSeller = async () => {
         if (!product) return;
         const chat = await apiService.findOrCreateChat(user.id, product.seller.id);
-        // FIX: Use navigate instead of history.push.
         navigate(`/chat/${chat.id}?productId=${product.id}`);
     };
     
@@ -123,13 +138,13 @@ const ProductDetailPage: React.FC = () => {
         
         if (salePrice && salePrice < price) {
             return (
-                <>
-                    <span className="text-4xl font-bold text-brand-primary">{getFormattedPrice(salePrice)}</span>
-                    <span className="text-xl text-brand-text-secondary line-through ml-2">{getFormattedPrice(price)}</span>
-                </>
+                <div className="mb-6">
+                    <span className="text-3xl font-bold text-neutral">{getFormattedPrice(salePrice)}</span>
+                    <span className="text-lg text-neutral/60 line-through ml-3">{getFormattedPrice(price)}</span>
+                </div>
             )
         }
-        return <span className="text-4xl font-bold text-brand-primary">{getFormattedPrice(price)}</span>
+        return <div className="mb-6"><span className="text-3xl font-bold text-neutral">{getFormattedPrice(price)}</span></div>
     }, [product, selectedVariant, getFormattedPrice]);
 
     if (isLoading) {
@@ -137,138 +152,130 @@ const ProductDetailPage: React.FC = () => {
     }
 
     if (!product) {
-        return <div className="text-center text-xl text-brand-text-secondary">Товар не найден.</div>;
+        return <div className="text-center text-xl text-neutral/70">Товар не найден.</div>;
     }
 
     const isOwner = product.seller.id === user.id;
     const hasVariants = product.variantAttributes && product.variantAttributes.length > 0;
     const isVariantInStock = hasVariants ? (selectedVariant ? selectedVariant.stock > 0 : false) : true;
+    const stockCount = hasVariants ? (selectedVariant?.stock ?? 0) : (Object.values(product.dynamicAttributes).find(v => String(v).toLowerCase() === 'stock') ?? 'N/A');
+
+    const reviewBgColors = ['bg-green-100', 'bg-yellow-100', 'bg-emerald-100', 'bg-lime-100', 'bg-teal-100', 'bg-yellow-50'];
 
     return (
-        <>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-                {/* Image Gallery */}
-                <div>
-                    <div className="aspect-square bg-brand-surface rounded-lg mb-4 flex items-center justify-center overflow-hidden">
-                        <img src={displayedImage} alt={`${product.title}`} className="max-w-full max-h-full object-contain"/>
+    <>
+      <div className="max-w-6xl mx-auto">
+        <div className="bg-base-100 rounded-3xl shadow-lg overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-8">
+            {/* Image Section */}
+            <div className="space-y-4">
+              <div className="main-image-container">
+                <img className="main-product-image w-full h-96 object-cover rounded-2xl" src={displayedImage} alt={product.title}/>
+              </div>
+              <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide">
+                {product.imageUrls.map((url, index) => (
+                    <img key={index} onClick={() => setSelectedImageIndex(index)} className={`w-20 h-20 object-cover rounded-lg border-2 cursor-pointer transition duration-200 ${selectedImageIndex === index && !selectedVariant?.imageUrl ? 'border-neutral' : 'border-transparent hover:border-neutral'}`} src={url} alt={`Thumbnail ${index + 1}`}/>
+                ))}
+              </div>
+            </div>
+            {/* Info Section */}
+            <div className="space-y-6">
+              <div>
+                <h1 className="font-bold text-4xl tracking-tight mb-4">{product.title}</h1>
+                <p className="text-neutral/70 mb-4">{product.description}</p>
+              </div>
+              
+              {displayPrice}
+
+              <div className="bg-stone-50 rounded-2xl p-6 mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <img className="w-12 h-12 rounded-full object-cover" src={product.seller.avatarUrl} alt={product.seller.name}/>
+                    <div>
+                      <h3 className="font-medium text-lg">{product.seller.name}</h3>
+                      <div className="flex items-center gap-1">
+                          <VerifiedBadge level={product.seller.verificationLevel} />
+                      </div>
                     </div>
-                    <div className="flex gap-2">
-                        {product.imageUrls.map((url, index) => (
-                            <button key={index} onClick={() => setSelectedImageIndex(index)} className={`w-20 h-20 bg-brand-surface rounded-md overflow-hidden ${selectedImageIndex === index && !selectedVariant?.imageUrl ? 'ring-2 ring-brand-primary' : ''}`}>
-                                <img src={url} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover"/>
-                            </button>
-                        ))}
-                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <StarRating rating={product.seller.rating} />
+                    <span className="text-sm text-neutral/60">({product.seller.rating.toFixed(1)})</span>
+                  </div>
                 </div>
-
-                {/* Product Info */}
-                <div className="flex flex-col">
-                    <h1 className="text-4xl font-bold text-white mb-4">{product.title}</h1>
-                    
-                    <div className="flex items-center gap-4 mb-6">
-                        <Link to={`/profile/${product.seller.id}`} className="flex items-center gap-3">
-                            <img src={product.seller.avatarUrl} alt={product.seller.name} className="w-12 h-12 rounded-full"/>
-                            <div>
-                                <p className="font-semibold text-white">{product.seller.name}</p>
-                                <div className="flex items-center gap-1">
-                                    <StarRating rating={product.seller.rating}/>
-                                    <span className="text-sm text-brand-text-secondary">{product.seller.rating.toFixed(1)}</span>
-                                </div>
-                            </div>
-                        </Link>
-                         <VerifiedBadge level={product.seller.verificationLevel} />
-                    </div>
-
-                    {product.authenticationStatus === 'AUTHENTICATED' && (
-                        <div className="mb-6">
-                            <AuthenticatedBadge 
-                                nftTokenId={product.nftTokenId} 
-                                reportUrl={product.authenticationReportUrl} 
-                                onClick={product.nftTokenId ? () => setIsNftModalOpen(true) : undefined} 
-                            />
-                        </div>
-                    )}
-                    
-                    {/* Variant Selectors */}
-                    {hasVariants && (
-                        <div className="space-y-4 mb-6">
-                            {product.variantAttributes?.map(attr => (
-                                <div key={attr.name}>
-                                    <label className="block text-sm font-medium text-brand-text-secondary mb-2">{attr.name}</label>
-                                    <div className="flex flex-wrap gap-2">
-                                        {attr.options.map(option => (
-                                            <button 
-                                                key={option}
-                                                onClick={() => handleAttributeSelect(attr.name, option)}
-                                                className={`px-4 py-2 text-sm rounded-md border-2 transition-colors ${selectedAttributes[attr.name] === option ? 'bg-brand-primary border-brand-primary text-white' : 'bg-brand-surface border-brand-border hover:border-brand-text-secondary text-brand-text-primary'}`}
-                                            >
-                                                {option}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                    
-                    {/* Auction / Price block */}
-                    {product.isAuction ? (
-                        <div className="bg-brand-surface p-6 rounded-lg mb-6">
-                            <h3 className="text-lg font-semibold text-white text-center mb-4">Аукцион заканчивается через:</h3>
-                            <div className="flex justify-center mb-6">
-                                <Countdown targetDate={product.auctionEnds || 0} />
-                            </div>
-                            <div className="flex justify-between items-baseline mb-4">
-                                <span className="text-brand-text-secondary">Текущая ставка:</span>
-                                <span className="text-2xl font-bold text-brand-primary">{product.currentBid || product.startingBid} USDT</span>
-                            </div>
-                            <button onClick={() => setIsBidModalOpen(true)} className="w-full bg-brand-primary hover:bg-brand-primary-hover text-white font-bold py-3 rounded-lg">
-                                Сделать ставку
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="mb-6">{displayPrice}</div>
-                    )}
-
-                    {/* Action Buttons */}
-                    {!product.isAuction && (
-                         <div className="flex items-center gap-4 mb-6">
-                            <input type="number" value={quantity} onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))} className="w-20 bg-brand-background border border-brand-border rounded-md p-3 text-center"/>
-                            <button onClick={handleAddToCart} disabled={isOwner || !isVariantInStock} className="flex-1 bg-brand-primary hover:bg-brand-primary-hover text-white font-bold py-3 px-4 rounded-lg disabled:bg-gray-500 disabled:cursor-not-allowed">
-                                {isOwner ? "Это ваш товар" : (!isVariantInStock ? "Нет в наличии" : "Добавить в корзину")}
-                            </button>
-                         </div>
-                    )}
-
-                     <button onClick={handleContactSeller} disabled={isOwner} className="w-full bg-brand-surface hover:bg-brand-border text-white font-bold py-3 px-4 rounded-lg disabled:opacity-50 mb-8">
-                        Написать продавцу
-                    </button>
-                    
-                    {/* Description and Attributes */}
-                    <div className="space-y-8">
-                        <div>
-                             <h2 className="text-2xl font-bold text-white mb-4 border-b border-brand-border pb-2">Описание</h2>
-                             <p className="text-brand-text-primary leading-relaxed whitespace-pre-wrap">{product.description}</p>
-                        </div>
-                        {Object.keys(product.dynamicAttributes).length > 0 && (
-                            <div>
-                                <h2 className="text-2xl font-bold text-white mb-4 border-b border-brand-border pb-2">Характеристики</h2>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-brand-text-primary">
-                                    {Object.entries(product.dynamicAttributes).map(([key, value]) => (
-                                        <div key={key} className="flex justify-between border-b border-brand-border/30 py-2">
-                                            <span className="text-brand-text-secondary">{key}:</span>
-                                            <span className="font-semibold text-right">{value}</span>
-                                        </div>
+              </div>
+              
+              {/* Action Buttons */}
+              <div className="space-y-4">
+                <button onClick={handleContactSeller} disabled={isOwner} className="btn btn-outline w-full rounded-full text-lg h-auto py-3">
+                  Написать продавцу
+                </button>
+                <button onClick={handleAddToCart} disabled={isOwner || !isVariantInStock} className="btn btn-neutral w-full rounded-full text-lg h-auto py-3 text-white">
+                  {isOwner ? "Это ваш товар" : (!isVariantInStock ? "Нет в наличии" : "Добавить в корзину")}
+                </button>
+              </div>
+              
+               {/* Additional Info / Variants */}
+              <div className="border-t pt-6">
+                {hasVariants && (
+                     <div className="space-y-4 mb-6">
+                        {product.variantAttributes?.map(attr => (
+                            <div key={attr.name}>
+                                <label className="block text-sm font-medium text-neutral/70 mb-2">{attr.name}</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {attr.options.map(option => (
+                                        <button 
+                                            key={option}
+                                            onClick={() => handleAttributeSelect(attr.name, option)}
+                                            className={`btn btn-sm ${selectedAttributes[attr.name] === option ? 'btn-neutral text-white' : 'btn-outline'}`}
+                                        >
+                                            {option}
+                                        </button>
                                     ))}
                                 </div>
                             </div>
-                        )}
+                        ))}
+                    </div>
+                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    {Object.entries(product.dynamicAttributes).map(([key, value]) => (
+                        <div key={key}>
+                            <span className="text-neutral/60">{key}:</span>
+                            <span className="font-medium ml-2">{value}</span>
+                        </div>
+                    ))}
+                    <div>
+                        <span className="text-neutral/60">В наличии:</span>
+                        <span className="font-medium ml-2 text-green-600">{stockCount} шт.</span>
                     </div>
                 </div>
+              </div>
+
             </div>
-            {product.isAuction && <BidModal isOpen={isBidModalOpen} onClose={() => setIsBidModalOpen(false)} onSubmit={handlePlaceBid} product={product} />}
-            {isNftModalOpen && <NFTCertificateModal product={product} onClose={() => setIsNftModalOpen(false)} />}
-        </>
+          </div>
+          {/* Reviews Section */}
+          {reviews.length > 0 && (
+            <div className="p-8 border-t border-gray-200">
+                <h3 className="text-2xl font-bold mb-6 text-center">Отзывы о продавце</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {reviews.slice(0, 6).map((review, index) => (
+                        <ReviewCard key={review.id} review={review} color={reviewBgColors[index % reviewBgColors.length]} />
+                    ))}
+                </div>
+                {reviews.length > 6 && (
+                    <div className="text-center mt-8">
+                        <button className="px-8 py-3 bg-gradient-to-r from-green-200 to-yellow-200 text-gray-800 font-medium rounded-full hover:from-green-300 hover:to-yellow-300 transition duration-200">
+                            Показать больше отзывов
+                        </button>
+                    </div>
+                )}
+            </div>
+          )}
+        </div>
+      </div>
+      {product.isAuction && <BidModal isOpen={isBidModalOpen} onClose={() => setIsBidModalOpen(false)} onSubmit={handlePlaceBid} product={product} />}
+      {isNftModalOpen && <NFTCertificateModal product={product} onClose={() => setIsNftModalOpen(false)} />}
+    </>
     );
 };
 

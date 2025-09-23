@@ -21,18 +21,18 @@ const categoryIcons: Record<string, JSX.Element> = {
 const CategoryGrid: React.FC = () => {
     return (
         <section>
-            <h2 className="text-3xl font-bold text-white mb-4">Категории</h2>
+            <h2 className="text-3xl font-bold text-neutral mb-4">Категории</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 {CATEGORIES.slice(0, 10).map(category => (
                     <Link 
                         key={category.name} 
                         to={`/products?category=${encodeURIComponent(category.name)}`}
-                        className="group relative block bg-brand-surface rounded-lg p-6 text-center transition-all duration-300 hover:shadow-2xl hover:shadow-brand-primary/20 hover:-translate-y-1"
+                        className="group relative block bg-base-100 rounded-lg p-6 text-center transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1"
                     >
-                        <div className="text-brand-primary group-hover:text-brand-secondary transition-colors duration-300 mb-2">
+                        <div className="text-primary group-hover:text-secondary transition-colors duration-300 mb-2">
                            {categoryIcons[category.name] || categoryIcons['Товары ручной работы']}
                         </div>
-                        <h3 className="font-semibold text-white">{category.name}</h3>
+                        <h3 className="font-semibold text-neutral">{category.name}</h3>
                     </Link>
                 ))}
             </div>

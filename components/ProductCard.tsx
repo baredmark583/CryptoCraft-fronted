@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Product } from '../types';
@@ -38,7 +39,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSoldView }) => {
 
   return (
     <>
-      <div className="card card-compact bg-neutral shadow-xl group transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1">
+      <div className="card card-compact bg-base-100 shadow-xl group transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1">
         <Link to={isSoldView ? '#' : `/product/${product.id}`} className={`block ${isSoldView ? 'pointer-events-none cursor-default' : ''}`}>
           <figure className="relative">
             <img
@@ -79,12 +80,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSoldView }) => {
           </figure>
 
           <div className="card-body">
-            <h2 className="card-title text-base text-brand-text-primary truncate" title={product.title}>
+            <h2 className="card-title text-base text-base-content truncate" title={product.title}>
               {product.title}
             </h2>
             <div className="flex items-center mt-1">
               <img src={product.seller.avatarUrl} alt={product.seller.name} className="w-5 h-5 rounded-full mr-2" />
-              <p className="text-sm text-brand-text-secondary truncate flex-shrink min-w-0">{product.seller.name}</p>
+              <p className="text-sm text-base-content/70 truncate flex-shrink min-w-0">{product.seller.name}</p>
               {product.seller.verificationLevel && product.seller.verificationLevel !== 'NONE' && (
                 <div className="ml-1.5 flex-shrink-0">
                   <VerifiedBadge level={product.seller.verificationLevel} />
@@ -98,7 +99,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSoldView }) => {
                  ) : (
                     <>
                         <p className="text-xl font-bold text-primary">{getFormattedPrice(hasSale ? product.salePrice! : (product.price || 0))}</p>
-                        {hasSale && <p className="text-sm text-brand-text-secondary line-through">{getFormattedPrice(product.price || 0)}</p>}
+                        {hasSale && <p className="text-sm text-base-content/60 line-through">{getFormattedPrice(product.price || 0)}</p>}
                     </>
                  )}
               </div>

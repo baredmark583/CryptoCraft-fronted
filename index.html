@@ -9,36 +9,25 @@
     <script src="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.js"></script>
     <script>
       tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              'brand-primary': '#F97316', // Orange-500
-              'brand-primary-hover': '#EA580C', // Orange-600
-              'brand-secondary': '#FB923C', // Orange-400
-              'brand-background': '#1C1917', // Stone-900
-              'brand-surface': '#292524', // Stone-800
-              'brand-border': '#44403C', // Stone-700
-              'brand-text-primary': '#F5F5F4', // Stone-100
-              'brand-text-secondary': '#A8A29E', // Stone-400
-            },
-          },
-        },
+        // Старая тема 'brand-*' удалена
         daisyui: {
           themes: [
             {
               cryptocraft: {
-                "primary": "#F97316",
-                "secondary": "#FB923C",
-                "accent": "#37CDBE",
-                "neutral": "#292524",
-                "base-100": "#1C1917",
-                "base-content": "#F5F5F4",
-                "info": "#3ABFF8",
-                "success": "#36D399",
-                "warning": "#FBBD23",
-                "error": "#F87272",
-                "--rounded-box": "0.5rem", // 8px, as in ProductCard
-                "--rounded-btn": "0.5rem", // 8px for buttons
+                "primary": "#b45309",   // amber-700 -> Теплый, песочно-коричневый
+                "secondary": "#10b981", // emerald-500 -> Мягкий зеленый
+                "accent": "#f472b6",    // pink-400
+                "neutral": "#292524",   // stone-800 -> Для темного текста
+                "base-100": "#ffffff",   // white -> Для фона карточек
+                "base-200": "#fafaf9",   // stone-50 -> Для основного фона страницы
+                "base-300": "#e7e5e4",   // stone-200 -> Для границ
+                "base-content": "#292524", // stone-800 -> Основной цвет текста
+                "info": "#0ea5e9",      // sky-500
+                "success": "#22c55e",    // green-500
+                "warning": "#f59e0b",    // amber-500
+                "error": "#ef4444",      // red-500
+                "--rounded-box": "1.5rem", // 24px, для карточек с классом .rounded-3xl
+                "--rounded-btn": "9999px", // для кнопок с классом .rounded-full
               },
             },
           ],
@@ -46,6 +35,8 @@
       }
     </script>
     <style>
+      @import url('https://rsms.me/inter/inter.css');
+      html { font-family: 'Inter', sans-serif; }
       @keyframes fly-up {
         from {
           transform: translateY(0) scale(1);

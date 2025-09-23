@@ -33,8 +33,8 @@ const FeaturedProducts: React.FC = () => {
     return (
         <section className="mb-12">
             <div className="mb-4">
-                 <h2 className="text-3xl font-bold text-white mb-1">✨ Промо-товары</h2>
-                 <p className="text-brand-text-secondary">Особые предложения от наших лучших мастеров.</p>
+                 <h2 className="text-3xl font-bold text-neutral mb-1">✨ Промо-товары</h2>
+                 <p className="text-neutral/70">Особые предложения от наших лучших мастеров.</p>
             </div>
             <div className="flex space-x-6 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
                 {products.map(product => (
@@ -79,7 +79,7 @@ const PersonalizedFeed: React.FC = () => {
     const renderContent = () => {
         if (isLoading) {
             return (
-                <div className="flex justify-center py-16 bg-brand-surface rounded-lg mt-6">
+                <div className="flex justify-center py-16 bg-base-100 rounded-lg mt-6">
                     <Spinner />
                 </div>
             );
@@ -87,7 +87,7 @@ const PersonalizedFeed: React.FC = () => {
 
         if (activeTab === 'forYou') {
             if (forYouProducts.length === 0) {
-                 return <div className="text-center py-16 bg-brand-surface rounded-lg mt-6"><p className="text-brand-text-secondary">Мы пока не можем подобрать вам рекомендации. Совершите первую покупку!</p></div>;
+                 return <div className="text-center py-16 bg-base-100 rounded-lg mt-6"><p className="text-neutral/60">Мы пока не можем подобрать вам рекомендации. Совершите первую покупку!</p></div>;
             }
             return (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6">
@@ -100,7 +100,7 @@ const PersonalizedFeed: React.FC = () => {
 
         if (activeTab === 'following') {
             if (!followingFeed || followingFeed.items.length === 0) {
-                 return <div className="text-center py-16 bg-brand-surface rounded-lg mt-6"><p className="text-brand-text-secondary">{followingFeed?.isDiscovery ? 'Подпишитесь на мастеров, чтобы видеть их обновления здесь.' : 'В вашей ленте пока нет постов.'}</p></div>;
+                 return <div className="text-center py-16 bg-base-100 rounded-lg mt-6"><p className="text-neutral/60">{followingFeed?.isDiscovery ? 'Подпишитесь на мастеров, чтобы видеть их обновления здесь.' : 'В вашей ленте пока нет постов.'}</p></div>;
             }
             return (
                 <div className="flex space-x-6 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide mt-6">
@@ -118,11 +118,11 @@ const PersonalizedFeed: React.FC = () => {
 
     return (
         <section className="mb-12">
-            <div className="flex items-center border-b border-brand-border mb-4">
-                <button onClick={() => setActiveTab('forYou')} className={`py-3 px-4 text-lg font-semibold transition-colors ${activeTab === 'forYou' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-brand-text-secondary hover:text-white'}`}>
+            <div className="flex items-center border-b border-base-300 mb-4">
+                <button onClick={() => setActiveTab('forYou')} className={`py-3 px-4 text-lg font-semibold transition-colors ${activeTab === 'forYou' ? 'text-primary border-b-2 border-primary' : 'text-neutral/60 hover:text-neutral'}`}>
                     Для вас
                 </button>
-                 <button onClick={() => setActiveTab('following')} className={`py-3 px-4 text-lg font-semibold transition-colors ${activeTab === 'following' ? 'text-brand-primary border-b-2 border-brand-primary' : 'text-brand-text-secondary hover:text-white'}`}>
+                 <button onClick={() => setActiveTab('following')} className={`py-3 px-4 text-lg font-semibold transition-colors ${activeTab === 'following' ? 'text-primary border-b-2 border-primary' : 'text-neutral/60 hover:text-neutral'}`}>
                     Подписки
                 </button>
             </div>
