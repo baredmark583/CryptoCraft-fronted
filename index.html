@@ -9,25 +9,24 @@
     <script src="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.js"></script>
     <script>
       tailwind.config = {
-        // Старая тема 'brand-*' удалена
         daisyui: {
           themes: [
             {
               cryptocraft: {
-                "primary": "#b45309",   // amber-700 -> Теплый, песочно-коричневый
-                "secondary": "#10b981", // emerald-500 -> Мягкий зеленый
-                "accent": "#f472b6",    // pink-400
-                "neutral": "#292524",   // stone-800 -> Для темного текста
-                "base-100": "#ffffff",   // white -> Для фона карточек
-                "base-200": "#fafaf9",   // stone-50 -> Для основного фона страницы
-                "base-300": "#e7e5e4",   // stone-200 -> Для границ
-                "base-content": "#292524", // stone-800 -> Основной цвет текста
-                "info": "#0ea5e9",      // sky-500
-                "success": "#22c55e",    // green-500
-                "warning": "#f59e0b",    // amber-500
-                "error": "#ef4444",      // red-500
-                "--rounded-box": "1.5rem", // 24px, для карточек с классом .rounded-3xl
-                "--rounded-btn": "9999px", // для кнопок с классом .rounded-full
+                "primary": "#57534e",       // stone-600 -> a sophisticated dark brown
+                "secondary": "#059669",     // emerald-600 -> muted green
+                "accent": "#fb7185",        // rose-400 -> soft pink
+                "neutral": "#292524",       // stone-800 -> for neutral dark elements
+                "base-100": "#fff7ed",       // orange-50 -> "powder" color for cards
+                "base-200": "#ffedd5",       // orange-100 -> "cookie dough" page background
+                "base-300": "#fed7aa",       // orange-200 -> "light cookie" for borders
+                "base-content": "#44403c",   // stone-700 -> softer dark brown text
+                "info": "#3b82f6",          // blue-500
+                "success": "#16a34a",        // green-600
+                "warning": "#f59e0b",        // amber-500
+                "error": "#ef4444",          // red-500
+                "--rounded-box": "1.5rem",
+                "--rounded-btn": "9999px",
               },
             },
           ],
@@ -107,7 +106,6 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
 </head>
   <body>
     <div id="root"></div>
