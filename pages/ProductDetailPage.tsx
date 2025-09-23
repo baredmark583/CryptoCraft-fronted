@@ -14,8 +14,37 @@ import { useTelegramBackButton } from '../hooks/useTelegram';
 import AuthenticatedBadge from '../components/AuthenticatedBadge';
 import NFTCertificateModal from '../components/NFTCertificateModal';
 
+const Countdown: React.FC<{ targetDate: number }> = ({ targetDate }) => {
+    const { days, hours, minutes, seconds, isFinished } = useCountdown(targetDate);
+    
+    if (isFinished) {
+        return <span className="text-red-500 font-bold">Аукцион завершен</span>;
+    }
+    
+    return (
+        <div className="flex gap-4 text-center">
+            <div><span className="text-3xl font-bold">{days}</span><span className="block text-xs">дней</span></div>
+            <div><span className="text-3xl font-bold">{hours}</span><span className="block text-xs">часов</span></div>
+            <div><span className="text-3xl font-bold">{minutes}</span><span className="block text-xs">минут</span></div>
+            <div><span className="text-3xl font-bold">{seconds}</span><span className="block text-xs">секунд</span></div>
+        </div>
+    )
+}
 
-// ... (вспомогательные компоненты Countdown и ReviewCard остаются без изменений)
+const ReviewCard: React.FC<{ review: Review }> = ({ review }) => (
+    <div className="bg-base-200 p-6 rounded-2xl">
+        <div className="flex items-center space-x-3 mb-4">
+            <img className="w-10 h-10 rounded-full object-cover" src={review.author.avatarUrl} alt={review.author.name}/>
+            <div>
+                <h4 className="font-bold">{review.author.name}</h4>
+                <StarRating rating={review.rating} />
+            </div>
+        </div>
+        <p className="text-base-content/70 text-sm leading-relaxed">{review.text}</p>
+        <div className="mt-4 text-xs text-base-content/50">{new Date(review.timestamp).toLocaleDateString()}</div>
+    </div>
+);
+
 
 const ProductDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -36,7 +65,6 @@ const ProductDetailPage: React.FC = () => {
     const { getFormattedPrice } = useCurrency();
     const { addToCart } = useCart();
     
-    // ... (вся ваша логика: fetch, useEffects, handlers - остается без изменений)
     useEffect(() => {
         if (!id) return;
         setIsLoading(true);
@@ -44,7 +72,6 @@ const ProductDetailPage: React.FC = () => {
             .then(data => {
                 if (data) {
                     setProduct(data);
-                    // Инициализация атрибутов
                     if (data.variantAttributes && data.variantAttributes.length > 0) {
                         const initialAttrs: Record<string, string> = {};
                         data.variantAttributes.forEach(attr => {
@@ -101,7 +128,6 @@ const ProductDetailPage: React.FC = () => {
         return product?.imageUrls[selectedImageIndex] || '';
     }, [selectedVariant, product, selectedImageIndex]);
 
-    // ... (Компонент displayPrice убираем отсюда, его JSX будет прямо в сайдбаре)
 
     if (isLoading) {
         return <div className="flex justify-center items-center h-96"><Spinner /></div>;
@@ -113,18 +139,89 @@ const ProductDetailPage: React.FC = () => {
 
     const isOwner = product.seller.id === user.id;
     const hasVariants = product.variantAttributes && product.variantAttributes.length > 0;
-    const isVariantInStock = hasVariants ? (selectedVariant ? selectedVariant.stock > 0 : false) : product.stock > 0;
-    const stockCount = hasVariants ? (selectedVariant?.stock ?? 0) : product.stock;
+    
+    const currentDisplayableVariant = useMemo(() => {
+        if (hasVariants) {
+            return selectedVariant;
+        }
+        return product?.variants?.[0] || null;
+    }, [hasVariants, selectedVariant, product]);
+
+    const isStockAvailable = !hasVariants || (currentDisplayableVariant?.stock ?? 0) > 0;
+    const stockCount = hasVariants ? (currentDisplayableVariant?.stock ?? 0) : 0;
     
     return (
     <>
         <div className="container mx-auto px-4 py-8">
-            {/* --- ОСНОВНАЯ СЕТКА --- */}
-            {/* Меняем grid-cols-2 на grid-cols-3 для более гибкого сайдбара */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
 
+                {/* --- ПРАВАЯ КОЛОНКА (Сайдбар с действиями) --- */}
+                {/* На мобильных этот блок будет ПЕРВЫМ (`order-1`) */}
+                <div className="lg:col-span-1 order-1 lg:order-2 lg:sticky lg:top-24 self-start">
+                    <div className="bg-base-200 rounded-2xl p-6 space-y-6">
+                        <div>
+                            <h1 className="font-bold text-3xl tracking-tight mb-2">{product.title}</h1>
+                        </div>
+                        
+                        <div>
+                            {(() => {
+                                const priceSource = hasVariants ? selectedVariant : (product.variants?.[0] || product);
+                                const price = priceSource?.price ?? product?.price ?? 0;
+                                const salePrice = priceSource?.salePrice ?? product?.salePrice;
+                                
+                                if (salePrice && salePrice < price) {
+                                    return (
+                                        <div>
+                                            <span className="text-4xl font-bold text-base-content">{getFormattedPrice(salePrice)}</span>
+                                            <span className="text-xl text-base-content/60 line-through ml-3">{getFormattedPrice(price)}</span>
+                                        </div>
+                                    )
+                                }
+                                return <div><span className="text-4xl font-bold text-base-content">{getFormattedPrice(price)}</span></div>
+                            })()}
+                        </div>
+                        
+                        {hasVariants && (
+                            <div className="space-y-4 border-t border-base-300 pt-6">
+                                {product.variantAttributes?.map(attr => (
+                                    <div key={attr.name}>
+                                        <label className="block text-sm font-medium text-base-content/70 mb-2">{attr.name}</label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {attr.options.map(option => (
+                                                <button 
+                                                    key={option}
+                                                    onClick={() => handleAttributeSelect(attr.name, option)}
+                                                    className={`px-4 py-2 text-sm rounded-lg transition-all duration-200 ${selectedAttributes[attr.name] === option ? 'bg-primary text-primary-content scale-105 shadow-md' : 'bg-base-100 hover:bg-base-300'}`}
+                                                >
+                                                    {option}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        
+                        <div className="text-sm">
+                            <span className="text-base-content/60">В наличии:</span>
+                            <span className={`font-bold ml-2 ${isStockAvailable ? 'text-green-500' : 'text-red-500'}`}>
+                                {isStockAvailable ? (!hasVariants ? 'В наличии' : `${stockCount} шт.`) : 'Нет в наличии'}
+                            </span>
+                        </div>
+
+                        <div className="space-y-3 pt-4 border-t border-base-300">
+                            <button onClick={handleAddToCart} disabled={isOwner || !isStockAvailable} className="w-full text-center bg-primary text-primary-content py-3.5 px-4 rounded-xl text-lg font-bold hover:bg-primary-focus transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed">
+                                {isOwner ? "Это ваш товар" : (!isStockAvailable ? "Нет в наличии" : "Добавить в корзину")}
+                            </button>
+                            <button onClick={handleContactSeller} disabled={isOwner} className="w-full text-center bg-base-300 py-3.5 px-4 rounded-xl text-lg font-bold hover:bg-base-100 transition-colors disabled:opacity-50">
+                                Написать продавцу
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 {/* --- ЛЕВАЯ КОЛОНКА (Основной контент) --- */}
-                {/* На мобильных этот блок будет ВТОРЫМ (`order-2`), после сайдбара */}
+                {/* На мобильных этот блок будет ВТОРЫМ (`order-2`) */}
                 <div className="lg:col-span-2 order-2 lg:order-1">
                     {/* -- ГАЛЕРЕЯ -- */}
                     <div className="space-y-4 mb-8">
@@ -152,9 +249,9 @@ const ProductDetailPage: React.FC = () => {
                             </div>
                             <div className="text-right">
                                 <StarRating rating={product.seller.rating} />
-                                <Link to={`/seller/${product.seller.id}/reviews`} className="text-sm text-base-content/60 hover:text-primary mt-1">
+                                <span className="text-sm text-base-content/60 hover:text-primary mt-1">
                                     {reviews.length} отзывов
-                                </Link>
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -175,74 +272,6 @@ const ProductDetailPage: React.FC = () => {
                         </div>
                     </div>
                 </div>
-
-                {/* --- ПРАВАЯ КОЛОНКА (Сайдбар с действиями) --- */}
-                {/* Этот блок на мобильных будет ПЕРВЫМ (`order-1`) после галереи */}
-                {/* `lg:sticky lg:top-8` делает его "липким" на десктопе */}
-                <div className="lg:col-span-1 order-1 lg:order-2 lg:sticky lg:top-8 self-start">
-                    <div className="bg-base-200 rounded-2xl p-6 space-y-6">
-                        <div>
-                            <h1 className="font-bold text-3xl tracking-tight mb-2">{product.title}</h1>
-                        </div>
-                        
-                        {/* -- ЦЕНА -- */}
-                        <div>
-                            {(() => {
-                                const price = selectedVariant?.price ?? product?.price ?? 0;
-                                const salePrice = selectedVariant?.salePrice ?? product?.salePrice;
-                                if (salePrice && salePrice < price) {
-                                    return (
-                                        <div>
-                                            <span className="text-4xl font-bold text-base-content">{getFormattedPrice(salePrice)}</span>
-                                            <span className="text-xl text-base-content/60 line-through ml-3">{getFormattedPrice(price)}</span>
-                                        </div>
-                                    )
-                                }
-                                return <div><span className="text-4xl font-bold text-base-content">{getFormattedPrice(price)}</span></div>
-                            })()}
-                        </div>
-                        
-                        {/* -- ВАРИАНТЫ -- */}
-                        {hasVariants && (
-                            <div className="space-y-4 border-t border-base-300 pt-6">
-                                {product.variantAttributes?.map(attr => (
-                                    <div key={attr.name}>
-                                        <label className="block text-sm font-medium text-base-content/70 mb-2">{attr.name}</label>
-                                        <div className="flex flex-wrap gap-2">
-                                            {attr.options.map(option => (
-                                                <button 
-                                                    key={option}
-                                                    onClick={() => handleAttributeSelect(attr.name, option)}
-                                                    className={`px-4 py-2 text-sm rounded-lg transition-all duration-200 ${selectedAttributes[attr.name] === option ? 'bg-primary text-primary-content scale-105 shadow-md' : 'bg-base-100 hover:bg-base-300'}`}
-                                                >
-                                                    {option}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                        
-                        {/* -- СТАТУС НАЛИЧИЯ -- */}
-                        <div className="text-sm">
-                            <span className="text-base-content/60">В наличии:</span>
-                            <span className={`font-bold ml-2 ${isVariantInStock ? 'text-green-500' : 'text-red-500'}`}>
-                                {isVariantInStock ? `${stockCount} шт.` : 'Нет в наличии'}
-                            </span>
-                        </div>
-
-                        {/* -- КНОПКИ ДЕЙСТВИЙ -- */}
-                        <div className="space-y-3 pt-4 border-t border-base-300">
-                            <button onClick={handleAddToCart} disabled={isOwner || !isVariantInStock} className="w-full text-center bg-primary text-primary-content py-3.5 px-4 rounded-xl text-lg font-bold hover:bg-primary-focus transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed">
-                                {isOwner ? "Это ваш товар" : (!isVariantInStock ? "Нет в наличии" : "Добавить в корзину")}
-                            </button>
-                            <button onClick={handleContactSeller} disabled={isOwner} className="w-full text-center bg-base-300 py-3.5 px-4 rounded-xl text-lg font-bold hover:bg-base-100 transition-colors disabled:opacity-50">
-                                Написать продавцу
-                            </button>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             {/* -- ОТЗЫВЫ -- */}
@@ -251,24 +280,14 @@ const ProductDetailPage: React.FC = () => {
                     <h3 className="text-3xl font-bold mb-6 text-center">Отзывы о продавце</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {reviews.slice(0, 3).map((review) => (
-                            <div key={review.id} className="bg-base-200 p-6 rounded-2xl">
-                                <div className="flex items-center space-x-3 mb-4">
-                                    <img className="w-10 h-10 rounded-full object-cover" src={review.author.avatarUrl} alt={review.author.name}/>
-                                    <div>
-                                        <h4 className="font-bold">{review.author.name}</h4>
-                                        <StarRating rating={review.rating} />
-                                    </div>
-                                </div>
-                                <p className="text-base-content/70 text-sm leading-relaxed">{review.text}</p>
-                                <div className="mt-4 text-xs text-base-content/50">{new Date(review.timestamp).toLocaleDateDateString()}</div>
-                            </div>
+                           <ReviewCard key={review.id} review={review} />
                         ))}
                     </div>
                     {reviews.length > 3 && (
                         <div className="text-center mt-8">
-                             <Link to={`/seller/${product.seller.id}/reviews`} className="btn btn-ghost">
+                             <span className="p-4 rounded-lg bg-base-200 hover:bg-base-300 transition-colors">
                                  Показать все отзывы ({reviews.length})
-                            </Link>
+                            </span>
                         </div>
                     )}
                 </div>
