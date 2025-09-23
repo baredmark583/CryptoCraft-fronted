@@ -105,32 +105,7 @@ let forumPosts: ForumPost[] = [];
 let promoCodes: PromoCode[] = [];
 let disputes: Dispute[] = [];
 let liveStreams: LiveStream[] = [];
-let proposals: Proposal[] = [
-    {
-        id: 'prop-1',
-        title: 'Уменьшить комиссию платформы с 2% до 1.5%',
-        description: 'Предлагаю снизить комиссию для всех Pro-продавцов. Это увеличит их доход и привлечет больше качественных продавцов на платформу. Снижение комиссии будет компенсировано увеличением объема торгов. Мы также можем ввести многоуровневую систему комиссий в будущем, но для начала 1.5% - это хороший шаг.',
-        proposer: users[0], // Pottery Master
-        createdAt: Date.now() - 2 * 24 * 60 * 60 * 1000, // 2 days ago
-        endsAt: Date.now() + 5 * 24 * 60 * 60 * 1000, // in 5 days
-        status: 'ACTIVE',
-        votesFor: 15,
-        votesAgainst: 3,
-        voters: {'user-2': 'FOR', 'user-3': 'AGAINST'}
-    },
-    {
-        id: 'prop-2',
-        title: 'Создать фонд для маркетинга в Telegram',
-        description: 'Выделить 10,000 USDT из казны DAO для проведения рекламной кампании в тематических Telegram-каналах с целью привлечения новой аудитории покупателей. Кампания будет нацелена на каналы о рукоделии, винтаже и искусстве. Отчет о расходах будет предоставляться ежемесячно.',
-        proposer: users[1], // Jewelry Queen
-        createdAt: Date.now() - 10 * 24 * 60 * 60 * 1000, // 10 days ago
-        endsAt: Date.now() - 3 * 24 * 60 * 60 * 1000, // ended 3 days ago
-        status: 'PASSED',
-        votesFor: 42,
-        votesAgainst: 8,
-        voters: {}
-    }
-];
+let proposals: Proposal[] = [];
 
 
 export const apiService = {
