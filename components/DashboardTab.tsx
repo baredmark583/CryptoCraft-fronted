@@ -145,7 +145,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ setActiveTab, sellerId }) =
                 {/* AI Focus */}
                 <section>
                      {/* FIX: Replaced redundant comparison `aiFocusState === 'loading'` with `false` to resolve TypeScript error. */}
-                     {aiFocusState === 'idle' && <AiFocusGenerator onGenerate={handleGenerateFocus} isLoading={false} />}
+                     {aiFocusState === 'idle' && <AiFocusGenerator onGenerate={handleGenerateFocus} isLoading={aiFocusState === 'loading'} />}
                      {aiFocusState === 'loading' && (
                         <div className="bg-brand-surface p-6 rounded-lg flex flex-col items-center justify-center min-h-[190px]">
                             <Spinner />

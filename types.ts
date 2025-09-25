@@ -19,6 +19,8 @@ export interface User {
     registrationNumber: string;
   };
   tonWalletAddress?: string;
+  // FIX: Add email property to User interface for admin panel compatibility.
+  email?: string;
 }
 
 export type AuthenticationStatus =
@@ -86,6 +88,12 @@ export interface Product {
   authenticationReportUrl?: string;
   nftTokenId?: string;
   nftContractAddress?: string;
+  
+  // Admin-related fields
+  // FIX: Add status, rejectionReason, and createdAt to Product interface for admin panel compatibility.
+  status?: 'Pending Moderation' | 'Active' | 'Rejected';
+  rejectionReason?: string;
+  createdAt?: string;
 }
 
 export interface Review {
