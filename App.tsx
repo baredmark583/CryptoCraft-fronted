@@ -1,5 +1,6 @@
 
 
+
 import React from 'react';
 // FIX: Upgraded react-router-dom to v6.
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
@@ -11,6 +12,7 @@ import { CollectionsProvider } from './hooks/useCollections';
 import { CurrencyProvider } from './hooks/useCurrency';
 import { CartProvider } from './hooks/useCart';
 import { WishlistProvider } from './hooks/useWishlist';
+import { IconProvider } from './hooks/useIcons';
 
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -89,7 +91,9 @@ const App: React.FC = () => {
               <CurrencyProvider>
                 <CartProvider>
                   <WishlistProvider>
-                    <MainLayout />
+                    <IconProvider>
+                      <MainLayout />
+                    </IconProvider>
                   </WishlistProvider>
                 </CartProvider>
               </CurrencyProvider>

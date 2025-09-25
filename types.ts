@@ -395,3 +395,10 @@ export type ImportedListingData = GeneratedListing & {
   saleType: 'FIXED_PRICE' | 'AUCTION';
   giftWrapAvailable: boolean;
 };
+
+// --- NEW TYPES ---
+export interface Icon {
+    id: string;
+    name: string;
+    svgContent: string;
+}

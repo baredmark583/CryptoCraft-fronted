@@ -4,7 +4,7 @@ import type {
   User, Product, Review, Chat, Message, Order, Notification, Collection,
   WorkshopPost, WorkshopComment, ForumThread, ForumPost, SellerAnalytics, FeedItem,
   PromoCode, SellerDashboardData, CartItem, ShippingAddress, MessageContent, Dispute, DisputeMessage, LiveStream, OrderItem, TrackingEvent, Proposal, VoteChoice,
-  GeneratedListing, VerificationAnalysis, AiInsight, AiFocus, ImportedListingData
+  GeneratedListing, VerificationAnalysis, AiInsight, AiFocus, ImportedListingData, Icon
 } from '../types';
 
 
@@ -70,86 +70,175 @@ const products: Product[] = [
   { id: 'prod-2', title: 'Silver Necklace with Moonstone', description: 'Elegant sterling silver necklace featuring a mesmerizing moonstone pendant. A timeless piece.', price: 120, salePrice: 99, imageUrls: ['https://picsum.photos/seed/prod2/600/400'], category: 'Ювелирные изделия', seller: users[1], dynamicAttributes: {'Металл': 'Серебро 925', 'Камень': 'Лунный камень'}, isPromoted: true, purchaseCost: 60, weight: 150, productType: 'PHYSICAL' },
   { id: 'prod-3', title: 'Кожаная куртка', description: 'Стильная куртка из натуральной кожи. Ручная работа.', price: 250, imageUrls: ['https://picsum.photos/seed/prod3/600/400'], category: 'Одежда и аксессуары', seller: users[2], dynamicAttributes: { 'Материал': 'Кожа', 'Размер': 'L', 'Цвет': 'Черный' }, productType: 'PHYSICAL' },
   { id: 'prod-4', title: 'Шаблон для Figma "E-commerce"', description: 'Готовый шаблон для дизайна интернет-магазина. Легко редактировать.', price: 50, imageUrls: ['https://picsum.photos/seed/prod4/600/400'], category: 'Цифровые товары', seller: users[3], dynamicAttributes: { 'Тип файла': 'FIG', 'Лицензия': 'Personal Use' }, productType: 'DIGITAL', digitalFileUrl: 'mock_download_link' },
-  { id: 'prod-5', title: 'Игровой ноутбук Razer Blade 15', description: 'Мощный игровой ноутбук в отличном состоянии. Intel Core i7, RTX 3070, 16GB RAM, 1TB SSD.', price: 1150, imageUrls: ['https://picsum.photos/seed/prod5/600/400'], category: 'Электроника', seller: users[4], dynamicAttributes: { 'Бренд': 'Razer', 'Модель': 'Blade 15', 'Состояние': 'Б/у' }, isAuthenticationAvailable: true, authenticationStatus: 'NONE', productType: 'PHYSICAL' },
-  { id: 'prod-6', title: 'Audi A6 2019', description: 'Автомобиль в идеальном состоянии. Один владелец. Полная комплектация. Пробег 85000 км.', price: 25000, imageUrls: ['https://picsum.photos/seed/prod6/600/400'], category: 'Автомобили', seller: users[4], dynamicAttributes: { 'Бренд': 'Audi', 'Модель': 'A6', 'Год выпуска': 2019, 'Пробег, км': 85000, 'VIN-код': 'WAUZZZF27KN000123' }, isAuthenticationAvailable: true, authenticationStatus: 'AUTHENTICATED', nftTokenId: 'mock_nft_123', productType: 'PHYSICAL' },
-  { id: 'prod-7', title: 'Винтажная брошь', description: 'Элегантная винтажная брошь 60-х годов. Серебро с эмалью.', price: 95, imageUrls: ['https://picsum.photos/seed/prod7/600/400'], category: 'Винтаж', seller: users[1], dynamicAttributes: { 'Период': '1960-e', 'Состояние': 'Отличное' }, productType: 'PHYSICAL' },
-  { id: 'prod-8', title: 'Акварельный пейзаж', description: 'Оригинальная акварельная работа. Размер 30х40 см.', price: 150, imageUrls: ['https://picsum.photos/seed/prod8/600/400'], category: 'Искусство и коллекционирование', seller: users[3], dynamicAttributes: { 'Автор': 'Digital Artist', 'Стиль': 'Реализм' }, productType: 'PHYSICAL' },
+  { id: 'prod-5', title: 'iPhone 14 Pro Max', description: 'Used but in great condition. Unlocked. 256GB.', price: 950, imageUrls: ['https://picsum.photos/seed/prod5/600/400'], category: 'Электроника', seller: users[4], dynamicAttributes: { 'Бренд': 'Apple', 'Модель': 'iPhone 14 Pro Max', 'Состояние': 'Б/у' }, productType: 'PHYSICAL', isAuthenticationAvailable: true, authenticationStatus: 'NONE' },
+  { id: 'prod-6', title: 'BMW X5 2022', description: 'Low mileage, one owner. Excellent condition.', price: 55000, imageUrls: ['https://picsum.photos/seed/prod6/600/400'], category: 'Автомобили', seller: users[4], dynamicAttributes: { 'Бренд': 'BMW', 'Модель': 'X5', 'Год выпуска': 2022, 'Пробег, км': 15000 }, productType: 'PHYSICAL', isAuthenticationAvailable: true, authenticationStatus: 'PENDING' },
+  { id: 'prod-7', title: 'Аукцион: Картина "Закат"', description: 'Уникальная картина маслом на холсте.', imageUrls: ['https://picsum.photos/seed/prod7/600/400'], category: 'Искусство и коллекционирование', seller: users[3], dynamicAttributes: { 'Автор': 'Неизвестен', 'Стиль': 'Импрессионизм' }, isAuction: true, auctionEnds: Date.now() + 3 * 24 * 60 * 60 * 1000, startingBid: 200, currentBid: 250, bidders: ['user-1', 'buyer-1'], productType: 'PHYSICAL' },
+  { id: 'prod-8', title: 'Authenticated Rolex Watch', description: 'Vintage Rolex, authenticated by our experts. Comes with an NFT certificate.', price: 8500, imageUrls: ['https://picsum.photos/seed/prod8/600/400'], category: 'Электроника', seller: users[4], dynamicAttributes: { 'Бренд': 'Rolex', 'Модель': 'Submariner', 'Состояние': 'Б/у' }, productType: 'PHYSICAL', isAuthenticationAvailable: true, authenticationStatus: 'AUTHENTICATED', authenticationReportUrl: 'mock_report_url', nftTokenId: '0x123...abc', nftContractAddress: '0x456...def' },
+  {
+    id: 'prod-9',
+    title: 'Customizable T-Shirt',
+    description: 'High-quality cotton t-shirt. Choose your color and size.',
+    imageUrls: ['https://picsum.photos/seed/prod9/600/400'],
+    category: 'Одежда и аксессуары',
+    seller: users[2],
+    dynamicAttributes: { 'Материал': 'Хлопок' },
+    productType: 'PHYSICAL',
+    variantAttributes: [
+      { name: 'Цвет', options: ['Красный', 'Синий', 'Черный'] },
+      { name: 'Размер', options: ['S', 'M', 'L'] },
+    ],
+    variants: [
+      { id: 'v1', attributes: { 'Цвет': 'Красный', 'Размер': 'S' }, price: 25, stock: 10, imageUrl: 'https://picsum.photos/seed/prod9-red-s/600/400' },
+      { id: 'v2', attributes: { 'Цвет': 'Красный', 'Размер': 'M' }, price: 25, stock: 15 },
+      { id: 'v3', attributes: { 'Цвет': 'Красный', 'Размер': 'L' }, price: 25, stock: 5, salePrice: 22 },
+      { id: 'v4', attributes: { 'Цвет': 'Синий', 'Размер': 'S' }, price: 26, stock: 8 },
+      { id: 'v5', attributes: { 'Цвет': 'Синий', 'Размер': 'M' }, price: 26, stock: 12 },
+      { id: 'v6', attributes: { 'Цвет': 'Синий', 'Размер': 'L' }, price: 26, stock: 9 },
+      { id: 'v7', attributes: { 'Цвет': 'Черный', 'Размер': 'S' }, price: 25, stock: 20 },
+      { id: 'v8', attributes: { 'Цвет': 'Черный', 'Размер': 'M' }, price: 25, stock: 0 },
+      { id: 'v9', attributes: { 'Цвет': 'Черный', 'Размер': 'L' }, price: 25, stock: 18 },
+    ],
+  },
+];
+
+
+let reviews: Review[] = [
+    { id: 'rev-1', productId: 'prod-1', author: users[5], rating: 5, text: 'Отличная чашка, очень качественная работа!', timestamp: Date.now() - 86400000 },
+    { id: 'rev-2', productId: 'prod-2', author: users[5], rating: 4, text: 'Красивое ожерелье, но доставка была долгой.', timestamp: Date.now() - 172800000 },
+];
+
+let chats: Chat[] = [
+    { id: 'chat-1', participant: users[1], messages: [
+        { id: 'msg-1', senderId: 'buyer-1', text: 'Здравствуйте! Ожерелье еще в наличии?', timestamp: Date.now() - 3600000 },
+        { id: 'msg-2', senderId: 'user-2', text: 'Добрый день! Да, в наличии.', timestamp: Date.now() - 3540000 },
+    ], lastMessage: { id: 'msg-2', senderId: 'user-2', text: 'Добрый день! Да, в наличии.', timestamp: Date.now() - 3540000 } },
+    { id: 'chat-2', participant: users[2], messages: [
+        { id: 'msg-3', senderId: 'buyer-1', text: 'Торг уместен?', timestamp: Date.now() - 7200000 },
+    ], lastMessage: { id: 'msg-3', senderId: 'buyer-1', text: 'Торг уместен?', timestamp: Date.now() - 7200000 } },
 ];
 
 let orders: Order[] = [
-    {
-        id: 'order-1',
-        buyer: users[0], // Logged-in user
-        seller: users[3],
-        items: [{
-            product: products.find(p => p.id === 'prod-8')!,
-            quantity: 1,
-            price: 150,
-            purchaseType: 'RETAIL'
-        }],
-        total: 150,
-        status: 'COMPLETED',
-        orderDate: Date.now() - 5 * 24 * 60 * 60 * 1000, // 5 days ago
-        shippingAddress: { city: 'Киев', postOffice: 'Отделение 1', recipientName: 'Pottery Master', phoneNumber: '123456789' },
-        shippingMethod: 'NOVA_POSHTA',
-        paymentMethod: 'ESCROW',
-    }
+  { id: 'order-1', buyer: users[5], seller: users[0], items: [{ product: products[0], quantity: 1, price: 35, purchaseType: 'RETAIL' }], total: 35, status: 'SHIPPED', orderDate: Date.now() - 86400000, shippingAddress: { city: 'Киев', postOffice: 'Отделение №1', recipientName: 'Craft Enthusiast', phoneNumber: '+380991234567' }, shippingMethod: 'NOVA_POSHTA', paymentMethod: 'ESCROW', trackingNumber: '20450123456789' },
+  { id: 'order-2', buyer: users[5], seller: users[1], items: [{ product: products[1], quantity: 1, price: 99, purchaseType: 'RETAIL' }], total: 99, status: 'DELIVERED', orderDate: Date.now() - 2 * 86400000, shippingAddress: { city: 'Киев', postOffice: 'Отделение №1', recipientName: 'Craft Enthusiast', phoneNumber: '+380991234567' }, shippingMethod: 'NOVA_POSHTA', paymentMethod: 'ESCROW' },
+  { id: 'order-3', buyer: users[0], seller: users[5], items: [{ product: products[4], quantity: 1, price: 950, purchaseType: 'RETAIL' }], total: 950, status: 'PAID', orderDate: Date.now() - 3 * 86400000, shippingAddress: { city: 'Львов', postOffice: 'Отделение №5', recipientName: 'Pottery Master', phoneNumber: '+380507654321' }, shippingMethod: 'NOVA_POSHTA', paymentMethod: 'ESCROW', smartContractAddress: '0:abc...def', transactionHash: 'tx_hash_123' },
+  { id: 'order-4', buyer: users[5], seller: users[4], items: [{ product: products[5], quantity: 1, price: 55000, purchaseType: 'RETAIL' }], total: 55000, status: 'SHIPPED_TO_EXPERT', orderDate: Date.now() - 4 * 86400000, shippingAddress: { city: 'Киев', postOffice: 'Отделение №1', recipientName: 'Craft Enthusiast', phoneNumber: '+380991234567' }, shippingMethod: 'NOVA_POSHTA', paymentMethod: 'ESCROW', authenticationRequested: true, authenticationEvents: [{ status: 'SHIPPED_TO_EXPERT', timestamp: Date.now() - 3 * 86400000, comment: "Seller has shipped the car to CryptoCraft hub." }] },
+  { id: 'order-5', buyer: users[5], seller: users[4], items: [{ product: products[7], quantity: 1, price: 8500, purchaseType: 'RETAIL' }], total: 8500, status: 'NFT_ISSUED', orderDate: Date.now() - 5 * 86400000, shippingAddress: { city: 'Киев', postOffice: 'Отделение №1', recipientName: 'Craft Enthusiast', phoneNumber: '+380991234567' }, shippingMethod: 'NOVA_POSHTA', paymentMethod: 'ESCROW', authenticationRequested: true, authenticationEvents: [{ status: 'NFT_ISSUED', timestamp: Date.now() - 4 * 86400000, comment: "NFT Certificate minted." }] },
 ];
-let reviews: Review[] = [];
-let chats: Chat[] = [];
-let notifications: Notification[] = [];
-let collections: Collection[] = [];
-let workshopPosts: WorkshopPost[] = [];
-let forumThreads: ForumThread[] = [];
-let forumPosts: ForumPost[] = [];
-let promoCodes: PromoCode[] = [];
-let disputes: Dispute[] = [];
-let liveStreams: LiveStream[] = [];
-let proposals: Proposal[] = [];
 
+let notifications: Notification[] = [
+    { id: 'notif-1', userId: 'user-1', type: 'new_message', text: 'У вас новое сообщение от Jewelry Queen', link: '/chat/chat-1', timestamp: Date.now() - 3600000, read: false },
+    { id: 'notif-2', userId: 'user-1', type: 'sale', text: 'Поздравляем! Вы продали "Handmade Ceramic Mug"', link: '/profile?tab=sales', timestamp: Date.now() - 86400000, read: true },
+    { id: 'notif-3', userId: 'user-2', type: 'new_review', text: 'Craft Enthusiast оставил отзыв 4 звезды на ваш товар.', link: '/profile', timestamp: Date.now() - 172800000, read: true },
+    { id: 'notif-4', userId: 'user-1', type: 'outbid', text: 'Вашу ставку на "Картина Закат" перебили!', link: '/product/prod-7', timestamp: Date.now() - 1800000, read: false },
+    { id: 'notif-5', userId: 'user-3', type: 'auction_ended_seller', text: 'Ваш аукцион "Картина Закат" завершился! Победитель - buyer-1.', link: '/product/prod-7', timestamp: Date.now(), read: false },
+    { id: 'notif-6', userId: 'user-1', type: 'new_dispute_seller', text: 'Покупатель открыл спор по заказу #order-1.', link: '/dispute/order-1', timestamp: Date.now() - 900000, read: false },
+];
+
+let collections: Collection[] = [
+    { id: 'col-1', userId: 'buyer-1', name: 'Вдохновение для дома', productIds: ['prod-1'] },
+    { id: 'col-2', userId: 'buyer-1', name: 'Подарки', productIds: ['prod-1', 'prod-2'] },
+];
+
+let workshopPosts: WorkshopPost[] = [
+    { id: 'post-1', sellerId: 'user-1', text: 'Работаю над новой партией чашек! Скоро в продаже. #керамика #ручнаяработа', imageUrl: 'https://picsum.photos/seed/post1/600/400', timestamp: Date.now() - 2 * 86400000, likedBy: ['buyer-1', 'user-2'], comments: [{id: 'wc-1', author: users[5], text: 'Очень красиво!', timestamp: Date.now() - 86400000}] },
+    { id: 'post-2', sellerId: 'user-2', text: 'Новое поступление лунных камней для ваших украшений.', timestamp: Date.now() - 3 * 86400000, likedBy: ['buyer-1'], comments: [] },
+];
+
+let forumThreads: ForumThread[] = [
+    { id: 'thread-1', title: 'Как правильно фотографировать товары для продажи?', author: users[0], createdAt: Date.now() - 5 * 86400000, replyCount: 2, lastReplyAt: Date.now() - 86400000, isPinned: true },
+    { id: 'thread-2', title: 'Обсуждение: Комиссии на платформе', author: users[2], createdAt: Date.now() - 2 * 86400000, replyCount: 0, lastReplyAt: Date.now() - 2 * 86400000 },
+];
+
+let forumPosts: ForumPost[] = [
+    { id: 'fp-1', threadId: 'thread-1', author: users[0], content: 'Коллеги, поделитесь советами, как вы делаете такие красивые фото? У меня получается не очень.', createdAt: Date.now() - 5 * 86400000 },
+    { id: 'fp-2', threadId: 'thread-1', author: users[3], content: 'Главное - это хороший дневной свет! И не используйте вспышку.', createdAt: Date.now() - 4 * 86400000 },
+    { id: 'fp-3', threadId: 'thread-1', author: users[1], content: 'Согласна! Еще можно использовать Lightroom для небольшой коррекции.', createdAt: Date.now() - 86400000 },
+];
+
+let promoCodes: PromoCode[] = [
+    { id: 'promo-1', sellerId: 'user-1', code: 'CRAFT10', discountType: 'PERCENTAGE', discountValue: 10, isActive: true, uses: 5, scope: 'ENTIRE_ORDER' },
+    { id: 'promo-2', sellerId: 'user-2', code: 'JEWEL20', discountType: 'PERCENTAGE', discountValue: 20, isActive: true, uses: 2, minPurchaseAmount: 100, scope: 'CATEGORY', applicableCategory: 'Ювелирные изделия' },
+];
+
+let disputes: Dispute[] = [
+    { id: 'order-1', order: orders.find(o => o.id === 'order-1')!, messages: [
+        { id: 'dm-1', senderId: 'buyer-1', senderName: 'Craft Enthusiast', senderAvatar: 'https://picsum.photos/seed/buyer1/100/100', timestamp: Date.now() - 900000, text: 'Я получил чашку, но она разбита! Требую возврата.' },
+        { id: 'dm-2', senderId: 'user-1', senderName: 'Pottery Master', senderAvatar: 'https://picsum.photos/seed/seller1/100/100', timestamp: Date.now() - 840000, text: 'Я очень хорошо упаковал ее. Возможно, это вина службы доставки.' },
+        { id: 'dm-3', senderId: 'arbitrator-01', senderName: 'CryptoCraft Support', senderAvatar: 'https://picsum.photos/seed/support/100/100', timestamp: Date.now() - 600000, text: 'Здравствуйте. Я арбитр CryptoCraft. Пожалуйста, предоставьте фото упаковки и поврежденного товара.' },
+    ], status: 'UNDER_REVIEW' }
+];
+
+let liveStreams: LiveStream[] = [
+    { id: 'stream-1', title: 'Новая коллекция керамики!', seller: users[0], status: 'LIVE', featuredProductId: 'prod-1', welcomeMessage: 'Всем привет! Сегодня показываю новые поступления, задавайте вопросы!' },
+    { id: 'stream-2', title: 'Эксклюзивные украшения', seller: users[1], status: 'UPCOMING', featuredProductId: 'prod-2', scheduledStartTime: Date.now() + 2 * 60 * 60 * 1000 },
+    { id: 'stream-3', title: 'Винтажные находки', seller: users[2], status: 'ENDED', featuredProductId: 'prod-3' },
+];
+
+// --- API SERVICE IMPLEMENTATION ---
 
 export const apiService = {
   // --- REAL API METHODS ---
+  getPublicIcons: async (): Promise<Icon[]> => {
+    return apiFetch('/icons/public');
+  },
 
-  // Authentication
-  loginWithTelegram: async (initData: string): Promise<{ access_token: string, user: User }> => {
+  loginWithTelegram: async (initData: string): Promise<{ access_token: string; user: User }> => {
     return apiFetch('/auth/telegram', {
       method: 'POST',
       body: JSON.stringify({ initData }),
     });
   },
+
+  uploadFile: async (file: File): Promise<{ url: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const token = localStorage.getItem('authToken');
+    const response = await fetch(`${API_BASE_URL}/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+    if (!response.ok) throw new Error('File upload failed');
+    return response.json();
+  },
+
+  createListing: async (
+    productData: Partial<Product>,
+    imageUrls: string[],
+    videoUrl: string | undefined,
+    user: User
+  ): Promise<Product> => {
+     // Backend expects `sellerId`, not the full user object
+    const payload = {
+      ...productData,
+      imageUrls,
+      videoUrl,
+      sellerId: user.id,
+    };
+    return apiFetch('/products', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
   
-  // AI Service Methods (delegated to backend)
+  updateListing: async (id: string, updates: Partial<Product>): Promise<Product> => {
+      return apiFetch(`/products/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify(updates),
+      });
+  },
+
+  // --- AI Service Proxies ---
   generateListingWithAi: async (imageBase64: string, userDescription: string): Promise<GeneratedListing> => {
     return apiFetch('/ai/generate-listing', {
-      method: 'POST',
-      body: JSON.stringify({ imageBase64, userDescription }),
+        method: 'POST',
+        body: JSON.stringify({ imageBase64, userDescription }),
     });
   },
-  editImageWithAi: async (imageBase64: string, mimeType: string, prompt: string): Promise<{ base64Image: string }> => {
-    return apiFetch('/ai/edit-image', {
-      method: 'POST',
-      body: JSON.stringify({ imageBase64, mimeType, prompt }),
-    });
-  },
-  analyzeDocumentForVerificationWithAi: async (imageBase64: string): Promise<VerificationAnalysis> => {
-    return apiFetch('/ai/analyze-document', {
-      method: 'POST',
-      body: JSON.stringify({ imageBase64 }),
-    });
-  },
-  getAnalyticsInsightsWithAi: async (analyticsData: SellerAnalytics): Promise<AiInsight[]> => {
-      return apiFetch('/ai/analytics-insights', {
-          method: 'POST',
-          body: JSON.stringify({ analyticsData }),
-      });
-  },
-  generateDashboardFocusWithAi: async (dashboardData: SellerDashboardData): Promise<AiFocus> => {
-      return apiFetch('/ai/dashboard-focus', {
-          method: 'POST',
-          body: JSON.stringify({ dashboardData }),
-      });
-  },
+  
   processImportedHtmlWithAi: async (html: string): Promise<ImportedListingData> => {
       return apiFetch('/ai/process-html', {
           method: 'POST',
@@ -157,351 +246,294 @@ export const apiService = {
       });
   },
 
-
-  // Products
-  getProducts: async (filters: any): Promise<Product[]> => {
-    const allProducts: Product[] = await apiFetch('/products');
-
-    // The backend doesn't have the concept of orders yet to filter by "sold".
-    // This logic is kept on the client-side until the backend is updated.
-    let baseProducts: Product[];
-    if (filters.specialFilter === 'sold') {
-        // TODO: Implement this once backend supports orders and can identify sold products.
-        // For now, returning an empty array for "sold" to avoid showing unsold items.
-        baseProducts = []; 
-    } else {
-        baseProducts = allProducts;
-    }
-
-    const filtered = baseProducts.filter(p => {
-        let match = true;
-        if (filters.category && filters.category !== 'Все') match = match && p.category === filters.category;
-        if (filters.specialFilter === 'verified') match = match && p.seller.verificationLevel === 'PRO';
-        const price = p.salePrice ?? p.price ?? 0;
-        if (filters.priceMin && price < filters.priceMin) match = false;
-        if (filters.priceMax && price > filters.priceMax) match = false;
-        if (filters.dynamic && Object.keys(filters.dynamic).length > 0) {
-            for (const [key, values] of Object.entries(filters.dynamic as Record<string, string[]>)) {
-                if (values.length > 0) {
-                    const productValue = p.dynamicAttributes[key];
-                    if (!productValue || !values.includes(String(productValue))) {
-                        match = false;
-                        break; 
-                    }
-                }
-            }
-        }
-        return match;
-    });
-
-    return filtered.sort((a, b) => {
-        const priceA = a.salePrice ?? a.price ?? 0;
-        const priceB = b.salePrice ?? b.price ?? 0;
-        switch (filters.sortBy) {
-            case 'priceAsc': return priceA - priceB;
-            case 'priceDesc': return priceB - priceA;
-            default: return 0;
-        }
-    });
-  },
-  getProductById: async (id: string): Promise<Product | undefined> => {
-    return apiFetch(`/products/${id}`);
-  },
-  createListing: async (data: Partial<Product>, imageUrls: string[], videoUrl: string | undefined, seller: User): Promise<Product> => {
-    const listingData = {
-        ...data,
-        imageUrls,
-        videoUrl,
-        sellerId: seller.id,
-    };
-    return apiFetch('/products', {
+  editImageWithAi: async (imageBase64: string, mimeType: string, prompt: string): Promise<{ base64Image: string }> => {
+    return apiFetch('/ai/edit-image', {
         method: 'POST',
-        body: JSON.stringify(listingData),
-    });
-  },
-  updateListing: async (id: string, data: Partial<Product>): Promise<Product> => {
-    return apiFetch(`/products/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(data),
+        body: JSON.stringify({ imageBase64, mimeType, prompt }),
     });
   },
 
-  // Users
-  getUsers: async (): Promise<User[]> => {
-    return apiFetch('/users');
-  },
-  getUserById: async (id: string): Promise<User | undefined> => {
-    return apiFetch(`/users/${id}`);
-  },
-  updateUser: async (userId: string, data: Partial<User>): Promise<User> => {
-    return apiFetch(`/users/${userId}`, {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    });
+  analyzeDocumentForVerificationWithAi: async (imageBase64: string): Promise<VerificationAnalysis> => {
+      return apiFetch('/ai/analyze-document', {
+          method: 'POST',
+          body: JSON.stringify({ imageBase64 }),
+      });
   },
   
-  // File Upload
-  uploadFile: async (file: File): Promise<{ url: string }> => {
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    const token = localStorage.getItem('authToken');
-    const headers: HeadersInit = {};
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-    }
-
-    const response = await fetch(`${API_BASE_URL}/upload`, {
-        method: 'POST',
-        body: formData,
-        headers,
-    });
-
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: response.statusText }));
-        throw new Error(errorData.message || 'File upload failed');
-    }
-
-    return response.json();
+  getAnalyticsInsightsWithAi: async (analyticsData: SellerAnalytics): Promise<AiInsight[]> => {
+      return apiFetch('/ai/analytics-insights', {
+          method: 'POST',
+          body: JSON.stringify({ analyticsData }),
+      });
   },
 
-  uploadFileFromUrl: async (url: string): Promise<{ url: string }> => {
-    return apiFetch('/upload/url', {
-        method: 'POST',
-        body: JSON.stringify({ url }),
-    });
+  generateDashboardFocusWithAi: async (dashboardData: SellerDashboardData): Promise<AiFocus> => {
+      return apiFetch('/ai/dashboard-focus', {
+          method: 'POST',
+          body: JSON.stringify({ dashboardData }),
+      });
   },
-
-  // Orders - REAL IMPLEMENTATION
-  createOrdersFromCart: async (cartItems: CartItem[], user: User, paymentMethod: 'ESCROW' | 'DIRECT', shippingMethod: 'NOVA_POSHTA' | 'UKRPOSHTA', shippingAddress: ShippingAddress, requestAuthentication: boolean, appliedPromos: any, shippingCosts: any, transactionHash?: string): Promise<{success: boolean}> => {
-    // MOCKED
-    await new Promise(res => setTimeout(res, 1000));
-    console.log("Simulating order creation with transaction hash:", transactionHash);
-    return { success: true };
-  },
-  getPurchasesByBuyerId: async (): Promise<Order[]> => {
-    // MOCKED
-    await new Promise(res => setTimeout(res, 300));
-    return orders.filter(o => o.buyer.id === users[0].id); // Logged in user is users[0]
-  },
-  getSalesBySellerId: async (): Promise<Order[]> => {
-    // MOCKED
-    await new Promise(res => setTimeout(res, 300));
-    return orders.filter(o => o.seller.id === users[0].id);
-  },
-  updateOrder: async (orderId: string, updates: Partial<Order>): Promise<Order> => {
-    // MOCKED
-    await new Promise(res => setTimeout(res, 300));
-    const orderIndex = orders.findIndex(o => o.id === orderId);
-    if (orderIndex === -1) throw new Error("Order not found");
-    orders[orderIndex] = { ...orders[orderIndex], ...updates };
-    return orders[orderIndex];
-  },
-  generateWaybill: async (orderId: string): Promise<Order> => {
-    // MOCKED
-    await new Promise(res => setTimeout(res, 800));
-    const orderIndex = orders.findIndex(o => o.id === orderId);
-    if (orderIndex === -1) throw new Error("Order not found");
-    orders[orderIndex].status = 'SHIPPED';
-    orders[orderIndex].trackingNumber = `59000${Math.floor(1000000000 + Math.random() * 9000000000)}`;
-    return orders[orderIndex];
-  },
-
-  // Scraping
+  
   scrapeUrl: async (url: string): Promise<{ cleanText: string }> => {
     return apiFetch('/scrape', {
-        method: 'POST',
-        body: JSON.stringify({ url }),
+      method: 'POST',
+      body: JSON.stringify({ url }),
     });
   },
   
-  // Currency Conversion (Mock)
-  convertCurrency: async (amount: number, fromCurrency: string): Promise<number> => {
-    // This is a mock. A real service would call a currency API.
-    await new Promise(res => setTimeout(res, 100)); // Simulate network latency
-    const from = fromCurrency.toUpperCase();
+  uploadFileFromUrl: async (url: string): Promise<{ url: string }> => {
+    return apiFetch('/upload/url', {
+      method: 'POST',
+      body: JSON.stringify({ url }),
+    });
+  },
+  
+  convertCurrency: async (amount: number, from: string): Promise<number> => {
+      // Mocked on frontend for now
+      await new Promise(res => setTimeout(res, 300));
+      // Simple mock conversion
+      const rates: Record<string, number> = { 'ГРН': 0.025, 'USD': 1, '$': 1, 'USDT': 1 };
+      const rate = Object.keys(rates).find(key => from.toUpperCase().includes(key.toUpperCase())) || 'USD';
+      return amount * (rates[rate] || 1);
+  },
 
-    // Rough exchange rates
-    const rates: Record<string, number> = {
-        'UAH': 0.025, // 1 UAH = 0.025 USDT
-        'ГРН': 0.025,
-        'USD': 1.0,
-        '$': 1.0,
-        'EUR': 1.08, // 1 EUR = 1.08 USDT
-        '€': 1.08,
-    };
+  // --- MOCKED API METHODS ---
 
-    const rate = rates[from];
-    if (rate) {
-      return amount * rate;
+  getProducts: async (filters?: any): Promise<Product[]> => {
+    await new Promise(res => setTimeout(res, 500));
+    console.log("Filtering with:", filters);
+    let filteredProducts = [...products];
+
+    if (filters?.category && filters.category !== 'Все') {
+      filteredProducts = filteredProducts.filter(p => p.category === filters.category);
     }
     
-    // If currency is unknown, return original amount
-    return amount;
+    // specialFilter logic
+    if (filters?.specialFilter === 'sold') {
+      // For demo, just return some products as if they were sold
+      return filteredProducts.slice(2, 5);
+    }
+    if (filters?.specialFilter === 'verified') {
+        filteredProducts = filteredProducts.filter(p => p.seller.verificationLevel === 'PRO');
+    }
+    
+    // Dynamic attribute filtering
+    if (filters?.dynamic && Object.keys(filters.dynamic).length > 0) {
+        filteredProducts = filteredProducts.filter(p => {
+            return Object.entries(filters.dynamic).every(([key, values]) => {
+                if (!p.dynamicAttributes[key]) return false;
+                return (values as string[]).includes(String(p.dynamicAttributes[key]));
+            });
+        });
+    }
+
+    // Sorting
+    if (filters?.sortBy) {
+        switch (filters.sortBy) {
+            case 'priceAsc':
+                filteredProducts.sort((a, b) => (a.price || 0) - (b.price || 0));
+                break;
+            case 'priceDesc':
+                filteredProducts.sort((a, b) => (b.price || 0) - (a.price || 0));
+                break;
+            case 'rating':
+                filteredProducts.sort((a, b) => b.seller.rating - a.seller.rating);
+                break;
+            case 'newest':
+            default:
+                // No sort needed, default is newest first
+                break;
+        }
+    }
+
+
+    return filteredProducts.filter(p => !p.isAuction);
+  },
+  
+  getAuctions: async (): Promise<Product[]> => {
+      await new Promise(res => setTimeout(res, 500));
+      return products.filter(p => p.isAuction);
   },
 
-  // --- MOCKED API METHODS (for remaining features) ---
-  
-  // This function now uses the real getProducts and filters on the client side.
-  getProductsBySellerId: async function(sellerId: string): Promise<Product[]> {
-    const allProducts = await this.getProducts({});
-    return allProducts.filter(p => p.seller.id === sellerId);
+  getPromotedProducts: async (): Promise<Product[]> => {
+    await new Promise(res => setTimeout(res, 500));
+    return products.filter(p => p.isPromoted);
+  },
+
+  getProductById: async (id: string): Promise<Product | undefined> => {
+    await new Promise(res => setTimeout(res, 300));
+    return products.find(p => p.id === id);
   },
   
-  // This is a mocked function, but it uses the real getProducts as its data source.
-  getPromotedProducts: async function(): Promise<Product[]> {
-    const allProducts = await this.getProducts({});
-    return allProducts.filter(p => p.isPromoted);
+  getProductsByIds: async (ids: string[]): Promise<Product[]> => {
+    await new Promise(res => setTimeout(res, 300));
+    return products.filter(p => ids.includes(p.id));
   },
-  getAuctions: async function(): Promise<Product[]> {
-    const allProducts = await this.getProducts({});
-    return allProducts.filter(p => p.isAuction);
+  
+  getProductsBySellerId: async (sellerId: string): Promise<Product[]> => {
+    await new Promise(res => setTimeout(res, 300));
+    return products.filter(p => p.seller.id === sellerId);
   },
-  placeBid: async (productId: string, amount: number, userId: string): Promise<Product> => {
-      await new Promise(res => setTimeout(res, 500));
-      const product = products.find(p => p.id === productId); // using mock data
-      if (!product || !product.isAuction) throw new Error("Auction not found");
-      product.currentBid = amount;
-      if (!product.bidders?.includes(userId)) {
-          product.bidders?.push(userId);
-      }
-      return product;
-  },
-  getProductsByIds: async function(ids: string[]): Promise<Product[]> {
-    const allProducts = await this.getProducts({});
-    return allProducts.filter(p => ids.includes(p.id));
+  
+  getUserById: async (id: string): Promise<User | undefined> => {
+      await new Promise(res => setTimeout(res, 200));
+      return users.find(u => u.id === id);
   },
 
   getReviewsByUserId: async (userId: string): Promise<Review[]> => {
-    // MOCKED: No reviews endpoint yet.
-    await new Promise(res => setTimeout(res, 300));
-    return reviews.filter(r => products.find(p => p.id === 'prod-1')?.seller.id === userId); // Mock
-  },
-  updateUserBalance: async (userId: string, newBalance: number): Promise<User> => {
-    // MOCKED
-    await new Promise(res => setTimeout(res, 300));
-    const userIndex = users.findIndex(u => u.id === userId);
-    if (userIndex === -1) throw new Error("User not found");
-    users[userIndex].balance = newBalance;
-    return users[userIndex];
+      await new Promise(res => setTimeout(res, 400));
+      return reviews.filter(r => r.productId.startsWith('prod-') && products.find(p => p.id === r.productId)?.seller.id === userId);
   },
 
-  // Chat
   getChats: async (userId: string): Promise<Chat[]> => {
-     await new Promise(res => setTimeout(res, 500));
-     return chats; // simplified mock
+      await new Promise(res => setTimeout(res, 600));
+      return [...chats].sort((a, b) => b.lastMessage.timestamp - a.lastMessage.timestamp);
   },
+
   getChatById: async (chatId: string, userId: string): Promise<Chat | null> => {
-     await new Promise(res => setTimeout(res, 200));
-     return chats.find(c => c.id === chatId) || null;
+      await new Promise(res => setTimeout(res, 300));
+      return chats.find(c => c.id === chatId) || null;
   },
+  
   findOrCreateChat: async (userId1: string, userId2: string): Promise<Chat> => {
-      await new Promise(res => setTimeout(res, 500));
-      let chat = chats.find(c => (c.participant.id === userId2));
-      if (chat) return chat;
-      const participant = users.find(u => u.id === userId2);
-      if (!participant) throw new Error("Participant not found");
+      await new Promise(res => setTimeout(res, 300));
+      // This is a simplified logic. A real backend would handle this properly.
+      const existingChat = chats.find(c => (c.participant.id === userId1 || c.participant.id === userId2));
+      if(existingChat) return existingChat;
+      
+      const otherUser = users.find(u => u.id === userId2);
+      if(!otherUser) throw new Error("User not found");
+
       const newChat: Chat = {
           id: `chat-${Date.now()}`,
-          participant,
+          participant: otherUser,
           messages: [],
-          lastMessage: { id: '', senderId: '', text: 'New chat created', timestamp: Date.now() },
+          lastMessage: {id: 'temp', senderId: '', timestamp: Date.now(), text: 'Чат создан'}
       };
       chats.push(newChat);
       return newChat;
   },
+
   sendMessage: async (chatId: string, content: MessageContent, senderId: string): Promise<Message> => {
-    await new Promise(res => setTimeout(res, 200));
+    await new Promise(res => setTimeout(res, 250));
     const chat = chats.find(c => c.id === chatId);
     if (!chat) throw new Error("Chat not found");
+
     const newMessage: Message = {
-        id: `msg-${Date.now()}`,
-        senderId,
-        timestamp: Date.now(),
-        ...content,
+      id: `msg-${Date.now()}`,
+      senderId,
+      timestamp: Date.now(),
+      ...content
     };
     chat.messages.push(newMessage);
     chat.lastMessage = newMessage;
     return newMessage;
   },
   
-  // Notifications
-  getNotificationsByUserId: async (userId: string): Promise<Notification[]> => {
-    await new Promise(res => setTimeout(res, 500));
-    return notifications.filter(n => n.userId === userId).sort((a,b) => b.timestamp - a.timestamp);
+  getPurchasesByBuyerId: async (): Promise<Order[]> => {
+      await new Promise(res => setTimeout(res, 500));
+      return [...orders];
   },
-  markAllNotificationsAsRead: async (userId: string): Promise<void> => {
-      await new Promise(res => setTimeout(res, 200));
-      notifications.forEach(n => {
-          if (n.userId === userId) n.read = true;
-      });
+
+  getSalesBySellerId: async (): Promise<Order[]> => {
+      await new Promise(res => setTimeout(res, 500));
+      return [...orders];
   },
   
-  // Collections
+  getNotificationsByUserId: async (userId: string): Promise<Notification[]> => {
+      await new Promise(res => setTimeout(res, 800));
+      return [...notifications].sort((a,b) => b.timestamp - a.timestamp);
+  },
+
+  markAllNotificationsAsRead: async (userId: string): Promise<void> => {
+      await new Promise(res => setTimeout(res, 200));
+      notifications = notifications.map(n => n.userId === userId ? { ...n, read: true } : n);
+  },
+  
   getCollectionsByUserId: async (userId: string): Promise<Collection[]> => {
       await new Promise(res => setTimeout(res, 400));
       return collections.filter(c => c.userId === userId);
   },
-  createCollection: async (userId: string, name: string): Promise<Collection> => {
-      await new Promise(res => setTimeout(res, 500));
-      const newCollection: Collection = { id: `col-${Date.now()}`, userId, name, productIds: [] };
-      collections.push(newCollection);
-      return newCollection;
-  },
-  addProductToCollection: async (collectionId: string, productId: string): Promise<void> => {
-      await new Promise(res => setTimeout(res, 200));
-      const collection = collections.find(c => c.id === collectionId);
-      if (collection && !collection.productIds.includes(productId)) {
-          collection.productIds.push(productId);
-      }
-  },
-  removeProductFromCollection: async (collectionId: string, productId: string): Promise<void> => {
-      await new Promise(res => setTimeout(res, 200));
-      const collection = collections.find(c => c.id === collectionId);
-      if (collection) {
-          collection.productIds = collection.productIds.filter(id => id !== productId);
-      }
-  },
-  getCollectionById: async (id: string, userId: string): Promise<{ collection: Collection, products: Product[] } | null> => {
+  
+  getCollectionById: async (id: string, userId: string): Promise<{collection: Collection, products: Product[]} | null> => {
       await new Promise(res => setTimeout(res, 500));
       const collection = collections.find(c => c.id === id && c.userId === userId);
       if (!collection) return null;
       const collectionProducts = products.filter(p => collection.productIds.includes(p.id));
       return { collection, products: collectionProducts };
   },
+  
+  createCollection: async (userId: string, name: string): Promise<Collection> => {
+      await new Promise(res => setTimeout(res, 300));
+      const newCollection: Collection = {
+          id: `col-${Date.now()}`,
+          userId,
+          name,
+          productIds: [],
+      };
+      collections.push(newCollection);
+      return newCollection;
+  },
+  
+  addProductToCollection: async (collectionId: string, productId: string): Promise<void> => {
+      await new Promise(res => setTimeout(res, 200));
+      const collection = collections.find(c => c.id === collectionId);
+      if(collection && !collection.productIds.includes(productId)) {
+          collection.productIds.push(productId);
+      }
+  },
 
-  // Feed/Community
-  getForYouFeed: async function(userId: string): Promise<Product[]> {
-    const allProducts = await this.getProducts({});
-    return allProducts.slice(0, 4); // simple mock
+  removeProductFromCollection: async (collectionId: string, productId: string): Promise<void> => {
+      await new Promise(res => setTimeout(res, 200));
+      const collection = collections.find(c => c.id === collectionId);
+      if(collection) {
+          collection.productIds = collection.productIds.filter(id => id !== productId);
+      }
   },
-  getFeedForUser: async (userId: string): Promise<{ items: FeedItem[], isDiscovery: boolean }> => {
-    await new Promise(res => setTimeout(res, 700));
-    const user = users.find(u => u.id === userId);
-    if (!user || user.following.length === 0) {
-        return { items: [], isDiscovery: true };
-    }
-    const items = workshopPosts
-        .filter(p => user.following.includes(p.sellerId))
-        .map(post => ({ post, seller: users.find(u => u.id === post.sellerId)! }));
-    return { items, isDiscovery: false };
+  
+  getFeedForUser: async(userId: string): Promise<{ items: FeedItem[], isDiscovery: boolean }> => {
+      await new Promise(res => setTimeout(res, 700));
+      const followingIds = users.find(u => u.id === userId)?.following || [];
+      
+      if (followingIds.length === 0) {
+          // Discovery mode: show posts from popular sellers
+          const popularSellers = users.filter(u => u.rating > 4.8);
+          const feedPosts = workshopPosts.filter(p => popularSellers.some(s => s.id === p.sellerId));
+          const feedItems: FeedItem[] = feedPosts.map(post => ({ post, seller: users.find(u => u.id === post.sellerId)! }));
+          return { items: feedItems.slice(0, 5), isDiscovery: true };
+      }
+      
+      const feedPosts = workshopPosts.filter(p => followingIds.includes(p.sellerId));
+      const feedItems: FeedItem[] = feedPosts.map(post => ({ post, seller: users.find(u => u.id === post.sellerId)! }));
+      return { items: feedItems, isDiscovery: false };
   },
+
+  getForYouFeed: async(userId: string): Promise<Product[]> => {
+      await new Promise(res => setTimeout(res, 700));
+      // Simple mock: return some promoted products and some random ones
+      return [...products.filter(p => p.isPromoted), products[2], products[3]].slice(0, 8);
+  },
+  
   likeWorkshopPost: async (postId: string, userId: string): Promise<void> => {
-    await new Promise(res => setTimeout(res, 200));
-    const post = workshopPosts.find(p => p.id === postId);
-    if (post) {
-        const index = post.likedBy.indexOf(userId);
-        if (index > -1) post.likedBy.splice(index, 1);
-        else post.likedBy.push(userId);
-    }
-  },
-  addCommentToWorkshopPost: async (postId: string, authorId: string, text: string): Promise<WorkshopComment> => {
-      await new Promise(res => setTimeout(res, 500));
+      await new Promise(res => setTimeout(res, 150));
       const post = workshopPosts.find(p => p.id === postId);
-      const author = users.find(u => u.id === authorId);
-      if (!post || !author) throw new Error("Not found");
+      if (post) {
+          const index = post.likedBy.indexOf(userId);
+          if (index > -1) {
+              post.likedBy.splice(index, 1);
+          } else {
+              post.likedBy.push(userId);
+          }
+      }
+  },
+
+  addCommentToWorkshopPost: async (postId: string, userId: string, text: string): Promise<WorkshopComment> => {
+      await new Promise(res => setTimeout(res, 400));
+      const post = workshopPosts.find(p => p.id === postId);
+      const author = users.find(u => u.id === userId);
+      if (!post || !author) throw new Error("Post or user not found");
       const newComment: WorkshopComment = {
-          id: `comment-${Date.now()}`,
+          id: `wc-${Date.now()}`,
           author,
           text,
           timestamp: Date.now(),
@@ -509,173 +541,361 @@ export const apiService = {
       post.comments.push(newComment);
       return newComment;
   },
-  createWorkshopPost: async (postData: { sellerId: string, text: string, imageUrl?: string }): Promise<WorkshopPost> => {
-      await new Promise(res => setTimeout(res, 1000));
+  
+  // FIX: Add missing 'createWorkshopPost' method to handle post creation.
+  createWorkshopPost: async (postData: { sellerId: string; text: string; imageUrl?: string }): Promise<WorkshopPost> => {
+      await new Promise(res => setTimeout(res, 500));
+      const author = users.find(u => u.id === postData.sellerId);
+      if (!author) throw new Error("User not found");
       const newPost: WorkshopPost = {
-          id: `wp-${Date.now()}`,
-          ...postData,
+          id: `post-${Date.now()}`,
+          sellerId: postData.sellerId,
+          text: postData.text,
+          imageUrl: postData.imageUrl,
           timestamp: Date.now(),
           likedBy: [],
           comments: [],
       };
-      workshopPosts.unshift(newPost);
+      workshopPosts.unshift(newPost); // Add to the beginning of the feed
       return newPost;
   },
 
-  // Forum
-  getForumThreads: async (): Promise<ForumThread[]> => {
-      await new Promise(res => setTimeout(res, 600));
-      return forumThreads.sort((a,b) => b.lastReplyAt - a.lastReplyAt);
-  },
-  getForumThreadById: async (id: string): Promise<ForumThread | null> => {
-      await new Promise(res => setTimeout(res, 300));
-      return forumThreads.find(t => t.id === id) || null;
-  },
-  getForumPostsByThreadId: async (threadId: string): Promise<ForumPost[]> => {
-      await new Promise(res => setTimeout(res, 400));
-      return forumPosts.filter(p => p.threadId === threadId).sort((a,b) => a.createdAt - b.createdAt);
-  },
-  createForumThread: async (title: string, content: string, author: User): Promise<ForumThread> => {
-      await new Promise(res => setTimeout(res, 800));
-      const now = Date.now();
-      const newThread: ForumThread = { id: `thread-${now}`, title, author, createdAt: now, replyCount: 0, lastReplyAt: now };
-      const newPost: ForumPost = { id: `post-${now}`, threadId: newThread.id, author, content, createdAt: now };
-      forumThreads.unshift(newThread);
-      forumPosts.push(newPost);
-      return newThread;
-  },
-  createForumPost: async (threadId: string, content: string, author: User): Promise<ForumPost> => {
-      await new Promise(res => setTimeout(res, 500));
-      const thread = forumThreads.find(t => t.id === threadId);
-      if (!thread) throw new Error("Thread not found");
-      const now = Date.now();
-      const newPost: ForumPost = { id: `post-${now}`, threadId, author, content, createdAt: now };
-      forumPosts.push(newPost);
-      thread.replyCount++;
-      thread.lastReplyAt = now;
-      return newPost;
-  },
+   getForumThreads: async (): Promise<ForumThread[]> => {
+        await new Promise(res => setTimeout(res, 600));
+        return [...forumThreads].sort((a, b) => (b.isPinned ? 1 : -1) - (a.isPinned ? -1 : 1) || b.lastReplyAt - a.lastReplyAt);
+   },
+   
+   getForumThreadById: async (id: string): Promise<ForumThread | null> => {
+       await new Promise(res => setTimeout(res, 300));
+       return forumThreads.find(t => t.id === id) || null;
+   },
 
-  // Analytics & Seller Tools
-  getSellerAnalytics: async (sellerId: string, period: '7d' | '30d' | 'all'): Promise<SellerAnalytics> => {
-      await new Promise(res => setTimeout(res, 800));
-      return { // mock data
-          profileVisits: 1234, totalProductViews: 5678, totalSales: 98, conversionRate: 1.72,
-          salesOverTime: [{date: '1', value: 5}, {date: '2', value: 8}, {date: '3', value: 3}],
-          viewsOverTime: [{date: '1', value: 120}, {date: '2', value: 200}, {date: '3', value: 150}],
-          topProducts: products.filter(p => p.seller.id === sellerId).slice(0,3).map(p => ({id: p.id, title: p.title, imageUrl: p.imageUrls[0], views: 500, sales: 20})),
-          trafficSources: [{source: 'Direct', visits: 800}, {source: 'Social', visits: 300}, {source: 'Search', visits: 134}],
-      };
-  },
-  getPromoCodesBySellerId: async (sellerId: string): Promise<PromoCode[]> => {
-      await new Promise(res => setTimeout(res, 500));
-      return promoCodes.filter(p => p.sellerId === sellerId);
-  },
-  createPromoCode: async (sellerId: string, data: Omit<PromoCode, 'id' | 'sellerId' | 'isActive' | 'uses'>): Promise<PromoCode> => {
-      await new Promise(res => setTimeout(res, 500));
-      if (promoCodes.some(p => p.code === data.code && p.sellerId === sellerId)) throw new Error("Такой код уже существует");
-      const newCode: PromoCode = { 
-          id: `promo-${Date.now()}`, 
-          sellerId, 
-          isActive: true,
-          uses: 0,
-          ...data
-      };
-      promoCodes.push(newCode);
-      return newCode;
-  },
-  deletePromoCode: async (promoId: string, sellerId: string): Promise<void> => {
-      await new Promise(res => setTimeout(res, 300));
-      const index = promoCodes.findIndex(p => p.id === promoId && p.sellerId === sellerId);
-      if (index > -1) {
-          promoCodes.splice(index, 1);
-      } else {
-        throw new Error("Промокод не найден");
-      }
-  },
-  getSellerDashboardData: async (sellerId: string): Promise<SellerDashboardData> => {
-      await new Promise(res => setTimeout(res, 600));
-      return {
-          metrics: { revenueToday: 125.50, salesToday: 3, profileVisitsToday: 45 },
-          actionableItems: [
-              { id: 'a1', type: 'new_order', text: 'Новый заказ #12345', linkTo: 'sales' },
-              { id: 'a2', type: 'new_message', text: 'Новое сообщение от Craft Enthusiast', linkTo: 'chat' },
-          ],
-          recentActivity: [
-              { id: 'r1', type: 'wishlist_add', icon: '❤️', time: '5 минут назад', user: {id: 'buyer-1', name: 'Craft Enthusiast'}, product: {id: 'prod-1', name: 'Handmade Ceramic Mug'} }
-          ]
-      };
-  },
+   getForumPostsByThreadId: async (threadId: string): Promise<ForumPost[]> => {
+       await new Promise(res => setTimeout(res, 400));
+       return forumPosts.filter(p => p.threadId === threadId).sort((a,b) => a.createdAt - b.createdAt);
+   },
+   
+   createForumThread: async (title: string, content: string, author: User): Promise<ForumThread> => {
+       await new Promise(res => setTimeout(res, 500));
+       const now = Date.now();
+       const newThread: ForumThread = {
+           id: `thread-${now}`,
+           title,
+           author,
+           createdAt: now,
+           lastReplyAt: now,
+           replyCount: 1,
+       };
+       const newPost: ForumPost = {
+           id: `fp-${now}`,
+           threadId: newThread.id,
+           author,
+           content,
+           createdAt: now,
+       };
+       forumThreads.unshift(newThread);
+       forumPosts.push(newPost);
+       return newThread;
+   },
+   
+   createForumPost: async (threadId: string, content: string, author: User): Promise<ForumPost> => {
+       await new Promise(res => setTimeout(res, 400));
+       const thread = forumThreads.find(t => t.id === threadId);
+       if (!thread) throw new Error("Thread not found");
+       
+       const now = Date.now();
+       const newPost: ForumPost = {
+           id: `fp-${now}`,
+           threadId,
+           author,
+           content,
+           createdAt: now,
+       };
+       forumPosts.push(newPost);
+       thread.replyCount++;
+       thread.lastReplyAt = now;
+       return newPost;
+   },
+   
+    getSellerAnalytics: async (sellerId: string, period: '7d' | '30d' | 'all'): Promise<SellerAnalytics> => {
+        await new Promise(res => setTimeout(res, 900));
+        // Mock data generation
+        const days = period === '7d' ? 7 : 30;
+        return {
+            profileVisits: Math.floor(Math.random() * 500 * (days/7)),
+            totalProductViews: Math.floor(Math.random() * 2000 * (days/7)),
+            totalSales: Math.floor(Math.random() * 50 * (days/7)),
+            conversionRate: parseFloat((Math.random() * 5).toFixed(2)),
+            salesOverTime: Array.from({length: days}, (_, i) => ({ date: `Day ${i+1}`, value: Math.floor(Math.random() * 10) })),
+            viewsOverTime: Array.from({length: days}, (_, i) => ({ date: `Day ${i+1}`, value: Math.floor(Math.random() * 100) })),
+            topProducts: products.filter(p => p.seller.id === sellerId).slice(0, 3).map(p => ({ id: p.id, title: p.title, imageUrl: p.imageUrls[0], views: Math.floor(Math.random() * 500), sales: Math.floor(Math.random() * 20) })),
+            trafficSources: [
+                { source: 'Поиск CryptoCraft', visits: 120 },
+                { source: 'Прямые заходы', visits: 80 },
+                { source: 'Telegram', visits: 65 },
+                { source: 'Другое', visits: 30 },
+            ]
+        };
+    },
+    
+    validatePromoCode: async(code: string, sellerId: string, items: CartItem[]): Promise<{discountValue: number, discountType: 'PERCENTAGE' | 'FIXED_AMOUNT'}> => {
+        await new Promise(res => setTimeout(res, 500));
+        const promo = promoCodes.find(p => p.code === code && p.sellerId === sellerId && p.isActive);
+        if(!promo) throw new Error("Промокод не найден или неактивен.");
+        
+        const total = items.reduce((sum, item) => sum + item.priceAtTimeOfAddition * item.quantity, 0);
 
-  // Checkout & Orders (Mocks)
-  validatePromoCode: async (code: string, sellerId: string, cartItems: CartItem[]): Promise<{ discountValue: number, discountType: 'PERCENTAGE' | 'FIXED_AMOUNT', codeId: string }> => {
-      await new Promise(res => setTimeout(res, 500));
-      const promo = promoCodes.find(p => p.code.toUpperCase() === code.toUpperCase() && p.sellerId === sellerId && p.isActive);
-      if (!promo) throw new Error("Промокод недействителен или не найден.");
-      return { discountValue: promo.discountValue, discountType: promo.discountType, codeId: promo.id };
-  },
-  reserveProductsForCheckout: async (cartItems: CartItem[]): Promise<{ success: boolean, failedItems: CartItem[] }> => {
-    await new Promise(res => setTimeout(res, 700)); // Simulate network latency
-    return { success: true, failedItems: [] }; // Mock success
-  },
-  calculateShippingCost: async (cartItems: CartItem[], shippingMethod: 'NOVA_POSHTA' | 'UKRPOSHTA'): Promise<{ cost: number }> => {
-    await new Promise(res => setTimeout(res, 600)); // Simulate API call
-    return { cost: 2.5 };
-  },
-  getTrackingHistory: async (orderId: string): Promise<TrackingEvent[] | null> => {
-    await new Promise(res => setTimeout(res, 500));
-    return [{ timestamp: Date.now(), status: 'Принято в отделении', location: 'Киев' }];
-  },
-  requestProductAuthentication: async (productId: string): Promise<Product> => {
-    await new Promise(res => setTimeout(res, 1000));
-    const product = products.find(p => p.id === productId);
-    if (!product) throw new Error("Product not found");
-    product.authenticationStatus = 'PENDING';
-    return product;
-  },
-  getAuthenticationOrders: async (userId: string): Promise<Order[]> => {
-      await new Promise(res => setTimeout(res, 500));
-      return orders.filter(o => o.authenticationRequested && (o.buyer.id === userId || o.seller.id === userId));
-  },
-  getDisputeById: async (orderId: string): Promise<Dispute | null> => {
-      await new Promise(res => setTimeout(res, 500));
-      return disputes.find(d => d.id === orderId) || null;
-  },
-  addMessageToDispute: async (orderId: string, message: Omit<DisputeMessage, 'id' | 'timestamp'>): Promise<DisputeMessage> => {
-      await new Promise(res => setTimeout(res, 500));
-      const newMsg: DisputeMessage = { ...message, id: `dm-${Date.now()}`, timestamp: Date.now() };
-      return newMsg;
-  },
-  getLiveStreams: async(): Promise<LiveStream[]> => {
-      await new Promise(res => setTimeout(res, 500));
-      return liveStreams;
-  },
-  getLiveStreamById: async(streamId: string): Promise<LiveStream | null> => {
-      await new Promise(res => setTimeout(res, 300));
-      return liveStreams.find(s => s.id === streamId) || null;
-  },
-  createLiveStream: async (title: string, seller: User, featuredProductId: string, options: Partial<LiveStream>): Promise<LiveStream> => {
-      await new Promise(res => setTimeout(res, 1000));
-      const newStream: LiveStream = { id: `stream-${Date.now()}`, title, seller, status: 'LIVE', featuredProductId, ...options };
-      liveStreams.unshift(newStream);
-      return newStream;
-  },
-  sendPersonalOffer: async(sellerId: string, recipientId: string, productId: string, promoCodeId: string): Promise<void> => {
-      await new Promise(res => setTimeout(res, 800));
-  },
-  getProposals: async (): Promise<Proposal[]> => {
-    await new Promise(res => setTimeout(res, 700));
-    return proposals;
-  },
-  getProposalById: async (id: string): Promise<Proposal | null> => {
-    await new Promise(res => setTimeout(res, 400));
-    return proposals.find(p => p.id === id) || null;
-  },
-  castVote: async (proposalId: string, userId: string, choice: VoteChoice): Promise<Proposal> => {
-    await new Promise(res => setTimeout(res, 600));
-    const proposal = proposals.find(p => p.id === proposalId);
-    if (!proposal) throw new Error("Proposal not found");
-    proposal.voters[userId] = choice;
-    return proposal;
-  },
+        if(promo.minPurchaseAmount && total < promo.minPurchaseAmount) {
+            throw new Error(`Минимальная сумма заказа для этого кода: ${promo.minPurchaseAmount} USDT`);
+        }
+        
+        return { discountValue: promo.discountValue, discountType: promo.discountType };
+    },
+    
+    createPromoCode: async (sellerId: string, data: Partial<PromoCode>): Promise<PromoCode> => {
+        await new Promise(res => setTimeout(res, 400));
+        const newPromo: PromoCode = {
+            id: `promo-${Date.now()}`,
+            sellerId,
+            code: data.code!,
+            discountType: data.discountType!,
+            discountValue: data.discountValue!,
+            isActive: true,
+            uses: 0,
+            scope: data.scope!,
+            ...data
+        };
+        promoCodes.push(newPromo);
+        return newPromo;
+    },
+
+    deletePromoCode: async (promoId: string, sellerId: string): Promise<void> => {
+        await new Promise(res => setTimeout(res, 300));
+        promoCodes = promoCodes.filter(p => !(p.id === promoId && p.sellerId === sellerId));
+    },
+    
+    // FIX: Add missing 'getPromoCodesBySellerId' method to fetch promotions for a specific seller.
+    getPromoCodesBySellerId: async (sellerId: string): Promise<PromoCode[]> => {
+        await new Promise(res => setTimeout(res, 400));
+        return promoCodes.filter(p => p.sellerId === sellerId);
+    },
+
+    getSellerDashboardData: async (sellerId: string): Promise<SellerDashboardData> => {
+        await new Promise(res => setTimeout(res, 700));
+        return {
+            metrics: {
+                revenueToday: Math.random() * 200,
+                salesToday: Math.floor(Math.random() * 10),
+                profileVisitsToday: Math.floor(Math.random() * 50),
+            },
+            actionableItems: [
+                { id: 'ac-1', type: 'new_order', text: 'Новый заказ #order-3 ожидает отправки.', linkTo: 'sales', entityId: 'order-3' },
+                { id: 'ac-2', type: 'new_message', text: 'У вас новое сообщение в чате с Jewelry Queen.', linkTo: 'chat', entityId: 'chat-1' },
+            ],
+            recentActivity: [
+                { id: 'ra-1', type: 'wishlist_add', icon: '❤️', time: '5 минут назад', user: {id: 'buyer-1', name: 'Craft Enthusiast'}, product: {id: 'prod-1', name: 'Handmade Ceramic Mug'} },
+                { id: 'ra-2', type: 'new_follower', icon: '➕', time: '1 час назад', text: 'Пользователь Jewelry Queen подписался на вас.' },
+            ]
+        };
+    },
+    
+    sendPersonalOffer: async(sellerId: string, recipientId: string, productId: string, promoId: string): Promise<void> => {
+        await new Promise(res => setTimeout(res, 600));
+        console.log(`Sending offer from ${sellerId} to ${recipientId} for product ${productId} with promo ${promoId}`);
+        const product = products.find(p => p.id === productId);
+        const promo = promoCodes.find(p => p.id === promoId);
+        
+        notifications.unshift({
+            id: `notif-${Date.now()}`,
+            userId: recipientId,
+            type: 'personal_offer',
+            text: `У вас персональное предложение от ${product?.seller.name}: Скидка ${promo?.discountValue}${promo?.discountType === 'PERCENTAGE' ? '%' : ' USDT'} на товар "${product?.title}"!`,
+            link: `/product/${productId}`,
+            timestamp: Date.now(),
+            read: false,
+        });
+    },
+
+    createOrdersFromCart: async (cartItems: CartItem[], buyer: User, paymentMethod: 'ESCROW' | 'DIRECT', shippingMethod: 'NOVA_POSHTA' | 'UKRPOSHTA', shippingAddress: ShippingAddress, authenticationRequested: boolean, appliedPromos: any, shippingCosts: any, txHash: string): Promise<void> => {
+        console.log("Creating orders with data:", { cartItems, buyer, paymentMethod, shippingMethod, shippingAddress, txHash });
+        await new Promise(res => setTimeout(res, 1000));
+        // This is a complex operation that would be handled by the backend.
+        // The mock will just log the data and do nothing for now.
+    },
+    
+    reserveProductsForCheckout: async (cartItems: CartItem[]): Promise<{ success: boolean; failedItems: CartItem[] }> => {
+        await new Promise(res => setTimeout(res, 500));
+        // Simulate a scenario where one item is sold out
+        if (cartItems.some(item => item.product.id === 'prod-3')) {
+            // return { success: false, failedItems: [cartItems.find(item => item.product.id === 'prod-3')!] };
+        }
+        return { success: true, failedItems: [] };
+    },
+    
+    getDisputeById: async(orderId: string): Promise<Dispute | null> => {
+        await new Promise(res => setTimeout(res, 400));
+        return disputes.find(d => d.id === orderId) || null;
+    },
+
+    addMessageToDispute: async(orderId: string, message: Omit<DisputeMessage, 'id' | 'timestamp'>): Promise<DisputeMessage> => {
+        await new Promise(res => setTimeout(res, 300));
+        const dispute = disputes.find(d => d.id === orderId);
+        if(!dispute) throw new Error("Dispute not found");
+
+        const newMessage: DisputeMessage = {
+            id: `dm-${Date.now()}`,
+            timestamp: Date.now(),
+            ...message
+        };
+        dispute.messages.push(newMessage);
+        
+        // Simulate arbitrator response
+        if (dispute.messages.length % 3 === 0) {
+             const arbitratorMessage: DisputeMessage = {
+                id: `dm-${Date.now() + 1}`,
+                timestamp: Date.now() + 1,
+                senderId: 'arbitrator-01',
+                senderName: 'CryptoCraft Support',
+                senderAvatar: 'https://picsum.photos/seed/support/100/100',
+                text: 'Спасибо за предоставленную информацию. Мы изучаем ваше дело и скоро вернемся с решением.',
+            };
+            dispute.messages.push(arbitratorMessage);
+        }
+
+        return newMessage;
+    },
+    
+    getLiveStreams: async (): Promise<LiveStream[]> => {
+        await new Promise(res => setTimeout(res, 500));
+        return liveStreams;
+    },
+
+    getLiveStreamById: async (id: string): Promise<LiveStream | null> => {
+        await new Promise(res => setTimeout(res, 300));
+        return liveStreams.find(s => s.id === id) || null;
+    },
+
+    createLiveStream: async (title: string, seller: User, featuredProductId: string, options: any): Promise<LiveStream> => {
+        await new Promise(res => setTimeout(res, 800));
+        const newStream: LiveStream = {
+            id: `stream-${Date.now()}`,
+            title,
+            seller,
+            featuredProductId,
+            status: options.scheduledStartTime ? 'UPCOMING' : 'LIVE',
+            ...options
+        };
+        liveStreams.unshift(newStream);
+        return newStream;
+    },
+    
+    updateOrder: async (orderId: string, updates: Partial<Order>): Promise<Order> => {
+        await new Promise(res => setTimeout(res, 300));
+        const order = orders.find(o => o.id === orderId);
+        if (!order) throw new Error("Order not found");
+        Object.assign(order, updates);
+        return order;
+    },
+
+    generateWaybill: async (orderId: string): Promise<Order> => {
+        const order = await apiService.updateOrder(orderId, {
+            status: 'SHIPPED',
+            trackingNumber: `TTN${Date.now()}`
+        });
+        return order;
+    },
+    
+    calculateShippingCost: async (items: CartItem[], method: 'NOVA_POSHTA' | 'UKRPOSHTA'): Promise<{cost: number}> => {
+        await new Promise(res => setTimeout(res, 600));
+        // Mock calculation
+        const baseCost = method === 'NOVA_POSHTA' ? 3 : 2;
+        const weight = items.reduce((sum, item) => sum + ((item.product.weight || 200) * item.quantity), 0);
+        const weightCost = Math.ceil(weight / 1000) * 0.5;
+        return { cost: baseCost + weightCost };
+    },
+    
+    getTrackingHistory: async (orderId: string): Promise<TrackingEvent[] | null> => {
+        await new Promise(res => setTimeout(res, 700));
+        const order = orders.find(o => o.id === orderId);
+        if (!order || !order.trackingNumber) return null;
+        return [
+            { timestamp: order.orderDate + 100000, status: 'Принято в отделении', location: 'Киев, Отделение №5' },
+            { timestamp: order.orderDate + 2000000, status: 'Направляется в город получателя', location: 'Сортировочный центр, Киев' },
+            { timestamp: Date.now() - 100000, status: 'Прибыло в отделение получателя', location: 'Львов, Отделение №1' },
+        ];
+    },
+    
+    placeBid: async (productId: string, amount: number, userId: string): Promise<Product> => {
+        await new Promise(res => setTimeout(res, 400));
+        const product = products.find(p => p.id === productId);
+        if (!product) throw new Error("Product not found");
+        if (amount <= (product.currentBid || product.startingBid || 0)) throw new Error("Bid must be higher than current bid");
+
+        product.currentBid = amount;
+        if (!product.bidders?.includes(userId)) {
+            product.bidders?.push(userId);
+        }
+        return product;
+    },
+    
+    getProposals: async (): Promise<Proposal[]> => {
+        await new Promise(res => setTimeout(res, 500));
+        return [
+            { id: 'prop-1', title: 'Снизить комиссию платформы до 1.5%', description: 'Предлагаю снизить комиссию для всех сделок с 2% до 1.5% для стимуляции активности продавцов.', proposer: users[1], createdAt: Date.now() - 5*86400000, endsAt: Date.now() + 2*86400000, status: 'ACTIVE', votesFor: 125, votesAgainst: 30, voters: {'user-1': 'FOR'} },
+            { id: 'prop-2', title: 'Выделить гранты на продвижение для новых мастеров', description: 'Создать фонд в 10,000 USDT для выдачи грантов по 100 USDT новым талантливым мастерам на продвижение их первых товаров.', proposer: users[0], createdAt: Date.now() - 10*86400000, endsAt: Date.now() - 3*86400000, status: 'PASSED', votesFor: 210, votesAgainst: 15, voters: {} },
+            { id: 'prop-3', title: 'Добавить категорию "Антиквариат"', description: '...', proposer: users[2], createdAt: Date.now() - 12*86400000, endsAt: Date.now() - 5*86400000, status: 'REJECTED', votesFor: 50, votesAgainst: 150, voters: {} },
+        ];
+    },
+
+    getProposalById: async (id: string): Promise<Proposal | null> => {
+        const proposals = await apiService.getProposals();
+        return proposals.find(p => p.id === id) || null;
+    },
+    
+    castVote: async (proposalId: string, userId: string, choice: VoteChoice): Promise<Proposal> => {
+        await new Promise(res => setTimeout(res, 600));
+        const proposal = (await apiService.getProposals()).find(p => p.id === proposalId);
+        if(!proposal) throw new Error("Proposal not found");
+        
+        if (!proposal.voters[userId]) {
+             proposal.voters[userId] = choice;
+             if (choice === 'FOR') proposal.votesFor++;
+             else proposal.votesAgainst++;
+        }
+        return proposal;
+    },
+    
+    getAuthenticationOrders: async (userId: string): Promise<Order[]> => {
+        await new Promise(res => setTimeout(res, 500));
+        return orders.filter(o => o.authenticationRequested);
+    },
+
+    requestProductAuthentication: async (productId: string): Promise<Product> => {
+        await new Promise(res => setTimeout(res, 700));
+        const product = products.find(p => p.id === productId);
+        if (!product) throw new Error("Product not found");
+        product.authenticationStatus = 'PENDING';
+        return product;
+    },
+    
+    updateUserBalance: async (userId: string, newBalance: number): Promise<void> => {
+        await new Promise(res => setTimeout(res, 200));
+        const user = users.find(u => u.id === userId);
+        if (user) {
+            user.balance = newBalance;
+        }
+    },
+    
+    getUsers: async(): Promise<User[]> => {
+        await new Promise(res => setTimeout(res, 200));
+        return users;
+    },
+    
+    updateUser: async(userId: string, updates: Partial<User>): Promise<User> => {
+        await new Promise(res => setTimeout(res, 300));
+        const user = users.find(u => u.id === userId);
+        if(!user) throw new Error("User not found");
+        Object.assign(user, updates);
+        return user;
+    }
 };
