@@ -26,7 +26,7 @@ const ElectronicsDashboardTab: React.FC<ElectronicsDashboardTabProps> = ({ user,
 
     const electronicsStats = useMemo(() => {
         const electronicsProducts = products.filter(p => p.category === 'Электроника');
-        const totalValue = electronicsProducts.reduce((sum, p) => sum + p.price, 0);
+        const totalValue = electronicsProducts.reduce((sum, p) => sum + (p.price || 0), 0);
         const pendingAuthentication = electronicsProducts.filter(p => p.authenticationStatus === 'PENDING').length;
         const needsAuthentication = electronicsProducts.filter(p => p.isAuthenticationAvailable && p.authenticationStatus === 'NONE');
 
@@ -41,7 +41,7 @@ const ElectronicsDashboardTab: React.FC<ElectronicsDashboardTabProps> = ({ user,
     const recentlySold = useMemo(() => {
         return products.filter(p => p.category === 'Электроника').slice(0, 2).map(p => ({
             ...p,
-            profit: (p.price * 0.9) - (p.purchaseCost || p.price * 0.7) // Mock profit calculation
+            profit: ((p.price || 0) * 0.9) - (p.purchaseCost || (p.price || 0) * 0.7) // Mock profit calculation
         }));
     }, [products]);
 
@@ -103,7 +103,7 @@ const ElectronicsDashboardTab: React.FC<ElectronicsDashboardTabProps> = ({ user,
                                         <img src={product.imageUrls[0]} alt={product.title} className="w-12 h-12 object-cover rounded-md flex-shrink-0" />
                                         <div className="flex-grow">
                                             <p className="font-semibold text-white truncate">{product.title}</p>
-                                            <p className="text-xs text-brand-text-secondary">Продано за {product.price.toFixed(2)} USDT</p>
+                                            <p className="text-xs text-brand-text-secondary">Продано за {(product.price || 0).toFixed(2)} USDT</p>
                                         </div>
                                         <div className="text-right flex-shrink-0">
                                             <p className="font-bold text-green-400 text-lg">+{product.profit.toFixed(2)}</p>
