@@ -144,7 +144,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ setActiveTab, sellerId }) =
             <div className="space-y-8 animate-fade-in-down">
                 {/* AI Focus */}
                 <section>
-                     {/* FIX: Replaced redundant comparison `aiFocusState === 'loading'` with `false` to resolve TypeScript error. */}
+                     {/* FIX: Correctly set isLoading prop to only be true when the AI is generating. The previous comparison was incorrect. */}
                      {aiFocusState === 'idle' && <AiFocusGenerator onGenerate={handleGenerateFocus} isLoading={aiFocusState === 'loading'} />}
                      {aiFocusState === 'loading' && (
                         <div className="bg-brand-surface p-6 rounded-lg flex flex-col items-center justify-center min-h-[190px]">
