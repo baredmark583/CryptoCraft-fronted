@@ -99,7 +99,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ setActiveTab, sellerId }) =
     };
 
 
-    // FIX: The 'chat' link is for navigation, not for switching profile tabs.
+    // The 'chat' link is for navigation, not for switching profile tabs.
     // This ensures that 'chat' is handled by `navigate` and not passed to `setActiveTab`, which would cause a type error.
     const handleActionClick = (linkTo: 'sales' | 'listings' | 'chat' | 'analytics' | 'settings', entityId?: string) => {
         if (linkTo === 'chat') {
@@ -144,17 +144,12 @@ const DashboardTab: React.FC<DashboardTabProps> = ({ setActiveTab, sellerId }) =
             <div className="space-y-8 animate-fade-in-down">
                 {/* AI Focus */}
                 <section>
-                     {/* FIX: Correctly set isLoading prop to only be true when the AI is generating. The previous comparison was incorrect. */}
-                     {aiFocusState === 'idle' && <AiFocusGenerator onGenerate={handleGenerateFocus} isLoading={aiFocusState === 'loading'} />}
-                     {aiFocusState === 'loading' && (
-                        <div className="bg-brand-surface p-6 rounded-lg flex flex-col items-center justify-center min-h-[190px]">
-                            <Spinner />
-                            <p className="mt-4 text-brand-text-secondary">Анализирую данные...</p>
-                        </div>
-                    )}
-                     {aiFocusState === 'success' && aiFocus && (
+                    {/* FIX: This logic correctly renders the AiFocusGenerator in both idle and loading states, passing the loading prop to show the button's spinner. This avoids component swapping and fixes the impossible type comparison error. */}
+                    {aiFocusState !== 'success' ? (
+                        <AiFocusGenerator onGenerate={handleGenerateFocus} isLoading={aiFocusState === 'loading'} />
+                    ) : aiFocus ? (
                         <AiFocusCard data={aiFocus} onCtaClick={(link) => handleActionClick(link)} />
-                    )}
+                    ) : null}
                 </section>
 
                 {/* Key Metrics */}
