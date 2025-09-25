@@ -37,7 +37,9 @@
     "@tonconnect/ui-react": "^2.0.5",
     "multer": "^2.0.2",
     "express": "^5.1.0",
-    "recharts": "^3.2.1"
+    "recharts": "^3.2.1",
+    "@vitejs/plugin-react": "^5.0.3",
+    "vite": "^7.1.7"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
