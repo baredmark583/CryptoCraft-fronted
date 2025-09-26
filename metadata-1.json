@@ -1,8 +1,0 @@
-{
-  "name": "CryptoCraft Marketplace",
-  "description": "An Etsy-like marketplace for unique, handcrafted goods with AI-powered listing creation to simplify selling. The platform integrates cryptocurrency payments via the TON blockchain, offering a modern and decentralized commerce experience.",
-  "requestFramePermissions": [
-    "camera",
-    "microphone"
-  ]
-}
