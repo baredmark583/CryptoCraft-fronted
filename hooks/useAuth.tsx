@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import type { User } from '../types';
 import { apiService } from '../services/apiService';
@@ -34,33 +33,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setUser(userData);
           window.history.replaceState(null, '', window.location.pathname + window.location.search);
         } else {
-          // --- Local Development Logic ---
-          // FIX: In a local environment (without Telegram's data), simulate a logged-in user for development purposes.
-          // This prevents the app from crashing by ensuring a user object is always available.
-          console.warn("TWA data not found. Running in local development mode with a mock user.");
-          
-          // Using a mock user that matches the structure and data from apiService.ts
-          const mockUser: User = { 
-            id: 'user-1', 
-            name: 'Pottery Master', 
-            avatarUrl: 'https://picsum.photos/seed/seller1/100/100', 
-            headerImageUrl: 'https://picsum.photos/seed/header1/1000/300', 
-            rating: 4.9, 
-            reviews: [], 
-            following: ['user-2', 'user-3'], 
-            balance: 1250.75, 
-            commissionOwed: 25.01, 
-            verificationLevel: 'PRO', 
-            affiliateId: 'POTTERYPRO', 
-            tonWalletAddress: 'UQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA_______'
-          };
-          
-          setUser(mockUser);
-          setToken('mock-auth-token-for-local-dev');
+          // If no TWA data is found, we do nothing, which will cause the auth hook to throw an error.
+          // This is the desired behavior for a production TWA.
+          console.error("Telegram Web App data not found. This application can only be run inside Telegram.");
         }
       } catch (error) {
         console.error("Authentication failed:", error);
-        // In case of an error (real or mock), we don't set a user, which will trigger the error boundary as intended.
+        // In case of an error, we don't set a user, which will trigger the error boundary as intended.
       } finally {
         setIsLoading(false);
       }
