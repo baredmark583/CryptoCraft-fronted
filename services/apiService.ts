@@ -297,12 +297,11 @@ export const apiService = {
       return amount * (rates[rate] || 1);
   },
 
-  // --- MOCKED API METHODS ---
-
   getProducts: async (filters?: any): Promise<Product[]> => {
-    await new Promise(res => setTimeout(res, 500));
+    const allProducts: Product[] = await apiFetch('/products');
+    
     console.log("Filtering with:", filters);
-    let filteredProducts = [...products];
+    let filteredProducts = [...allProducts];
 
     if (filters?.category && filters.category !== 'Все') {
       filteredProducts = filteredProducts.filter(p => p.category === filters.category);
@@ -310,8 +309,8 @@ export const apiService = {
     
     // specialFilter logic
     if (filters?.specialFilter === 'sold') {
-      // For demo, just return some products as if they were sold
-      return filteredProducts.slice(2, 5);
+      // Backend doesn't support this yet. For now, we return nothing.
+      return [];
     }
     if (filters?.specialFilter === 'verified') {
         filteredProducts = filteredProducts.filter(p => p.seller.verificationLevel === 'PRO');
@@ -321,8 +320,9 @@ export const apiService = {
     if (filters?.dynamic && Object.keys(filters.dynamic).length > 0) {
         filteredProducts = filteredProducts.filter(p => {
             return Object.entries(filters.dynamic).every(([key, values]) => {
-                if (!p.dynamicAttributes[key]) return false;
-                return (values as string[]).includes(String(p.dynamicAttributes[key]));
+                const productValue = p.dynamicAttributes[key];
+                if (productValue === undefined || productValue === null) return false;
+                return (values as string[]).includes(String(productValue));
             });
         });
     }
@@ -331,17 +331,17 @@ export const apiService = {
     if (filters?.sortBy) {
         switch (filters.sortBy) {
             case 'priceAsc':
-                filteredProducts.sort((a, b) => (a.price || 0) - (b.price || 0));
+                filteredProducts.sort((a, b) => (a.price ?? 0) - (b.price ?? 0));
                 break;
             case 'priceDesc':
-                filteredProducts.sort((a, b) => (b.price || 0) - (a.price || 0));
+                filteredProducts.sort((a, b) => (b.price ?? 0) - (a.price ?? 0));
                 break;
             case 'rating':
                 filteredProducts.sort((a, b) => b.seller.rating - a.seller.rating);
                 break;
             case 'newest':
             default:
-                // No sort needed, default is newest first
+                 filteredProducts.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
                 break;
         }
     }
@@ -351,35 +351,50 @@ export const apiService = {
   },
   
   getAuctions: async (): Promise<Product[]> => {
-      await new Promise(res => setTimeout(res, 500));
-      return products.filter(p => p.isAuction);
+      const allProducts: Product[] = await apiFetch('/products');
+      return allProducts.filter(p => p.isAuction);
   },
 
   getPromotedProducts: async (): Promise<Product[]> => {
-    await new Promise(res => setTimeout(res, 500));
-    return products.filter(p => p.isPromoted);
+    const allProducts: Product[] = await apiFetch('/products');
+    return allProducts.filter(p => p.isPromoted);
   },
 
   getProductById: async (id: string): Promise<Product | undefined> => {
-    await new Promise(res => setTimeout(res, 300));
-    return products.find(p => p.id === id);
+    return apiFetch(`/products/${id}`);
   },
   
   getProductsByIds: async (ids: string[]): Promise<Product[]> => {
-    await new Promise(res => setTimeout(res, 300));
-    return products.filter(p => ids.includes(p.id));
+    if (ids.length === 0) return [];
+    const allProducts: Product[] = await apiFetch('/products');
+    return allProducts.filter(p => ids.includes(p.id));
   },
   
   getProductsBySellerId: async (sellerId: string): Promise<Product[]> => {
-    await new Promise(res => setTimeout(res, 300));
-    return products.filter(p => p.seller.id === sellerId);
+    const allProducts: Product[] = await apiFetch('/products');
+    return allProducts.filter(p => p.seller?.id === sellerId);
   },
   
   getUserById: async (id: string): Promise<User | undefined> => {
-      await new Promise(res => setTimeout(res, 200));
-      return users.find(u => u.id === id);
+      return apiFetch(`/users/${id}`);
   },
 
+  getPurchasesByBuyerId: async (): Promise<Order[]> => {
+      return apiFetch('/orders/purchases');
+  },
+
+  getSalesBySellerId: async (): Promise<Order[]> => {
+      return apiFetch('/orders/sales');
+  },
+  
+  getForYouFeed: async(userId: string): Promise<Product[]> => {
+      const allProducts = await apiFetch('/products');
+      // Simple mock: return some promoted products and some random ones
+      return [...allProducts.filter(p => p.isPromoted), ...allProducts.slice(2, 4)].slice(0, 8);
+  },
+
+  // --- MOCKED API METHODS (for features not yet on backend) ---
+  
   getReviewsByUserId: async (userId: string): Promise<Review[]> => {
       await new Promise(res => setTimeout(res, 400));
       return reviews.filter(r => r.productId.startsWith('prod-') && products.find(p => p.id === r.productId)?.seller.id === userId);
@@ -397,7 +412,6 @@ export const apiService = {
   
   findOrCreateChat: async (userId1: string, userId2: string): Promise<Chat> => {
       await new Promise(res => setTimeout(res, 300));
-      // This is a simplified logic. A real backend would handle this properly.
       const existingChat = chats.find(c => (c.participant.id === userId1 || c.participant.id === userId2));
       if(existingChat) return existingChat;
       
@@ -429,17 +443,7 @@ export const apiService = {
     chat.lastMessage = newMessage;
     return newMessage;
   },
-  
-  getPurchasesByBuyerId: async (): Promise<Order[]> => {
-      await new Promise(res => setTimeout(res, 500));
-      return [...orders];
-  },
 
-  getSalesBySellerId: async (): Promise<Order[]> => {
-      await new Promise(res => setTimeout(res, 500));
-      return [...orders];
-  },
-  
   getNotificationsByUserId: async (userId: string): Promise<Notification[]> => {
       await new Promise(res => setTimeout(res, 800));
       return [...notifications].sort((a,b) => b.timestamp - a.timestamp);
@@ -496,7 +500,6 @@ export const apiService = {
       const followingIds = users.find(u => u.id === userId)?.following || [];
       
       if (followingIds.length === 0) {
-          // Discovery mode: show posts from popular sellers
           const popularSellers = users.filter(u => u.rating > 4.8);
           const feedPosts = workshopPosts.filter(p => popularSellers.some(s => s.id === p.sellerId));
           const feedItems: FeedItem[] = feedPosts.map(post => ({ post, seller: users.find(u => u.id === post.sellerId)! }));
@@ -506,12 +509,6 @@ export const apiService = {
       const feedPosts = workshopPosts.filter(p => followingIds.includes(p.sellerId));
       const feedItems: FeedItem[] = feedPosts.map(post => ({ post, seller: users.find(u => u.id === post.sellerId)! }));
       return { items: feedItems, isDiscovery: false };
-  },
-
-  getForYouFeed: async(userId: string): Promise<Product[]> => {
-      await new Promise(res => setTimeout(res, 700));
-      // Simple mock: return some promoted products and some random ones
-      return [...products.filter(p => p.isPromoted), products[2], products[3]].slice(0, 8);
   },
   
   likeWorkshopPost: async (postId: string, userId: string): Promise<void> => {
@@ -542,7 +539,6 @@ export const apiService = {
       return newComment;
   },
   
-  // FIX: Add missing 'createWorkshopPost' method to handle post creation.
   createWorkshopPost: async (postData: { sellerId: string; text: string; imageUrl?: string }): Promise<WorkshopPost> => {
       await new Promise(res => setTimeout(res, 500));
       const author = users.find(u => u.id === postData.sellerId);
@@ -556,7 +552,7 @@ export const apiService = {
           likedBy: [],
           comments: [],
       };
-      workshopPosts.unshift(newPost); // Add to the beginning of the feed
+      workshopPosts.unshift(newPost);
       return newPost;
   },
 
@@ -619,7 +615,6 @@ export const apiService = {
    
     getSellerAnalytics: async (sellerId: string, period: '7d' | '30d' | 'all'): Promise<SellerAnalytics> => {
         await new Promise(res => setTimeout(res, 900));
-        // Mock data generation
         const days = period === '7d' ? 7 : 30;
         return {
             profileVisits: Math.floor(Math.random() * 500 * (days/7)),
@@ -674,7 +669,6 @@ export const apiService = {
         promoCodes = promoCodes.filter(p => !(p.id === promoId && p.sellerId === sellerId));
     },
     
-    // FIX: Add missing 'getPromoCodesBySellerId' method to fetch promotions for a specific seller.
     getPromoCodesBySellerId: async (sellerId: string): Promise<PromoCode[]> => {
         await new Promise(res => setTimeout(res, 400));
         return promoCodes.filter(p => p.sellerId === sellerId);
@@ -719,13 +713,10 @@ export const apiService = {
     createOrdersFromCart: async (cartItems: CartItem[], buyer: User, paymentMethod: 'ESCROW' | 'DIRECT', shippingMethod: 'NOVA_POSHTA' | 'UKRPOSHTA', shippingAddress: ShippingAddress, authenticationRequested: boolean, appliedPromos: any, shippingCosts: any, txHash: string): Promise<void> => {
         console.log("Creating orders with data:", { cartItems, buyer, paymentMethod, shippingMethod, shippingAddress, txHash });
         await new Promise(res => setTimeout(res, 1000));
-        // This is a complex operation that would be handled by the backend.
-        // The mock will just log the data and do nothing for now.
     },
     
     reserveProductsForCheckout: async (cartItems: CartItem[]): Promise<{ success: boolean; failedItems: CartItem[] }> => {
         await new Promise(res => setTimeout(res, 500));
-        // Simulate a scenario where one item is sold out
         if (cartItems.some(item => item.product.id === 'prod-3')) {
             // return { success: false, failedItems: [cartItems.find(item => item.product.id === 'prod-3')!] };
         }
@@ -749,7 +740,6 @@ export const apiService = {
         };
         dispute.messages.push(newMessage);
         
-        // Simulate arbitrator response
         if (dispute.messages.length % 3 === 0) {
              const arbitratorMessage: DisputeMessage = {
                 id: `dm-${Date.now() + 1}`,
@@ -807,7 +797,6 @@ export const apiService = {
     
     calculateShippingCost: async (items: CartItem[], method: 'NOVA_POSHTA' | 'UKRPOSHTA'): Promise<{cost: number}> => {
         await new Promise(res => setTimeout(res, 600));
-        // Mock calculation
         const baseCost = method === 'NOVA_POSHTA' ? 3 : 2;
         const weight = items.reduce((sum, item) => sum + ((item.product.weight || 200) * item.quantity), 0);
         const weightCost = Math.ceil(weight / 1000) * 0.5;
@@ -887,15 +876,13 @@ export const apiService = {
     },
     
     getUsers: async(): Promise<User[]> => {
-        await new Promise(res => setTimeout(res, 200));
-        return users;
+        return apiFetch('/users');
     },
     
     updateUser: async(userId: string, updates: Partial<User>): Promise<User> => {
-        await new Promise(res => setTimeout(res, 300));
-        const user = users.find(u => u.id === userId);
-        if(!user) throw new Error("User not found");
-        Object.assign(user, updates);
-        return user;
+        return apiFetch(`/users/${userId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(updates),
+        });
     }
 };

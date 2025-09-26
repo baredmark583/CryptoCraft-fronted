@@ -362,24 +362,36 @@ const ProfilePage: React.FC = () => {
     useEffect(() => {
         const fetchProfileData = async () => {
             setIsLoading(true);
-            const targetUserId = profileId || authUser.id;
             try {
-                const user = await apiService.getUserById(targetUserId);
-                if (user) {
-                    setProfileUser(user);
+                const targetUserId = profileId || authUser.id;
+                let userToSet: User | null;
+
+                if (isOwnProfile) {
+                    userToSet = authUser;
+                } else {
+                    userToSet = await apiService.getUserById(targetUserId) || null;
+                }
+
+                if (userToSet) {
+                    setProfileUser(userToSet);
                     const products = await apiService.getProductsBySellerId(targetUserId);
                     setUserProducts(products);
+                } else {
+                    setProfileUser(null);
+                    setUserProducts([]);
                 }
-                // Reset tab when profile changes
-                setActiveTab(!profileId || profileId === authUser.id ? 'dashboard' : 'listings');
+                
+                setActiveTab(isOwnProfile ? 'dashboard' : 'listings');
+
             } catch (error) {
                 console.error("Failed to fetch profile user data:", error);
+                setProfileUser(null);
             } finally {
                 setIsLoading(false);
             }
         };
         fetchProfileData();
-    }, [profileId, authUser.id]);
+    }, [profileId, authUser, isOwnProfile]);
 
     const isElectronicsSeller = useMemo(() => {
         if (!userProducts || userProducts.length === 0) return false;
