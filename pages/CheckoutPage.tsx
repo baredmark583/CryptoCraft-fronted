@@ -197,25 +197,9 @@ const CheckoutPage: React.FC = () => {
         setIsProcessing(true);
         setError('');
 
-        // Step 1: Reserve products
-        const reservationResult = await apiService.reserveProductsForCheckout(cartItems);
+        // The product reservation check is now handled by the backend within the order creation process.
+        // We can proceed directly to payment.
 
-        if (!reservationResult.success) {
-            const soldOutItems = reservationResult.failedItems.map(item => `"${item.product.title}"`).join(', ');
-            const errorMessage = `К сожалению, следующие товары только что были проданы: ${soldOutItems}. Они были удалены из вашей корзизы.`;
-            setError(errorMessage);
-            alert(errorMessage); // Use alert for high visibility
-            
-            // Remove sold out items from cart
-            removeItemsIfSoldOut(reservationResult.failedItems.map(i => ({ productId: i.product.id, variantId: i.variant?.id })));
-            
-            setIsProcessing(false);
-            // Stay on the summary page to show the updated cart
-            setStep('summary'); 
-            return;
-        }
-
-        // Step 2: Open Payment Modal
         let recipientAddress = TREASURY_WALLET_ADDRESS;
         if (paymentMethod === 'DIRECT') {
             const sellerId = Object.keys(groupedBySeller)[0];

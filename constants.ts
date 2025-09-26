@@ -14,8 +14,12 @@ export interface CategoryField {
 }
 
 export interface CategorySchema {
+  id?: string;
   name: string;
   fields: CategoryField[];
+  iconUrl?: string | null;
+  parentId?: string | null;
+  subcategories?: CategorySchema[];
 }
 
 export const CATEGORIES: CategorySchema[] = [
@@ -26,6 +30,10 @@ export const CATEGORIES: CategorySchema[] = [
             { name: 'model', label: 'Модель', type: 'text', required: true },
             { name: 'condition', label: 'Состояние', type: 'select', required: true, options: ['Новое', 'Б/у', 'На запчасти'] },
         ],
+        subcategories: [
+            { name: 'Смартфоны', fields: [] },
+            { name: 'Ноутбуки', fields: [] },
+        ]
     },
     {
         name: 'Автомобили',

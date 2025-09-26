@@ -397,6 +397,27 @@ export const apiService = {
       // Simple mock: return some promoted products and some random ones
       return [...allProducts.filter(p => p.isPromoted), ...allProducts.slice(2, 4)].slice(0, 8);
   },
+  
+  createOrdersFromCart: async (cartItems: CartItem[], buyer: User, paymentMethod: 'ESCROW' | 'DIRECT', shippingMethod: 'NOVA_POSHTA' | 'UKRPOSHTA', shippingAddress: ShippingAddress, authenticationRequested: boolean, appliedPromos: any, shippingCosts: any, txHash: string): Promise<void> => {
+    const payload = {
+        cartItems: cartItems.map(item => ({
+            // We only need IDs for the backend
+            product: { id: item.product.id, seller: { id: item.product.seller.id } },
+            quantity: item.quantity,
+            priceAtTimeOfAddition: item.priceAtTimeOfAddition,
+            variant: item.variant,
+            purchaseType: item.purchaseType,
+        })),
+        paymentMethod,
+        shippingMethod,
+        shippingAddress,
+        transactionHash: txHash
+    };
+    return apiFetch('/orders', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+  },
 
   // --- MOCKED API METHODS (for features not yet on backend) ---
   
@@ -713,19 +734,6 @@ export const apiService = {
             timestamp: Date.now(),
             read: false,
         });
-    },
-
-    createOrdersFromCart: async (cartItems: CartItem[], buyer: User, paymentMethod: 'ESCROW' | 'DIRECT', shippingMethod: 'NOVA_POSHTA' | 'UKRPOSHTA', shippingAddress: ShippingAddress, authenticationRequested: boolean, appliedPromos: any, shippingCosts: any, txHash: string): Promise<void> => {
-        console.log("Creating orders with data:", { cartItems, buyer, paymentMethod, shippingMethod, shippingAddress, txHash });
-        await new Promise(res => setTimeout(res, 1000));
-    },
-    
-    reserveProductsForCheckout: async (cartItems: CartItem[]): Promise<{ success: boolean; failedItems: CartItem[] }> => {
-        await new Promise(res => setTimeout(res, 500));
-        if (cartItems.some(item => item.product.id === 'prod-3')) {
-            // return { success: false, failedItems: [cartItems.find(item => item.product.id === 'prod-3')!] };
-        }
-        return { success: true, failedItems: [] };
     },
     
     getDisputeById: async(orderId: string): Promise<Dispute | null> => {

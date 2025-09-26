@@ -1,4 +1,6 @@
 
+
+
 import React, { useState, useMemo, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { Product } from '../types';
@@ -55,6 +57,33 @@ interface FilterBarProps {
     categories: CategorySchema[];
 }
 
+const CategoryFilterItem: React.FC<{ category: CategorySchema; level: number; activeCategory: string; }> = ({ category, level, activeCategory }) => {
+    const isParent = level === 0;
+    const isActive = activeCategory === category.name;
+    const baseClasses = 'block p-1 rounded transition-colors text-sm';
+    const activeClasses = 'text-primary font-bold';
+    const inactiveClasses = isParent ? 'text-white hover:text-primary font-semibold' : 'text-base-content/70 hover:text-white';
+
+    return (
+        <li>
+            <Link 
+                to={`/products?category=${encodeURIComponent(category.name)}`} 
+                className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
+                style={{ paddingLeft: `${8 + level * 16}px` }}
+            >
+                {category.name}
+            </Link>
+            {category.subcategories && category.subcategories.length > 0 && (
+                <ul className="space-y-1">
+                    {category.subcategories.map(sub => (
+                        <CategoryFilterItem key={sub.id || sub.name} category={sub} level={level + 1} activeCategory={activeCategory} />
+                    ))}
+                </ul>
+            )}
+        </li>
+    );
+};
+
 
 const FilterBar: React.FC<FilterBarProps> = ({ filters, setFilters, products, categories }) => {
     const [localPriceMin, setLocalPriceMin] = useState(filters.priceMin || '');
@@ -106,18 +135,14 @@ const FilterBar: React.FC<FilterBarProps> = ({ filters, setFilters, products, ca
     return (
         <div className="bg-base-100 p-4 rounded-lg">
             <Accordion title="Категории" defaultOpen={true}>
-                <ul className="space-y-2 text-sm max-h-60 overflow-y-auto pr-2">
+                <ul className="space-y-1 text-sm max-h-96 overflow-y-auto pr-2">
                     <li>
-                         <Link to="/products?category=Все" className={`block p-1 rounded ${filters.category === 'Все' ? 'text-primary font-bold' : 'text-base-content/70 hover:text-white'}`}>
+                         <Link to="/products?category=Все" className={`block p-2 rounded text-sm ${filters.category === 'Все' ? 'text-primary font-bold' : 'text-base-content/70 hover:text-white'}`}>
                             Все категории
                         </Link>
                     </li>
                     {categories.map(cat => (
-                        <li key={cat.name}>
-                            <Link to={`/products?category=${encodeURIComponent(cat.name)}`} className={`block p-1 rounded ${filters.category === cat.name ? 'text-primary font-bold' : 'text-base-content/70 hover:text-white'}`}>
-                                {cat.name}
-                            </Link>
-                        </li>
+                         <CategoryFilterItem key={cat.id || cat.name} category={cat} level={0} activeCategory={filters.category} />
                     ))}
                 </ul>
             </Accordion>

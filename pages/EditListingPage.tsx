@@ -1,20 +1,32 @@
-
-
-
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 // FIX: Replaced v6 hooks with v5 equivalents for compatibility.
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiService } from '../services/apiService';
+// FIX: Add missing import for cloudinaryService.
+import { cloudinaryService } from '../services/cloudinaryService';
 import { useAuth } from '../hooks/useAuth';
 import type { Product, VariantAttribute, ProductVariant } from '../types';
 // FIX: Correctly import types from constants file
-import type { CategoryField } from '../constants';
+import type { CategoryField, CategorySchema } from '../constants';
 import Spinner from '../components/Spinner';
 // FIX: Correctly import constants
-import { CATEGORIES, getCategoryNames } from '../constants';
-import { cloudinaryService } from '../services/cloudinaryService';
 import { useTelegramBackButton } from '../hooks/useTelegram';
 import DynamicIcon from '../components/DynamicIcon';
+
+// --- HELPERS ---
+const flattenCategoriesForSelect = (categories: CategorySchema[], level = 0): { label: string, value: string }[] => {
+    let options: { label: string, value: string }[] = [];
+    const indent = '\u00A0\u00A0'.repeat(level); // Use non-breaking spaces for indentation
+
+    for (const category of categories) {
+        options.push({ label: `${indent}${category.name}`, value: category.name });
+        if (category.subcategories && category.subcategories.length > 0) {
+            options = options.concat(flattenCategoriesForSelect(category.subcategories, level + 1));
+        }
+    }
+    return options;
+};
+
 
 const DynamicField: React.FC<{ field: CategoryField, value: any, onChange: (name: string, value: any) => void }> = ({ field, value, onChange }) => {
     const commonProps = {
@@ -241,13 +253,25 @@ const EditListingPage: React.FC = () => {
     const [videoFile, setVideoFile] = useState<File | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isUpdating, setIsUpdating] = useState(false);
+    const [categories, setCategories] = useState<CategorySchema[]>([]);
 
     useTelegramBackButton(true);
-
+    
     const categorySchema = useMemo(() => {
         if (!formData?.category) return null;
-        return CATEGORIES.find(c => c.name === formData.category);
-    }, [formData?.category]);
+        const findCategory = (cats: CategorySchema[], name: string): CategorySchema | null => {
+            for (const cat of cats) {
+                if (cat.name === name) return cat;
+                if (cat.subcategories) {
+                    const found = findCategory(cat.subcategories, name);
+                    if (found) return found;
+                }
+            }
+            return null;
+        }
+        return findCategory(categories, formData.category);
+    }, [formData?.category, categories]);
+
 
     useEffect(() => {
         if (!id) {
@@ -256,7 +280,11 @@ const EditListingPage: React.FC = () => {
         }
         const fetchProduct = async () => {
             setIsLoading(true);
-            const data = await apiService.getProductById(id);
+            const [data, fetchedCategories] = await Promise.all([
+                apiService.getProductById(id),
+                apiService.getCategories()
+            ]);
+            setCategories(fetchedCategories);
             if (data && data.seller.id === user.id) {
                 setProduct(data);
                 setImageUrls(data.imageUrls);
@@ -400,6 +428,8 @@ const EditListingPage: React.FC = () => {
     if (!product || !formData) {
         return null; 
     }
+    
+    const categoryOptions = useMemo(() => flattenCategoriesForSelect(categories), [categories]);
 
     return (
         <div className="max-w-4xl mx-auto bg-base-100 p-6 sm:p-8 rounded-lg shadow-xl">
@@ -550,7 +580,12 @@ const EditListingPage: React.FC = () => {
                  <div>
                     <label className="block text-sm font-medium text-base-content/70">Категория</label>
                     <select name="category" value={formData.category} onChange={handleChange} className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md shadow-sm py-2 px-3">
-                        {getCategoryNames().map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                         <option value="">- Выберите категорию -</option>
+                         {categoryOptions.map(opt => (
+                            <option key={opt.value} value={opt.value}>
+                                {opt.label}
+                            </option>
+                         ))}
                     </select>
                 </div>
 

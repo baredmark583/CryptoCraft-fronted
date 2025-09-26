@@ -14,7 +14,7 @@ const categoryIcons: Record<string, JSX.Element> = {
   // Add other categories here...
   "Дом и быт": <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-8 h-8"><path d="M11.25 3.25a.75.75 0 10-1.5 0v1.282a.75.75 0 01-.264.577l-4.22 4.22a.75.75 0 000 1.06l4.22 4.22a.75.75 0 01.264.577v1.282a.75.75 0 101.5 0v-1.282a.75.75 0 01.264-.577l4.22-4.22a.75.75 0 000-1.06l-4.22-4.22a.75.75 0 01-.264-.577V3.25z" /><path d="M5.22 5.22a.75.75 0 011.06 0l4.22 4.22a.75.75 0 010 1.06l-4.22 4.22a.75.75 0 01-1.06-1.06L8.94 10 5.22 6.28a.75.75 0 010-1.06z" /></svg>,
   "Цифровые товары": <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-8 h-8"><path fillRule="evenodd" d="M15.5 2A1.5 1.5 0 0014 3.5v13A1.5 1.5 0 0015.5 18h-11A1.5 1.5 0 013 16.5v-13A1.5 1.5 0 014.5 2h11zM10 5a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0110 5zM10 9a.75.75 0 01.75.75v5.5a.75.75 0 01-1.5 0v-5.5A.75.75 0 0110 9z" clipRule="evenodd" /></svg>,
-  "Винтаж": <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-8 h-8"><path fillRule="evenodd" d="M10 1a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0110 1zM5.05 3.636a.75.75 0 011.06 0l1.061 1.06a.75.75 0 01-1.06 1.061L5.05 4.697a.75.75 0 010-1.06zm9.9 0a.75.75 0 010 1.06l-1.06 1.061a.75.75 0 01-1.061-1.06l1.06-1.06a.75.75 0 011.061 0zM3 10a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5h-1.5A.75.75 0 013 10zm12 0a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5h-1.5a.75.75 0 01-.75-.75zM5.05 14.95a.75.75 0 010-1.06l1.06-1.061a.75.75 0 011.061 1.06l-1.06 1.06a.75.75 0 01-1.06 0zm9.9 0a.75.75 0 01-1.06 0l-1.061-1.06a.75.75 0 011.06-1.061l1.06 1.06a.75.75 0 010 1.06zM10 15a.75.75 0 01.75-.75h.008a.75.75 0 010 1.5h-.008A.75.75 0 0110 15z" clipRule="evenodd" /></svg>,
+  "Винтаж": <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-8 h-8"><path fillRule="evenodd" d="M10 1a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0110 1zM5.05 3.636a.75.75 0 011.06 0l1.061 1.06a.75.75 0 01-1.06 1.061L5.05 4.697a.75.75 0 010-1.06zm9.9 0a.75.75 0 010 1.06l-1.06 1.061a.75.75 0 01-1.061-1.06l1.06-1.06a.75.75 0 011.061 0zM3 10a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5h-1.5A.75.75 0 013 10zm12 0a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5h-1.5a.75.75 0 01-.75-.75zM5.05 14.95a.75.75 0 010-1.06l1.06-1.061a.75.75 0 011.061 1.06l-1.06 1.06a.75.75 0 01-1.06 0zm9.9 0a.75.75 0 01-1.06 0l-1.061-1.06a.75.75 0 011.06 1.06l1.06 1.06a.75.75 0 010 1.06zM10 15a.75.75 0 01.75-.75h.008a.75.75 0 010 1.5h-.008A.75.75 0 0110 15z" clipRule="evenodd" /></svg>,
 };
 
 
@@ -35,8 +35,12 @@ const CategoryGrid: React.FC = () => {
                         to={`/products?category=${encodeURIComponent(category.name)}`}
                         className="group relative block bg-base-200 rounded-lg p-6 text-center transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1"
                     >
-                        <div className="text-primary group-hover:text-secondary transition-colors duration-300 mb-2">
-                           {categoryIcons[category.name] || categoryIcons['Товары ручной работы']}
+                        <div className="text-primary group-hover:text-secondary transition-colors duration-300 mb-2 h-8 w-8 mx-auto flex items-center justify-center">
+                           {category.iconUrl ? (
+                                <img src={category.iconUrl} alt={category.name} className="w-8 h-8 object-contain" />
+                           ) : (
+                                categoryIcons[category.name] || categoryIcons['Товары ручной работы']
+                           )}
                         </div>
                         <h3 className="font-semibold text-base-content">{category.name}</h3>
                     </Link>

@@ -1,4 +1,6 @@
 
+
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 // FIX: Upgraded react-router-dom to v6. Replaced useHistory with useNavigate.
 import { useNavigate } from 'react-router-dom';
@@ -27,6 +29,21 @@ interface BatchItem {
     status: 'review' | 'publishing' | 'published' | 'error';
     publishError?: string;
 }
+
+// --- HELPERS ---
+const flattenCategoriesForSelect = (categories: CategorySchema[], level = 0): { label: string, value: string }[] => {
+    let options: { label: string, value: string }[] = [];
+    const indent = '\u00A0\u00A0'.repeat(level); // Use non-breaking spaces for indentation
+
+    for (const category of categories) {
+        options.push({ label: `${indent}${category.name}`, value: category.name });
+        if (category.subcategories && category.subcategories.length > 0) {
+            options = options.concat(flattenCategoriesForSelect(category.subcategories, level + 1));
+        }
+    }
+    return options;
+};
+
 
 // --- COMPONENTS ---
 
@@ -155,8 +172,19 @@ const ListingReviewCard: React.FC<{ item: BatchItem; onUpdate: (id: string, data
     const { formData } = item;
 
     const categorySchema = useMemo(() => {
-        return categories.find(c => c.name === formData.category);
+        const findCategory = (cats: CategorySchema[], name: string): CategorySchema | null => {
+            for (const cat of cats) {
+                if (cat.name === name) return cat;
+                if (cat.subcategories) {
+                    const found = findCategory(cat.subcategories, name);
+                    if (found) return found;
+                }
+            }
+            return null;
+        }
+        return findCategory(categories, formData.category);
     }, [formData.category, categories]);
+
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -212,6 +240,8 @@ const ListingReviewCard: React.FC<{ item: BatchItem; onUpdate: (id: string, data
         );
     }, [item.status, isPublishing]);
 
+    const categoryOptions = useMemo(() => flattenCategoriesForSelect(categories), [categories]);
+
     return (
         <details className="border border-base-300 rounded-lg overflow-hidden group">
             <summary className="p-4 flex items-center justify-between cursor-pointer bg-base-100 group-hover:bg-base-300/50">
@@ -252,7 +282,12 @@ const ListingReviewCard: React.FC<{ item: BatchItem; onUpdate: (id: string, data
                     <div>
                         <label className="block text-sm font-medium text-base-content/70">Категория</label>
                         <select name="category" value={formData.category} onChange={handleChange} className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md shadow-sm py-2 px-3">
-                             {categories.map(cat => <option key={cat.name} value={cat.name}>{cat.name}</option>)}
+                            <option value="">- Выберите категорию -</option>
+                            {categoryOptions.map(opt => (
+                                <option key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                </option>
+                            ))}
                         </select>
                     </div>
                 </div>
