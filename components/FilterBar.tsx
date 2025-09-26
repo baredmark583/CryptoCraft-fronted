@@ -1,10 +1,12 @@
 
 
+
 import React, { useState, useMemo, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { Product } from '../types';
 // FIX: Correctly import type from constants
 import type { CategorySchema } from '../constants';
+import DynamicIcon from './DynamicIcon';
 
 // Accordion component defined locally to avoid creating new files.
 const Accordion: React.FC<{ title: string; children: ReactNode; defaultOpen?: boolean; }> = ({ title, children, defaultOpen = true }) => {
@@ -17,16 +19,17 @@ const Accordion: React.FC<{ title: string; children: ReactNode; defaultOpen?: bo
         className="w-full flex justify-between items-center py-2 text-left font-semibold text-white text-lg"
       >
         <span>{title}</span>
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-          strokeWidth={2}
-          stroke="currentColor"
-          className={`w-5 h-5 transform transition-transform text-base-content/70 ${isOpen ? 'rotate-180' : ''}`}
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-        </svg>
+        <DynamicIcon name="accordion-arrow" className={`w-5 h-5 transform transition-transform text-base-content/70 ${isOpen ? 'rotate-180' : ''}`} fallback={
+            <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+            >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+            </svg>
+        }/>
       </button>
       {isOpen && (
         <div className="pt-2 pb-1 animate-fade-in-down">

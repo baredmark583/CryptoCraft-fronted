@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Spinner from '../components/Spinner';
@@ -7,6 +8,7 @@ import { fileToBase64 } from '../lib/utils';
 import { geminiService } from '../services/geminiService';
 import { useAuth } from '../hooks/useAuth';
 import VerifiedBadge from '../components/VerifiedBadge';
+import DynamicIcon from '../components/DynamicIcon';
 
 const VerificationPage: React.FC = () => {
     const navigate = useNavigate();
@@ -138,9 +140,11 @@ const VerificationPage: React.FC = () => {
                                         {preview ? (
                                             <img src={preview} alt="Предпросмотр документа" className="mx-auto h-32 w-auto rounded-md shadow-lg"/>
                                         ) : (
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="mx-auto h-12 w-12 text-brand-text-secondary">
-                                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                                            </svg>
+                                            <DynamicIcon name="upload-image" className="mx-auto h-12 w-12 text-brand-text-secondary" fallback={
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                                                </svg>
+                                            }/>
                                         )}
                                         <div className="flex flex-col sm:flex-row items-center justify-center text-sm text-brand-text-secondary gap-2 mt-2">
                                             <label htmlFor="file-upload" className="relative cursor-pointer bg-brand-surface rounded-md font-medium text-brand-primary hover:text-brand-primary-hover focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-brand-primary focus-within:ring-offset-brand-background px-4 py-2">

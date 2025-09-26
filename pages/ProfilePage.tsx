@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
@@ -23,6 +24,7 @@ import AuthenticationRequestModal from '../components/AuthenticationRequestModal
 import ElectronicsDashboardTab from '../components/ElectronicsDashboardTab';
 import NFTCertificateModal from '../components/NFTCertificateModal';
 import { useTelegramBackButton } from '../hooks/useTelegram';
+import DynamicIcon from '../components/DynamicIcon';
 
 export type ProfileTab = 'dashboard' | 'listings' | 'workshop' | 'wishlist' | 'collections' | 'purchases' | 'sales' | 'analytics' | 'wallet' | 'settings';
 
@@ -130,12 +132,14 @@ const PurchasesTab: React.FC = () => {
                                                 {trackingHistory.map((event, index) => (
                                                      <li key={index} className="mb-6 ml-6">
                                                         <span className="absolute flex items-center justify-center w-6 h-6 bg-secondary rounded-full -left-3 ring-4 ring-base-200">
-                                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-white">
-                                                                <path d="M3.5 3.75a.75.75 0 00-1.5 0v1.5c0 .414.336.75.75.75h1.5a.75.75 0 000-1.5H3.5v-1.5z" />
-                                                                <path d="M6.25 7.5a.75.75 0 000 1.5h7.5a.75.75 0 000-1.5h-7.5z" />
-                                                                <path d="M9 11.25a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5H9z" />
-                                                                <path fillRule="evenodd" d="M16 3a3 3 0 013 3v10a3 3 0 01-3 3H4a3 3 0 01-3-3V6a3 3 0 013-3h12zm-1.5 1.5H5.5a.75.75 0 01-.75.75v8.5a.75.75 0 01.75.75h9a.75.75 0 01.75-.75V8.854a.75.75 0 00-.22-.53l-2.25-2.25a.75.75 0 00-.53-.22H14.5z" clipRule="evenodd" />
-                                                              </svg>
+                                                             <DynamicIcon name="tracking-package" className="w-4 h-4 text-white" fallback={
+                                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                                    <path d="M3.5 3.75a.75.75 0 00-1.5 0v1.5c0 .414.336.75.75.75h1.5a.75.75 0 000-1.5H3.5v-1.5z" />
+                                                                    <path d="M6.25 7.5a.75.75 0 000 1.5h7.5a.75.75 0 000-1.5h-7.5z" />
+                                                                    <path d="M9 11.25a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5H9z" />
+                                                                    <path fillRule="evenodd" d="M16 3a3 3 0 013 3v10a3 3 0 01-3 3H4a3 3 0 01-3-3V6a3 3 0 013-3h12zm-1.5 1.5H5.5a.75.75 0 01-.75.75v8.5a.75.75 0 01.75.75h9a.75.75 0 01.75-.75V8.854a.75.75 0 00-.22-.53l-2.25-2.25a.75.75 0 00-.53-.22H14.5z" clipRule="evenodd" />
+                                                                </svg>
+                                                             }/>
                                                         </span>
                                                         <h3 className="font-semibold text-white">{event.status}</h3>
                                                         <p className="text-sm text-base-content/70">{event.location}</p>
@@ -150,9 +154,11 @@ const PurchasesTab: React.FC = () => {
                             {order.smartContractAddress && (
                                 <div className="mt-3 pt-3 border-t border-base-300/50 flex items-center justify-between">
                                     <div className="flex items-center gap-2 text-sm text-sky-400">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.286zm0 13.036h.008v.008h-.008v-.008z" />
-                                        </svg>
+                                        <DynamicIcon name="secure-deal" className="w-5 h-5" fallback={
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.286zm0 13.036h.008v.008h-.008v-.008z" />
+                                            </svg>
+                                        }/>
                                         <span>Сделка защищена смарт-контрактом</span>
                                     </div>
                                     <button
@@ -239,9 +245,11 @@ const SalesTab: React.FC = () => {
                         {order.smartContractAddress && (
                             <div className="mt-3 pt-3 border-t border-base-300/50 flex items-center justify-between">
                                 <div className="flex items-center gap-2 text-sm text-sky-400">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.286zm0 13.036h.008v.008h-.008v-.008z" />
-                                    </svg>
+                                     <DynamicIcon name="secure-deal" className="w-5 h-5" fallback={
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.286zm0 13.036h.008v.008h-.008v-.008z" />
+                                        </svg>
+                                     }/>
                                     <span>Сделка защищена смарт-контрактом</span>
                                 </div>
                                 <button
@@ -508,10 +516,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, isOwnProfile, onCon
                                 to="/governance" 
                                 className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-lg transition-colors shadow-lg"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                                  <path d="M3.5 2A1.5 1.5 0 002 3.5v2.75A1.5 1.5 0 003.5 8h13A1.5 1.5 0 0018 6.25V3.5A1.5 1.5 0 0016.5 2h-13z" />
-                                  <path d="M3 10.5A1.5 1.5 0 014.5 9h11a1.5 1.5 0 011.5 1.5v3A1.5 1.5 0 0116.5 15h-13A1.5 1.5 0 012 13.5v-3A1.5 1.5 0 013 10.5zm1.5 1.5a1 1 0 100-2 1 1 0 000 2z" />
-                                </svg>
+                                <DynamicIcon name="dao-governance" className="w-5 h-5" fallback={
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                      <path d="M3.5 2A1.5 1.5 0 002 3.5v2.75A1.5 1.5 0 003.5 8h13A1.5 1.5 0 0018 6.25V3.5A1.5 1.5 0 0016.5 2h-13z" />
+                                      <path d="M3 10.5A1.5 1.5 0 014.5 9h11a1.5 1.5 0 011.5 1.5v3A1.5 1.5 0 0116.5 15h-13A1.5 1.5 0 012 13.5v-3A1.5 1.5 0 013 10.5zm1.5 1.5a1 1 0 100-2 1 1 0 000 2z" />
+                                    </svg>
+                                }/>
                                 Управление DAO
                             </Link>
                         )}
@@ -520,9 +530,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, isOwnProfile, onCon
                                 to="/live/create" 
                                 className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-lg transition-colors shadow-lg animate-pulse"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                                  <path d="M3.25 4A2.25 2.25 0 001 6.25v7.5A2.25 2.25 0 003.25 16h13.5A2.25 2.25 0 0019 13.75v-7.5A2.25 2.25 0 0016.75 4H3.25zM10 8a.75.75 0 01.75.75v2.5a.75.75 0 01-1.5 0v-2.5A.75.75 0 0110 8zM5.75 9.5a.75.75 0 00-1.5 0v1a.75.75 0 001.5 0v-1zM14.25 9.5a.75.75 0 00-1.5 0v1a.75.75 0 001.5 0v-1z" />
-                                </svg>
+                                <DynamicIcon name="start-livestream" className="w-5 h-5" fallback={
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                      <path d="M3.25 4A2.25 2.25 0 001 6.25v7.5A2.25 2.25 0 003.25 16h13.5A2.25 2.25 0 0019 13.75v-7.5A2.25 2.25 0 0016.75 4H3.25zM10 8a.75.75 0 01.75.75v2.5a.75.75 0 01-1.5 0v-2.5A.75.75 0 0110 8zM5.75 9.5a.75.75 0 00-1.5 0v1a.75.75 0 001.5 0v-1zM14.25 9.5a.75.75 0 00-1.5 0v1a.75.75 0 001.5 0v-1z" />
+                                    </svg>
+                                }/>
                                 Начать эфир
                             </Link>
                         )}

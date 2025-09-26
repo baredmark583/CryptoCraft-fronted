@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 // FIX: Replaced v6 hooks with v5 equivalents for compatibility.
 import { useParams, useNavigate, Link } from 'react-router-dom';
@@ -13,6 +14,7 @@ import Spinner from '../components/Spinner';
 import { CATEGORIES, getCategoryNames } from '../constants';
 import { cloudinaryService } from '../services/cloudinaryService';
 import { useTelegramBackButton } from '../hooks/useTelegram';
+import DynamicIcon from '../components/DynamicIcon';
 
 const DynamicField: React.FC<{ field: CategoryField, value: any, onChange: (name: string, value: any) => void }> = ({ field, value, onChange }) => {
     const commonProps = {
@@ -420,13 +422,17 @@ const EditListingPage: React.FC = () => {
                             </div>
                         ))}
                          <label htmlFor="image-upload" className="cursor-pointer w-full aspect-square bg-base-200 border-2 border-dashed border-base-300 rounded-lg flex flex-col items-center justify-center text-base-content/70 hover:border-primary hover:text-primary transition-colors">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                            <DynamicIcon name="add-image" className="h-8 w-8" fallback={
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                            }/>
                             <span className="text-xs mt-1">Добавить</span>
                             <input id="image-upload" type="file" multiple onChange={handleImageFileChange} className="hidden" accept="image/*" />
                         </label>
                     </div>
                      <Link to={`/studio/${product.id}`} className="mt-4 inline-flex items-center gap-2 text-sm text-secondary hover:text-primary">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+                        <DynamicIcon name="ai-studio-link" className="h-5 w-5" fallback={
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+                        }/>
                         Улучшить фото в AI Студии
                     </Link>
                 </div>

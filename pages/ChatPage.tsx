@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 // FIX: Upgraded to react-router-dom v6.
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
@@ -11,6 +12,7 @@ import Spinner from '../components/Spinner';
 import ChatMessage from '../components/ChatMessage';
 import VerifiedBadge from '../components/VerifiedBadge';
 import { useTelegramBackButton } from '../hooks/useTelegram';
+import DynamicIcon from '../components/DynamicIcon';
 
 const ChatPage: React.FC = () => {
   const { chatId } = useParams<{ chatId?: string }>();
@@ -18,7 +20,7 @@ const ChatPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const { user } = useAuth();
-  // FIX: Upgraded react-router-dom to v6. Replaced useHistory with useNavigate.
+  // FIX: Upgraded react-router-dom v6. Replaced useHistory with useNavigate.
   const navigate = useNavigate();
 
   useTelegramBackButton(!!chatId);
@@ -221,9 +223,11 @@ const ChatPage: React.FC = () => {
           <>
             <div className="p-4 border-b border-base-300 flex items-center">
                 <button onClick={() => navigate('/chat')} className="sm:hidden mr-2 p-1 text-base-content/70 hover:text-white">
-                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                    </svg>
+                    <DynamicIcon name="back-arrow" className="w-6 h-6" fallback={
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                           <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                       </svg>
+                    }/>
                 </button>
                 <Link to={`/profile/${selectedChat.participant.id}`}>
                     <img src={selectedChat.participant.avatarUrl} alt={selectedChat.participant.name} className="w-10 h-10 rounded-full mr-3" />
@@ -245,9 +249,11 @@ const ChatPage: React.FC = () => {
               <form onSubmit={handleSendTextMessage} className="flex items-center space-x-2">
                 <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
                 <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 text-base-content/70 hover:text-white transition-colors rounded-full hover:bg-base-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01.01-.01z" />
-                    </svg>
+                    <DynamicIcon name="attachment-clip" className="w-6 h-6" fallback={
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01.01-.01z" />
+                        </svg>
+                    }/>
                 </button>
                 <input
                   type="text"
@@ -257,7 +263,9 @@ const ChatPage: React.FC = () => {
                   className="flex-grow bg-base-200 border border-base-300 rounded-full py-3 px-4 focus:outline-none focus:ring-2 focus:ring-primary"
                 />
                 <button type="submit" className="bg-primary text-white rounded-full p-3 hover:bg-primary-focus transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path d="M3.105 2.289a.75.75 0 00-.826.95l1.414 4.949a.75.75 0 00.95.54l3.123-.93a.75.75 0 01.928.928l-.93 3.123a.75.75 0 00.54.95l4.95 1.414a.75.75 0 00.95-.826l-2.434-8.518a.75.75 0 00-.702-.556l-8.518-2.434z" /></svg>
+                     <DynamicIcon name="send-arrow" className="w-5 h-5" fallback={
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M3.105 2.289a.75.75 0 00-.826.95l1.414 4.949a.75.75 0 00.95.54l3.123-.93a.75.75 0 01.928.928l-.93 3.123a.75.75 0 00.54.95l4.95 1.414a.75.75 0 00.95-.826l-2.434-8.518a.75.75 0 00-.702-.556l-8.518-2.434z" /></svg>
+                     }/>
                 </button>
               </form>
             </div>

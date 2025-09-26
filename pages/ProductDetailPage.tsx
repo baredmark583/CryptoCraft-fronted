@@ -14,6 +14,7 @@ import BidModal from '../components/BidModal';
 import { useTelegramBackButton } from '../hooks/useTelegram';
 import AuthenticatedBadge from '../components/AuthenticatedBadge';
 import NFTCertificateModal from '../components/NFTCertificateModal';
+import DynamicIcon from '../components/DynamicIcon';
 
 const Countdown: React.FC<{ targetDate: number }> = ({ targetDate }) => {
     const { days, hours, minutes, seconds, isFinished } = useCountdown(targetDate);
@@ -192,15 +193,16 @@ const ProductDetailPage: React.FC = () => {
   <details className="group border-b border-neutral-200 rounded-lg">
     <summary className="flex w-full cursor-pointer items-center justify-between py-4 text-left text-neutral-900">
       <span className="text-lg font-semibold">Описание товара</span>
-      <svg
-        className="h-6 w-6 transform transition-transform duration-300 group-open:rotate-180"
-        fill="none"
-        viewBox="0 0 24 24"
-        strokeWidth="2"
-        stroke="currentColor"
-      >
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-      </svg>
+      <DynamicIcon name="accordion-arrow" className="h-6 w-6 transform transition-transform duration-300 group-open:rotate-180" fallback={
+        <svg
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth="2"
+            stroke="currentColor"
+        >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+        </svg>
+      }/>
     </summary>
 
     <div className="pb-4 text-base text-base-content/80 leading-relaxed">
@@ -238,7 +240,9 @@ const ProductDetailPage: React.FC = () => {
                                 {isOwner ? "Это ваш товар" : (isStockAvailable ? "В корзину" : "Нет в наличии")}
                             </button>
                             <button type="button" onClick={handleWishlistClick} className={`ml-4 flex items-center justify-center rounded-md px-3 py-3 text-base-content/70 hover:bg-base-300 hover:text-red-500 ${isFavorited ? 'text-red-500' : ''}`}>
-                                <svg className="h-6 w-6 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
+                                <DynamicIcon name="wishlist-heart" className="h-6 w-6 flex-shrink-0" fallback={
+                                    <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
+                                }/>
                                 <span className="sr-only">Add to favorites</span>
                             </button>
                         </div>
@@ -250,7 +254,11 @@ const ProductDetailPage: React.FC = () => {
                              <details className="group" open>
                                 <summary className="flex w-full cursor-pointer items-center justify-between py-6 text-left text-neutral-900">
                                     <span className="text-base font-medium">Характеристики</span>
-                                    <span className="ml-6 flex items-center"><svg className="h-6 w-6 transform transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg></span>
+                                    <span className="ml-6 flex items-center">
+                                        <DynamicIcon name="accordion-arrow" className="h-6 w-6 transform transition-transform group-open:rotate-180" fallback={
+                                            <svg fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                                        }/>
+                                    </span>
                                 </summary>
                                 <div className="pb-6 prose prose-sm">
                                     <ul role="list">
@@ -264,7 +272,11 @@ const ProductDetailPage: React.FC = () => {
                              <details className="group">
                                 <summary className="flex w-full cursor-pointer items-center justify-between py-6 text-left text-neutral-900">
                                     <span className="text-base font-medium">Доставка и Возврат</span>
-                                    <span className="ml-6 flex items-center"><svg className="h-6 w-6 transform transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg></span>
+                                    <span className="ml-6 flex items-center">
+                                         <DynamicIcon name="accordion-arrow" className="h-6 w-6 transform transition-transform group-open:rotate-180" fallback={
+                                            <svg fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                                        }/>
+                                    </span>
                                 </summary>
                                 <div className="pb-6 prose prose-sm text-base-content/80">
                                     <p>Мы предлагаем быструю доставку через Нова Пошта и Укрпошта. Возврат возможен в течение 14 дней, если товар не был в использовании и сохранил товарный вид.</p>
