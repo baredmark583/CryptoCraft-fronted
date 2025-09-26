@@ -6,6 +6,7 @@ import type {
   PromoCode, SellerDashboardData, CartItem, ShippingAddress, MessageContent, Dispute, DisputeMessage, LiveStream, OrderItem, TrackingEvent, Proposal, VoteChoice,
   GeneratedListing, VerificationAnalysis, AiInsight, AiFocus, ImportedListingData, Icon
 } from '../types';
+import type { CategorySchema } from '../constants';
 
 
 // --- REAL API IMPLEMENTATION ---
@@ -180,6 +181,10 @@ export const apiService = {
   // --- REAL API METHODS ---
   getPublicIcons: async (): Promise<Icon[]> => {
     return apiFetch('/icons/public');
+  },
+
+  getCategories: async (): Promise<CategorySchema[]> => {
+    return apiFetch('/categories');
   },
 
   loginWithTelegram: async (initData: string): Promise<{ access_token: string; user: User }> => {

@@ -1,21 +1,17 @@
 
-
-
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 // FIX: Upgraded react-router-dom to v6. Replaced useHistory with useNavigate.
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import type { GeneratedListing, Product } from '../types';
 // FIX: Correctly import types from constants file
-import type { CategoryField } from '../constants';
+import type { CategoryField, CategorySchema } from '../constants';
 
 import { geminiService } from '../services/geminiService';
 import { cloudinaryService } from '../services/cloudinaryService';
 import { apiService } from '../services/apiService';
 import { fileToBase64 } from '../lib/utils';
 import Spinner from '../components/Spinner';
-// FIX: Correctly import constants
-import { CATEGORIES, getCategoryNames } from '../constants';
 import { useTelegramBackButton } from '../hooks/useTelegram';
 import DynamicIcon from '../components/DynamicIcon';
 
@@ -91,7 +87,7 @@ const AIGenerateForm: React.FC<{ onGenerated: (data: GeneratedListing, file: Fil
                             <DynamicIcon name="upload-image" className="mx-auto h-12 w-12 text-base-content/70" fallback={
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                               </svg>
+                                </svg>
                             }/>
                         )}
                         <div className="flex text-sm text-base-content/70">
@@ -155,12 +151,12 @@ const DynamicField: React.FC<{ field: CategoryField, value: any, onChange: (name
     }
 };
 
-const ListingReviewCard: React.FC<{ item: BatchItem; onUpdate: (id: string, data: Partial<FormData>) => void; onRemove: (id: string) => void; isPublishing: boolean; }> = ({ item, onUpdate, onRemove, isPublishing }) => {
+const ListingReviewCard: React.FC<{ item: BatchItem; onUpdate: (id: string, data: Partial<FormData>) => void; onRemove: (id: string) => void; isPublishing: boolean; categories: CategorySchema[] }> = ({ item, onUpdate, onRemove, isPublishing, categories }) => {
     const { formData } = item;
 
     const categorySchema = useMemo(() => {
-        return CATEGORIES.find(c => c.name === formData.category);
-    }, [formData.category]);
+        return categories.find(c => c.name === formData.category);
+    }, [formData.category, categories]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -256,7 +252,7 @@ const ListingReviewCard: React.FC<{ item: BatchItem; onUpdate: (id: string, data
                     <div>
                         <label className="block text-sm font-medium text-base-content/70">Категория</label>
                         <select name="category" value={formData.category} onChange={handleChange} className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md shadow-sm py-2 px-3">
-                             {getCategoryNames().map(cat => <option key={cat} value={cat}>{cat}</option>)}
+                             {categories.map(cat => <option key={cat.name} value={cat.name}>{cat.name}</option>)}
                         </select>
                     </div>
                 </div>
@@ -283,7 +279,16 @@ const CreateListingPage: React.FC = () => {
     const navigate = useNavigate();
     const [batchItems, setBatchItems] = useState<BatchItem[]>([]);
     const [isPublishing, setIsPublishing] = useState(false);
+    const [categories, setCategories] = useState<CategorySchema[]>([]);
+    const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+
     useTelegramBackButton(true);
+    
+    useEffect(() => {
+        apiService.getCategories()
+            .then(setCategories)
+            .finally(() => setIsLoadingCategories(false));
+    }, []);
 
     const handleAddItemToBatch = (generatedData: GeneratedListing, imageFile: File) => {
         const previewUrl = URL.createObjectURL(imageFile);
@@ -357,17 +362,20 @@ const CreateListingPage: React.FC = () => {
             {batchItems.length > 0 && (
                 <div className="bg-base-100 p-6 sm:p-8 rounded-lg shadow-xl">
                     <h2 className="text-2xl font-bold text-white mb-4">Пакет для публикации ({batchItems.length})</h2>
-                    <div className="space-y-4 mb-6">
-                        {batchItems.map(item => (
-                            <ListingReviewCard 
-                                key={item.id} 
-                                item={item}
-                                onUpdate={handleUpdateBatchItem}
-                                onRemove={handleRemoveBatchItem}
-                                isPublishing={isPublishing}
-                            />
-                        ))}
-                    </div>
+                    {isLoadingCategories ? <Spinner /> : (
+                        <div className="space-y-4 mb-6">
+                            {batchItems.map(item => (
+                                <ListingReviewCard 
+                                    key={item.id} 
+                                    item={item}
+                                    onUpdate={handleUpdateBatchItem}
+                                    onRemove={handleRemoveBatchItem}
+                                    isPublishing={isPublishing}
+                                    categories={categories}
+                                />
+                            ))}
+                        </div>
+                    )}
                     <button 
                         onClick={handlePublishBatch} 
                         disabled={isPublishing || batchItems.every(i => i.status !== 'review')}

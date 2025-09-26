@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-// FIX: Correctly import constant
-import { CATEGORIES } from '../constants';
+import { apiService } from '../services/apiService';
+import type { CategorySchema } from '../constants';
 
 // A simple mapping for icons, you can replace these with more specific SVGs
 const categoryIcons: Record<string, JSX.Element> = {
@@ -14,16 +14,22 @@ const categoryIcons: Record<string, JSX.Element> = {
   // Add other categories here...
   "Дом и быт": <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-8 h-8"><path d="M11.25 3.25a.75.75 0 10-1.5 0v1.282a.75.75 0 01-.264.577l-4.22 4.22a.75.75 0 000 1.06l4.22 4.22a.75.75 0 01.264.577v1.282a.75.75 0 101.5 0v-1.282a.75.75 0 01.264-.577l4.22-4.22a.75.75 0 000-1.06l-4.22-4.22a.75.75 0 01-.264-.577V3.25z" /><path d="M5.22 5.22a.75.75 0 011.06 0l4.22 4.22a.75.75 0 010 1.06l-4.22 4.22a.75.75 0 01-1.06-1.06L8.94 10 5.22 6.28a.75.75 0 010-1.06z" /></svg>,
   "Цифровые товары": <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-8 h-8"><path fillRule="evenodd" d="M15.5 2A1.5 1.5 0 0014 3.5v13A1.5 1.5 0 0015.5 18h-11A1.5 1.5 0 013 16.5v-13A1.5 1.5 0 014.5 2h11zM10 5a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0110 5zM10 9a.75.75 0 01.75.75v5.5a.75.75 0 01-1.5 0v-5.5A.75.75 0 0110 9z" clipRule="evenodd" /></svg>,
-  "Винтаж": <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-8 h-8"><path fillRule="evenodd" d="M10 1a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0110 1zM5.05 3.636a.75.75 0 011.06 0l1.061 1.06a.75.75 0 01-1.06 1.061L5.05 4.697a.75.75 0 010-1.06zm9.9 0a.75.75 0 010 1.06l-1.06 1.061a.75.75 0 01-1.061-1.06l1.06-1.06a.75.75 0 011.061 0zM3 10a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5h-1.5A.75.75 0 013 10zm12 0a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5h-1.5A.75.75 0 0115 10zM5.05 14.95a.75.75 0 010-1.06l1.06-1.061a.75.75 0 011.061 1.06l-1.06 1.06a.75.75 0 01-1.06 0zm9.9 0a.75.75 0 01-1.06 0l-1.061-1.06a.75.75 0 011.06-1.061l1.06 1.06a.75.75 0 010 1.06zM10 15a.75.75 0 01.75-.75h.008a.75.75 0 010 1.5h-.008A.75.75 0 0110 15z" clipRule="evenodd" /></svg>,
+  "Винтаж": <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-8 h-8"><path fillRule="evenodd" d="M10 1a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 0110 1zM5.05 3.636a.75.75 0 011.06 0l1.061 1.06a.75.75 0 01-1.06 1.061L5.05 4.697a.75.75 0 010-1.06zm9.9 0a.75.75 0 010 1.06l-1.06 1.061a.75.75 0 01-1.061-1.06l1.06-1.06a.75.75 0 011.061 0zM3 10a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5h-1.5A.75.75 0 013 10zm12 0a.75.75 0 01.75-.75h1.5a.75.75 0 010 1.5h-1.5a.75.75 0 01-.75-.75zM5.05 14.95a.75.75 0 010-1.06l1.06-1.061a.75.75 0 011.061 1.06l-1.06 1.06a.75.75 0 01-1.06 0zm9.9 0a.75.75 0 01-1.06 0l-1.061-1.06a.75.75 0 011.06-1.061l1.06 1.06a.75.75 0 010 1.06zM10 15a.75.75 0 01.75-.75h.008a.75.75 0 010 1.5h-.008A.75.75 0 0110 15z" clipRule="evenodd" /></svg>,
 };
 
 
 const CategoryGrid: React.FC = () => {
+    const [categories, setCategories] = useState<CategorySchema[]>([]);
+
+    useEffect(() => {
+        apiService.getCategories().then(data => setCategories(data));
+    }, []);
+
     return (
         <section>
             <h2 className="text-3xl font-bold text-base-content mb-4">Категории</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                {CATEGORIES.slice(0, 10).map(category => (
+                {categories.slice(0, 10).map(category => (
                     <Link 
                         key={category.name} 
                         to={`/products?category=${encodeURIComponent(category.name)}`}

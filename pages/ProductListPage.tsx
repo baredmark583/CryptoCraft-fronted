@@ -1,14 +1,12 @@
 
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import type { Product } from '../types';
+import type { CategorySchema } from '../constants';
 import ProductCard from '../components/ProductCard';
 import AuctionCard from '../components/AuctionCard';
 import Spinner from '../components/Spinner';
-// FIX: Correctly import constant
-import { CATEGORIES } from '../constants';
 import FilterBar from '../components/FilterBar';
 import { useTelegramBackButton } from '../hooks/useTelegram';
 import DynamicIcon from '../components/DynamicIcon';
@@ -29,6 +27,7 @@ const ProductListPage: React.FC = () => {
   useTelegramBackButton(true);
 
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<CategorySchema[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'catalog' | 'auctions'>('catalog');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -39,6 +38,10 @@ const ProductListPage: React.FC = () => {
     specialFilter: 'all',
     dynamic: {},
   });
+  
+  useEffect(() => {
+    apiService.getCategories().then(setCategories);
+  }, []);
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
@@ -129,7 +132,7 @@ const ProductListPage: React.FC = () => {
                 <h2 className="text-xl font-bold">Фильтры</h2>
                 <button onClick={() => setIsFilterOpen(false)} className="p-2 text-white text-2xl">&times;</button>
              </div>
-             <FilterBar filters={filters} setFilters={setFilters} products={products} categories={CATEGORIES} />
+             <FilterBar filters={filters} setFilters={setFilters} products={products} categories={categories} />
         </aside>
 
         <main className="flex-grow w-full">

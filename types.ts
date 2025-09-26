@@ -404,7 +404,6 @@ export type ImportedListingData = GeneratedListing & {
   giftWrapAvailable: boolean;
 };
 
-// --- NEW TYPES ---
 export interface Icon {
     id: string;
     name: string;
