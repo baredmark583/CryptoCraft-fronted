@@ -16,7 +16,8 @@ export default defineConfig(({ mode }) => {
       },
       resolve: {
         alias: {
-          '@': path.resolve(__dirname, '.'),
+          // FIX: Replaced process.cwd() with '.' to resolve a TypeScript error where the type for 'process' was incomplete.
+          '@': path.resolve('.'),
         }
       }
     };
