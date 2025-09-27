@@ -408,4 +408,6 @@ export interface Icon {
     id: string;
     name: string;
     svgContent: string;
+    width?: number;
+    height?: number;
 }
