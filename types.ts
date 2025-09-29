@@ -19,6 +19,7 @@ export interface User {
     registrationNumber: string;
   };
   tonWalletAddress?: string;
+  paymentCard?: string;
   // FIX: Added 'role' property to User interface for admin panel compatibility.
   role?: 'USER' | 'MODERATOR' | 'SUPER_ADMIN';
   // FIX: Add email property to User interface for admin panel compatibility.

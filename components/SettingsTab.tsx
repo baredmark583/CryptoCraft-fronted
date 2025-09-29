@@ -16,7 +16,7 @@ const SettingsTab: React.FC<{ user: User }> = ({ user }) => {
         postOffice: user.defaultShippingAddress?.postOffice || '',
         recipientName: user.defaultShippingAddress?.recipientName || user.name,
         phoneNumber: user.defaultShippingAddress?.phoneNumber || user.phoneNumber || '',
-        paymentCard: '',
+        paymentCard: user.paymentCard || '',
     });
 
     const [headerImageFile, setHeaderImageFile] = useState<File | null>(null);
@@ -82,7 +82,8 @@ const SettingsTab: React.FC<{ user: User }> = ({ user }) => {
                     postOffice: formData.postOffice,
                     recipientName: formData.recipientName,
                     phoneNumber: formData.phoneNumber.trim()
-                }
+                },
+                paymentCard: formData.paymentCard.trim() ? formData.paymentCard.trim() : undefined,
             };
             const updatedUser = await apiService.updateUser(user.id, updatedData);
             updateUser(updatedUser);
