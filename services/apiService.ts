@@ -279,11 +279,20 @@ export const apiService = {
       });
   },
   
-  scrapeUrl: async (url: string): Promise<{ cleanText: string }> => {
-    return apiFetch('/scrape', {
-      method: 'POST',
-      body: JSON.stringify({ url }),
-    });
+  scrapeUrlFromClient: async (url: string): Promise<{ html: string }> => {
+    // This now runs on the client, using a proxy to bypass CORS.
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+    try {
+      const response = await fetch(proxyUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch from proxy with status: ${response.status}`);
+      }
+      const html = await response.text();
+      return { html };
+    } catch (error) {
+      console.error(`Client-side scraping error for ${url}:`, error);
+      throw new Error(`Не удалось получить данные со страницы. Сайт может быть недоступен или защищен от сбора данных.`);
+    }
   },
   
   uploadFileFromUrl: async (url: string): Promise<{ url: string }> => {

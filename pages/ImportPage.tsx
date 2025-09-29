@@ -104,18 +104,22 @@ const ImportPage: React.FC = () => {
             status: 'pending'
         }));
         setItems(initialItems);
-        setSelectedItems(new Set()); // Reset selection
+        setSelectedItems(new Set());
 
         for (const item of initialItems) {
             setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'scraping' } : i));
             try {
-                const { cleanText: html } = await apiService.scrapeUrl(item.url);
+                // Step 1: Frontend scrapes HTML via a CORS proxy
+                const { html } = await apiService.scrapeUrlFromClient(item.url);
 
+                // Step 2: Frontend sends HTML to backend for AI processing
                 setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'parsing' } : i));
                 const aiData = await geminiService.processImportedHtml(html);
                 
+                // Step 3: Frontend asks backend to convert currency
                 const convertedPrice = await apiService.convertCurrency(aiData.originalPrice, aiData.originalCurrency);
 
+                // Step 4: Combine all data into the final listing object
                 const finalListingData: EditableListing = {
                     ...aiData,
                     price: parseFloat(convertedPrice.toFixed(2)),
@@ -129,7 +133,6 @@ const ImportPage: React.FC = () => {
                 setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'error', errorMessage: error.message || 'Unknown error' } : i));
             }
             
-            // Wait for a few seconds before processing the next item to avoid rate limiting
             if (initialItems.indexOf(item) < initialItems.length - 1) {
                 await new Promise(res => setTimeout(res, DELAY_BETWEEN_REQUESTS_MS));
             }
@@ -290,4 +293,4 @@ const ImportPage: React.FC = () => {
     );
 };
 
-    export default ImportPage;
+export default ImportPage;
