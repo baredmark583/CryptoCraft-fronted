@@ -103,7 +103,13 @@ const ImportPage: React.FC = () => {
         setItems(initialItems);
         setSelectedItems(new Set()); // Reset selection
 
-        for (const item of initialItems) {
+        const DELAY_BETWEEN_REQUESTS_MS = 2000; // 2 seconds delay to avoid rate limiting
+
+        for (const [index, item] of initialItems.entries()) {
+             if (index > 0) {
+                await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_REQUESTS_MS));
+            }
+            
             setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'scraping' } : i));
             try {
                 // Step 1: Scrape HTML from backend
