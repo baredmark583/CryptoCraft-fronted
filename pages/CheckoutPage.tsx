@@ -62,27 +62,26 @@ const CheckoutPage: React.FC = () => {
         return cartItems.some(item => item.product.isAuthenticationAvailable);
     }, [cartItems]);
 
-    // FIX: Correctly type the accumulator and add subtotal calculation.
     const groupedBySeller = useMemo(() => {
         return cartItems.reduce((acc, item) => {
             const sellerId = item.product.seller.id;
             if (!acc[sellerId]) {
+                const sellerData = sellerId === user.id ? user : item.product.seller;
                 acc[sellerId] = {
-                    seller: item.product.seller,
+                    seller: sellerData,
                     items: [],
                     subtotal: 0,
                 };
             }
-            acc[sellerId].items.push(item);
             const price = item.priceAtTimeOfAddition;
+            acc[sellerId].items.push(item);
             acc[sellerId].subtotal += price * item.quantity;
             return acc;
         }, {} as Record<string, { seller: User; items: CartItem[], subtotal: number }>);
-    }, [cartItems]);
+    }, [cartItems, user]);
     
     const isDirectPaymentPossible = useMemo(() => {
       const sellerIds = Object.keys(groupedBySeller);
-      // Direct payment is only possible if there is ONE seller and they have a wallet address.
       return sellerIds.length === 1 && !!groupedBySeller[sellerIds[0]].seller.tonWalletAddress;
     }, [groupedBySeller]);
 
