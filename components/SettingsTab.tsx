@@ -17,6 +17,7 @@ const SettingsTab: React.FC<{ user: User }> = ({ user }) => {
         recipientName: user.defaultShippingAddress?.recipientName || user.name,
         phoneNumber: user.defaultShippingAddress?.phoneNumber || user.phoneNumber || '',
         paymentCard: user.paymentCard || '',
+        tonWalletAddress: user.tonWalletAddress || '',
     });
 
     const [headerImageFile, setHeaderImageFile] = useState<File | null>(null);
@@ -84,6 +85,7 @@ const SettingsTab: React.FC<{ user: User }> = ({ user }) => {
                     phoneNumber: formData.phoneNumber.trim()
                 },
                 paymentCard: formData.paymentCard.trim() ? formData.paymentCard.trim() : undefined,
+                tonWalletAddress: formData.tonWalletAddress.trim() ? formData.tonWalletAddress.trim() : undefined,
             };
             const updatedUser = await apiService.updateUser(user.id, updatedData);
             updateUser(updatedUser);
@@ -216,12 +218,21 @@ const SettingsTab: React.FC<{ user: User }> = ({ user }) => {
                         </div>
                     </div>
 
-                     <div className="border-t border-base-300 pt-6">
-                        <h3 className="text-xl font-bold text-white">Реквизиты для прямой оплаты</h3>
-                        <p className="text-sm text-base-content/70 mt-1 mb-4">Эти данные будут показаны покупателю, если он выберет способ "Прямая оплата на карту".</p>
+                    <div className="border-t border-base-300 pt-6">
+                        <h3 className="text-xl font-bold text-white">Реквизиты для выплат</h3>
+                        <p className="text-sm text-base-content/70 mt-1 mb-4">Эти данные будут использоваться для вывода средств с вашего баланса на платформе.</p>
                         <div>
                             <label className="block text-sm font-medium text-base-content/70">Номер карты</label>
                             <input type="text" name="paymentCard" value={formData.paymentCard} onChange={handleChange} placeholder="0000 0000 0000 0000" className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md p-2 font-mono"/>
+                        </div>
+                    </div>
+
+                    <div className="border-t border-base-300 pt-6">
+                        <h3 className="text-xl font-bold text-white">Реквизиты для прямой оплаты (TON)</h3>
+                        <p className="text-sm text-base-content/70 mt-1 mb-4">Укажите ваш TON-кошелек, чтобы покупатели могли отправлять оплату напрямую вам. Этот способ не защищен "Безопасной сделкой".</p>
+                        <div>
+                            <label className="block text-sm font-medium text-base-content/70">TON-кошелек</label>
+                            <input type="text" name="tonWalletAddress" value={formData.tonWalletAddress} onChange={handleChange} placeholder="UQ..." className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md p-2 font-mono"/>
                         </div>
                     </div>
                     

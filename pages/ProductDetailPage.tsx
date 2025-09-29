@@ -50,6 +50,7 @@ const ProductDetailPage: React.FC = () => {
     const [isBidModalOpen, setIsBidModalOpen] = useState(false);
     const [isNftModalOpen, setIsNftModalOpen] = useState(false);
     const [viewingImage, setViewingImage] = useState<string | null>(null);
+    const [copied, setCopied] = useState(false);
     
     const { getFormattedPrice } = useCurrency();
     const { addToCart } = useCart();
@@ -120,6 +121,21 @@ const ProductDetailPage: React.FC = () => {
         } else {
             addToWishlist(product.id);
         }
+    };
+    
+     const handleShare = () => {
+        if (!product) return;
+        let urlToCopy = window.location.href;
+        // Если текущий пользователь является продавцом этого товара, добавляем его реферальный ID
+        if (user && user.id === product.seller.id && user.affiliateId) {
+            const url = new URL(urlToCopy);
+            url.searchParams.set('ref', user.affiliateId);
+            urlToCopy = url.toString();
+        }
+        navigator.clipboard.writeText(urlToCopy).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000); // Сбросить состояние через 2 секунды
+        });
     };
     
     const displayedImage = useMemo(() => {
@@ -248,8 +264,36 @@ const ProductDetailPage: React.FC = () => {
                                 }/>
                                 <span className="sr-only">Add to favorites</span>
                             </button>
+                             <button type="button" onClick={handleShare} className="ml-2 flex items-center justify-center rounded-md px-3 py-3 text-base-content/70 hover:bg-base-300 hover:text-primary relative">
+                                <DynamicIcon name="share" className="h-6 w-6 flex-shrink-0" fallback={
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M13 4.5a2.5 2.5 0 11.702 4.289l-3.41 1.95a2.5 2.5 0 110-1.478l3.41-1.95A2.5 2.5 0 0113 4.5zM4.5 8a2.5 2.5 0 100 5 2.5 2.5 0 000-5zm8.5 3.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z" /></svg>
+                                }/>
+                                {copied && <span className="absolute -top-6 right-0 text-xs bg-primary text-white px-2 py-1 rounded-md">Скопировано!</span>}
+                                <span className="sr-only">Share</span>
+                            </button>
                         </div>
                     </form>
+                    
+                    {!isOwner && (
+                    <div className="mt-8 border-t border-base-300/50 pt-6">
+                        <div className="flex items-center gap-4">
+                            <Link to={`/profile/${product.seller.id}`} className="flex-shrink-0">
+                                <img src={product.seller.avatarUrl} alt={product.seller.name} className="w-16 h-16 rounded-full" />
+                            </Link>
+                            <div className="flex-1">
+                                <p className="text-sm text-base-content/70">Продавец</p>
+                                <div className="flex items-center gap-2">
+                                     <Link to={`/profile/${product.seller.id}`} className="font-bold text-lg text-white hover:underline">{product.seller.name}</Link>
+                                     <VerifiedBadge level={product.seller.verificationLevel} />
+                                </div>
+                                 <Link to={`/profile/${product.seller.id}`} className="text-sm text-primary hover:underline">Все товары продавца &rarr;</Link>
+                            </div>
+                            <button onClick={handleContactSeller} className="bg-secondary hover:bg-primary-focus text-white font-semibold py-2 px-4 rounded-lg">
+                                Написать
+                            </button>
+                        </div>
+                    </div>
+                    )}
                     
                     <section className="mt-12">
                         <h2 className="sr-only">Детали</h2>
