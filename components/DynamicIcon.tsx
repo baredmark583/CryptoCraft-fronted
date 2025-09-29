@@ -3,7 +3,7 @@ import { useIcons } from '../hooks/useIcons';
 
 interface DynamicIconProps {
     name: string;
-    fallback: JSX.Element;
+    fallback: React.ReactElement;
     className?: string;
 }
 

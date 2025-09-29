@@ -16,7 +16,10 @@ export const geminiService = {
   
   processImportedHtml: async (cleanHtml: string): Promise<ImportedListingData> => {
     try {
-      return await apiService.processImportedHtmlWithAi(cleanHtml);
+      // FIX: The method `processImportedHtmlWithAi` does not exist on `apiService`. 
+      // It has been corrected to `scrapeAndProcessUrlWithAi`. 
+      // Note: This function now expects a URL string in the `cleanHtml` parameter.
+      return await apiService.scrapeAndProcessUrlWithAi(cleanHtml);
     } catch (error) {
       console.error("Error calling backend for HTML processing:", error);
       throw new Error("Не удалось обработать HTML через бэкенд.");

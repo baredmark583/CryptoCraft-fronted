@@ -11,7 +11,7 @@ interface ElectronicsDashboardTabProps {
     setActiveTab: (tab: ProfileTab) => void;
 }
 
-const StatCard: React.FC<{ title: string; value: string; icon: JSX.Element }> = ({ title, value, icon }) => (
+const StatCard: React.FC<{ title: string; value: string; icon: React.ReactElement }> = ({ title, value, icon }) => (
     <div className="bg-brand-surface p-6 rounded-lg flex items-center gap-4">
         <div className="bg-brand-primary/20 text-brand-primary p-3 rounded-full">{icon}</div>
         <div>

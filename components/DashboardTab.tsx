@@ -12,7 +12,7 @@ interface OfferTarget {
     product: Product;
 }
 
-const StatCard: React.FC<{ title: string; value: string | number; icon: JSX.Element; colorClass?: string }> = ({ title, value, icon, colorClass = 'text-green-400' }) => (
+const StatCard: React.FC<{ title: string; value: string | number; icon: React.ReactElement; colorClass?: string }> = ({ title, value, icon, colorClass = 'text-green-400' }) => (
     <div className="bg-brand-surface p-6 rounded-lg">
         <div className="flex justify-between items-center">
             <p className="text-sm font-medium text-brand-text-secondary">{title}</p>

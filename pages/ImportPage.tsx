@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useTelegramBackButton } from '../hooks/useTelegram';
 import { apiService } from '../services/apiService';
-import { geminiService } from '../services/geminiService';
 // FIX: Import ImportedListingData from types.ts where it is defined and exported.
 import type { ImportItem, Product, ImportedListingData } from '../types';
 import Spinner from '../components/Spinner';
@@ -107,19 +106,15 @@ const ImportPage: React.FC = () => {
         setSelectedItems(new Set());
 
         for (const item of initialItems) {
-            setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'scraping' } : i));
+            setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'enriching' } : i));
             try {
-                // Step 1: Frontend scrapes HTML via a CORS proxy
-                const { html } = await apiService.scrapeUrlFromClient(item.url);
-
-                // Step 2: Frontend sends HTML to backend for AI processing
-                setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'parsing' } : i));
-                const aiData = await geminiService.processImportedHtml(html);
+                // Step 1: Send URL to backend, backend scrapes and processes with AI
+                const aiData = await apiService.scrapeAndProcessUrlWithAi(item.url);
                 
-                // Step 3: Frontend asks backend to convert currency
+                // Step 2: Frontend asks backend to convert currency
                 const convertedPrice = await apiService.convertCurrency(aiData.originalPrice, aiData.originalCurrency);
 
-                // Step 4: Combine all data into the final listing object
+                // Step 3: Combine all data into the final listing object
                 const finalListingData: EditableListing = {
                     ...aiData,
                     price: parseFloat(convertedPrice.toFixed(2)),
