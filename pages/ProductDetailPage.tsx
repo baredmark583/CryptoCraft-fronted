@@ -15,6 +15,8 @@ import { useTelegramBackButton } from '../hooks/useTelegram';
 import AuthenticatedBadge from '../components/AuthenticatedBadge';
 import NFTCertificateModal from '../components/NFTCertificateModal';
 import DynamicIcon from '../components/DynamicIcon';
+import ReviewCard from '../components/ReviewCard';
+import ImageModal from '../components/ImageModal';
 
 const Countdown: React.FC<{ targetDate: number }> = ({ targetDate }) => {
     const { days, hours, minutes, seconds, isFinished } = useCountdown(targetDate);
@@ -47,6 +49,7 @@ const ProductDetailPage: React.FC = () => {
     const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
     const [isBidModalOpen, setIsBidModalOpen] = useState(false);
     const [isNftModalOpen, setIsNftModalOpen] = useState(false);
+    const [viewingImage, setViewingImage] = useState<string | null>(null);
     
     const { getFormattedPrice } = useCurrency();
     const { addToCart } = useCart();
@@ -73,7 +76,7 @@ const ProductDetailPage: React.FC = () => {
                 return Promise.resolve([]);
             })
             .then(reviewData => {
-                setReviews(reviewData);
+                setReviews(reviewData.filter(r => r.productId === id));
             })
             .finally(() => setIsLoading(false));
     }, [id]);
@@ -268,7 +271,25 @@ const ProductDetailPage: React.FC = () => {
                                     </ul>
                                 </div>
                             </details>
-                            {/* Static details for design consistency */}
+                            <details className="group">
+                                <summary className="flex w-full cursor-pointer items-center justify-between py-6 text-left text-neutral-900">
+                                    <span className="text-base font-medium">Отзывы ({reviews.length})</span>
+                                     <span className="ml-6 flex items-center">
+                                        <DynamicIcon name="accordion-arrow" className="h-6 w-6 transform transition-transform group-open:rotate-180" fallback={
+                                            <svg fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
+                                        }/>
+                                    </span>
+                                </summary>
+                                <div className="pb-6 space-y-4">
+                                    {reviews.length > 0 ? (
+                                        reviews.map(review => (
+                                            <ReviewCard key={review.id} review={review} onImageClick={setViewingImage} />
+                                        ))
+                                    ) : (
+                                        <p className="text-base-content/70">Отзывов пока нет.</p>
+                                    )}
+                                </div>
+                            </details>
                              <details className="group">
                                 <summary className="flex w-full cursor-pointer items-center justify-between py-6 text-left text-neutral-900">
                                     <span className="text-base font-medium">Доставка и Возврат</span>
@@ -290,6 +311,7 @@ const ProductDetailPage: React.FC = () => {
         
         {product.isAuction && <BidModal isOpen={isBidModalOpen} onClose={() => setIsBidModalOpen(false)} onSubmit={handlePlaceBid} product={product} />}
         {isNftModalOpen && <NFTCertificateModal product={product} onClose={() => setIsNftModalOpen(false)} />}
+        {viewingImage && <ImageModal imageUrl={viewingImage} onClose={() => setViewingImage(null)} />}
     </>
     );
 };

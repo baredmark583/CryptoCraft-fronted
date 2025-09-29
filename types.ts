@@ -19,6 +19,8 @@ export interface User {
     registrationNumber: string;
   };
   tonWalletAddress?: string;
+  // FIX: Added 'role' property to User interface for admin panel compatibility.
+  role?: 'USER' | 'MODERATOR' | 'SUPER_ADMIN';
   // FIX: Add email property to User interface for admin panel compatibility.
   email?: string;
 }
@@ -103,6 +105,7 @@ export interface Review {
   rating: number;
   text: string;
   timestamp: number;
+  imageUrl?: string;
 }
 
 export interface MessageContent {
@@ -320,6 +323,8 @@ export interface Dispute {
     order: Order;
     messages: DisputeMessage[];
     status: 'OPEN' | 'UNDER_REVIEW' | 'RESOLVED_BUYER' | 'RESOLVED_SELLER';
+    // FIX: Add createdAt to match backend entity for admin panel compatibility.
+    createdAt?: number;
 }
 
 export interface LiveStream {

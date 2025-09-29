@@ -104,7 +104,7 @@ const products: Product[] = [
 
 
 let reviews: Review[] = [
-    { id: 'rev-1', productId: 'prod-1', author: users[5], rating: 5, text: 'Отличная чашка, очень качественная работа!', timestamp: Date.now() - 86400000 },
+    { id: 'rev-1', productId: 'prod-1', author: users[5], rating: 5, text: 'Отличная чашка, очень качественная работа!', timestamp: Date.now() - 86400000, imageUrl: 'https://picsum.photos/seed/rev1/400/400' },
     { id: 'rev-2', productId: 'prod-2', author: users[5], rating: 4, text: 'Красивое ожерелье, но доставка была долгой.', timestamp: Date.now() - 172800000 },
 ];
 
@@ -424,6 +424,21 @@ export const apiService = {
   getReviewsByUserId: async (userId: string): Promise<Review[]> => {
       await new Promise(res => setTimeout(res, 400));
       return reviews.filter(r => r.productId.startsWith('prod-') && products.find(p => p.id === r.productId)?.seller.id === userId);
+  },
+  
+  submitReview: async (productId: string, author: User, rating: number, text: string, imageUrl?: string): Promise<Review> => {
+    await new Promise(res => setTimeout(res, 600));
+    const newReview: Review = {
+        id: `rev-${Date.now()}`,
+        productId,
+        author,
+        rating,
+        text,
+        timestamp: Date.now(),
+        imageUrl
+    };
+    reviews.unshift(newReview);
+    return newReview;
   },
 
   getChats: async (userId: string): Promise<Chat[]> => {
