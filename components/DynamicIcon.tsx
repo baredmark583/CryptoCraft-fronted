@@ -29,7 +29,8 @@ const DynamicIcon: React.FC<DynamicIconProps> = ({ name, fallback, className }) 
     }
     
     // If icon not found in DB, return the hardcoded fallback
-    return React.cloneElement(fallback, { className });
+    // FIX: Spreading existing props helps TypeScript correctly type the `className` property for `cloneElement`.
+    return React.cloneElement(fallback, { ...fallback.props, className });
 };
 
 export default DynamicIcon;

@@ -38,7 +38,8 @@ const NotificationIcon: React.FC<{ type: Notification['type'] }> = ({ type }) =>
 
     return (
         <div className={`w-8 h-8 rounded-full ${iconData.color} flex items-center justify-center flex-shrink-0`}>
-            <DynamicIcon name={iconData.name} className="w-5 h-5" fallback={React.cloneElement(iconData.fallback, { className: "w-5 h-5" })}/>
+            {/* FIX: The `className` is passed directly to DynamicIcon, so there's no need to clone the fallback element here. */}
+            <DynamicIcon name={iconData.name} className="w-5 h-5" fallback={iconData.fallback}/>
         </div>
     );
 };
