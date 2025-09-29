@@ -9,6 +9,9 @@ import { useAuth } from '../hooks/useAuth';
 
 type EditableListing = Omit<ImportedListingData, 'price'> & { price?: number };
 
+// A 2-second delay between processing each URL to avoid hitting API rate limits.
+const DELAY_BETWEEN_REQUESTS_MS = 2000;
+
 
 interface EditableListingProps {
     item: ImportItem;
@@ -103,38 +106,32 @@ const ImportPage: React.FC = () => {
         setItems(initialItems);
         setSelectedItems(new Set()); // Reset selection
 
-        const DELAY_BETWEEN_REQUESTS_MS = 2000; // 2 seconds delay to avoid rate limiting
-
-        for (const [index, item] of initialItems.entries()) {
-             if (index > 0) {
-                await new Promise(resolve => setTimeout(resolve, DELAY_BETWEEN_REQUESTS_MS));
-            }
-            
+        for (const item of initialItems) {
             setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'scraping' } : i));
             try {
-                // Step 1: Scrape HTML from backend
                 const { cleanText: html } = await apiService.scrapeUrl(item.url);
 
-                // Step 2: Extract, Classify, and Enrich with a single AI call
-                setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'parsing' } : i)); // "parsing" now means AI analysis
+                setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'parsing' } : i));
                 const aiData = await geminiService.processImportedHtml(html);
                 
-                // Step 3: Convert price
                 const convertedPrice = await apiService.convertCurrency(aiData.originalPrice, aiData.originalCurrency);
 
-                // Step 4: Combine all data into the final listing object
                 const finalListingData: EditableListing = {
                     ...aiData,
                     price: parseFloat(convertedPrice.toFixed(2)),
                 };
                 
-                // FIX: Cast finalListingData to ImportedListingData to satisfy the type of ImportItem['listing'].
                 setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'success', listing: finalListingData as ImportedListingData } : i));
                 setSelectedItems(prev => new Set(prev).add(item.id));
 
             } catch (error: any) {
                 console.error(`Failed to process ${item.url}:`, error);
                 setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'error', errorMessage: error.message || 'Unknown error' } : i));
+            }
+            
+            // Wait for a few seconds before processing the next item to avoid rate limiting
+            if (initialItems.indexOf(item) < initialItems.length - 1) {
+                await new Promise(res => setTimeout(res, DELAY_BETWEEN_REQUESTS_MS));
             }
         }
         setIsImporting(false);
