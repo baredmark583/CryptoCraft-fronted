@@ -244,10 +244,10 @@ export const apiService = {
     });
   },
   
-  scrapeAndProcessUrlWithAi: async (url: string): Promise<ImportedListingData> => {
-    return apiFetch('/ai/scrape-and-process', {
+  processHtmlWithAi: async (html: string): Promise<ImportedListingData> => {
+    return apiFetch('/ai/process-html', {
       method: 'POST',
-      body: JSON.stringify({ url }),
+      body: JSON.stringify({ html }),
     });
   },
 

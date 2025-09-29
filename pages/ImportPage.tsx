@@ -1,15 +1,45 @@
 import React, { useState } from 'react';
 import { useTelegramBackButton } from '../hooks/useTelegram';
 import { apiService } from '../services/apiService';
-// FIX: Import ImportedListingData from types.ts where it is defined and exported.
+import { geminiService } from '../services/geminiService';
 import type { ImportItem, Product, ImportedListingData } from '../types';
 import Spinner from '../components/Spinner';
 import { useAuth } from '../hooks/useAuth';
 
 type EditableListing = Omit<ImportedListingData, 'price'> & { price?: number };
 
-// A 2-second delay between processing each URL to avoid hitting API rate limits.
 const DELAY_BETWEEN_REQUESTS_MS = 2000;
+
+const scrapeAndCleanUrl = async (url: string): Promise<string> => {
+    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+    
+    try {
+        const response = await fetch(proxyUrl);
+        if (!response.ok) {
+            throw new Error(`Failed to fetch page: ${response.statusText}`);
+        }
+        const html = await response.text();
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        doc.querySelectorAll('script, style, link, header, footer, nav, iframe, svg, noscript').forEach(el => el.remove());
+
+        doc.querySelectorAll('*').forEach(el => {
+            const attributes = Array.from(el.attributes);
+            for (const attr of attributes) {
+                if (!['src', 'href', 'alt', 'title', 'srcset', 'class', 'id'].includes(attr.name.toLowerCase())) {
+                    el.removeAttribute(attr.name);
+                }
+            }
+        });
+
+        return doc.body.innerHTML;
+    } catch (error) {
+        console.error(`Error scraping ${url}:`, error);
+        throw new Error(`Could not scrape the provided URL. It might be protected or unavailable.`);
+    }
+};
 
 
 interface EditableListingProps {
@@ -106,15 +136,23 @@ const ImportPage: React.FC = () => {
         setSelectedItems(new Set());
 
         for (const item of initialItems) {
-            setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'enriching' } : i));
             try {
-                // Step 1: Send URL to backend, backend scrapes and processes with AI
-                const aiData = await apiService.scrapeAndProcessUrlWithAi(item.url);
+                // Step 1: Scrape and clean on the frontend
+                setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'scraping' } : i));
+                const cleanedHtml = await scrapeAndCleanUrl(item.url);
                 
-                // Step 2: Frontend asks backend to convert currency
+                if (!cleanedHtml || cleanedHtml.trim().length < 200) {
+                   throw new Error("Не удалось извлечь контент со страницы.");
+                }
+
+                // Step 2: Send cleaned HTML to backend for AI processing
+                setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'enriching' } : i));
+                const aiData = await geminiService.processImportedHtml(cleanedHtml);
+                
+                // Step 3: Frontend asks backend to convert currency
                 const convertedPrice = await apiService.convertCurrency(aiData.originalPrice, aiData.originalCurrency);
 
-                // Step 3: Combine all data into the final listing object
+                // Step 4: Combine all data into the final listing object
                 const finalListingData: EditableListing = {
                     ...aiData,
                     price: parseFloat(convertedPrice.toFixed(2)),
