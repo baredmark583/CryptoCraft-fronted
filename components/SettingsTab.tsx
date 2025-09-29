@@ -6,6 +6,7 @@ import { getCategoryNames } from '../constants';
 import { useAuth } from '../hooks/useAuth';
 import { cloudinaryService } from '../services/cloudinaryService';
 import { Link } from 'react-router-dom';
+import DynamicIcon from './DynamicIcon';
 
 const SettingsTab: React.FC<{ user: User }> = ({ user }) => {
     const { updateUser } = useAuth();
@@ -244,6 +245,28 @@ const SettingsTab: React.FC<{ user: User }> = ({ user }) => {
                 </form>
             </div>
             
+            <div className="bg-base-100 p-6 sm:p-8 rounded-lg space-y-8">
+                 <h2 className="text-2xl font-bold text-white">Инструменты для объявлений</h2>
+                 <div className="mt-6 border-t border-base-300 pt-6">
+                    <h3 className="text-xl font-bold text-white mb-2">Импорт с других платформ</h3>
+                    <p className="text-base-content/70 mb-4">
+                        Перенесите свой магазин с другой площадки (например, OLX, Prom.ua) в CryptoCraft всего за несколько кликов. Наш AI-ассистент автоматически проанализирует ссылки на ваши товары и подготовит черновики для публикации.
+                    </p>
+                    <Link 
+                        to="/import"
+                        className="inline-flex items-center gap-2 bg-secondary hover:bg-primary-focus text-white font-bold py-2 px-4 rounded-lg transition-colors"
+                    >
+                        <DynamicIcon name="import-tool" className="h-5 w-5" fallback={
+                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M10.75 2.75a.75.75 0 00-1.5 0v8.586l-1.22-1.22a.75.75 0 00-1.06 1.06l2.5 2.5a.75.75 0 001.06 0l2.5-2.5a.75.75 0 10-1.06-1.06l-1.22 1.22V2.75z" />
+                                <path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" />
+                            </svg>
+                        }/>
+                        <span>Перейти к импорту</span>
+                    </Link>
+                </div>
+            </div>
+
             <div className="bg-base-100 p-6 sm:p-8 rounded-lg space-y-8">
                  <h2 className="text-2xl font-bold text-white">Инструменты маркетинга</h2>
 
