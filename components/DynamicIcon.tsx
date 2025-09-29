@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useIcons } from '../hooks/useIcons';
 
@@ -29,9 +30,10 @@ const DynamicIcon: React.FC<DynamicIconProps> = ({ name, fallback, className }) 
     }
     
     // If icon not found in DB, return the hardcoded fallback
-    // FIX: Spreading existing props helps TypeScript correctly type the `className` property for `cloneElement`.
-    // Casting to Record<string, any> to resolve the "Spread types may only be created from object types" error.
-    return React.cloneElement(fallback, { ...(fallback.props as Record<string, any>), className });
+    // FIX: The spread operator (`...fallback.props`) can cause a TypeScript error if the compiler cannot
+    // guarantee that `fallback.props` is an object. Using `Object.assign` is a safer way to merge props
+    // that avoids this "Spread types may only be created from object types" error.
+    return React.cloneElement(fallback, Object.assign({}, fallback.props, { className }));
 };
 
 export default DynamicIcon;

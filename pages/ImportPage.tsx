@@ -1,46 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useTelegramBackButton } from '../hooks/useTelegram';
 import { apiService } from '../services/apiService';
-import { geminiService } from '../services/geminiService';
 import type { ImportItem, Product, ImportedListingData } from '../types';
 import Spinner from '../components/Spinner';
 import { useAuth } from '../hooks/useAuth';
+import { cloudinaryService } from '../services/cloudinaryService';
 
 type EditableListing = Omit<ImportedListingData, 'price'> & { price?: number };
-
-const DELAY_BETWEEN_REQUESTS_MS = 2000;
-
-const scrapeAndCleanUrl = async (url: string): Promise<string> => {
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-    
-    try {
-        const response = await fetch(proxyUrl);
-        if (!response.ok) {
-            throw new Error(`Failed to fetch page: ${response.statusText}`);
-        }
-        const html = await response.text();
-
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-
-        doc.querySelectorAll('script, style, link, header, footer, nav, iframe, svg, noscript').forEach(el => el.remove());
-
-        doc.querySelectorAll('*').forEach(el => {
-            const attributes = Array.from(el.attributes);
-            for (const attr of attributes) {
-                if (!['src', 'href', 'alt', 'title', 'srcset', 'class', 'id'].includes(attr.name.toLowerCase())) {
-                    el.removeAttribute(attr.name);
-                }
-            }
-        });
-
-        return doc.body.innerHTML;
-    } catch (error) {
-        console.error(`Error scraping ${url}:`, error);
-        throw new Error(`Could not scrape the provided URL. It might be protected or unavailable.`);
-    }
-};
-
 
 interface EditableListingProps {
     item: ImportItem;
@@ -98,8 +64,10 @@ const EditableListingCard: React.FC<EditableListingProps> = ({ item, onUpdate, d
                             <img src={url} alt="Preview" className="w-full h-full object-cover rounded-md" />
                             <div className={`absolute inset-0 rounded-md transition-all ${selectedImages.includes(url) ? 'ring-2 ring-primary bg-black/20' : 'bg-black/60 group-hover:bg-black/30'}`}>
                                 {selectedImages.includes(url) && (
-                                    <div className="absolute top-1 right-1 bg-primary rounded-full w-5 h-5 flex items-center justify-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-primary-content"><path fillRule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.052-.143z" clipRule="evenodd" /></svg>
+                                    <div className="absolute top-1 right-1 w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
                                     </div>
                                 )}
                             </div>
@@ -111,217 +79,171 @@ const EditableListingCard: React.FC<EditableListingProps> = ({ item, onUpdate, d
     );
 };
 
-
 const ImportPage: React.FC = () => {
     useTelegramBackButton(true);
     const { user } = useAuth();
-
     const [urls, setUrls] = useState('');
-    const [items, setItems] = useState<ImportItem[]>([]);
-    const [isImporting, setIsImporting] = useState(false);
+    const [importItems, setImportItems] = useState<ImportItem[]>([]);
+    const [isProcessing, setIsProcessing] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
-    const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
-    const handleStartImport = async () => {
-        const urlList = urls.split('\n').map(u => u.trim()).filter(Boolean);
-        if (urlList.length === 0) return;
+    const updateItemStatus = useCallback((id: string, status: ImportItem['status'], listing?: ImportedListingData, errorMessage?: string) => {
+        setImportItems(prev => prev.map(item => item.id === id ? { ...item, status, listing: listing || item.listing, errorMessage } : item));
+    }, []);
 
-        setIsImporting(true);
-        const initialItems: ImportItem[] = urlList.map(url => ({
-            id: url + Date.now(),
+    const handleAddUrls = () => {
+        const urlArray = urls.split('\n').map(u => u.trim()).filter(Boolean);
+        const newItems: ImportItem[] = urlArray.map(url => ({
+            id: `${Date.now()}-${Math.random()}`,
             url,
             status: 'pending'
         }));
-        setItems(initialItems);
-        setSelectedItems(new Set());
+        setImportItems(prev => [...newItems, ...prev]);
+        setUrls('');
+    };
 
-        for (const item of initialItems) {
-            try {
-                // Step 1: Scrape and clean on the frontend
-                setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'scraping' } : i));
-                const cleanedHtml = await scrapeAndCleanUrl(item.url);
-                
-                if (!cleanedHtml || cleanedHtml.trim().length < 200) {
-                   throw new Error("Не удалось извлечь контент со страницы.");
-                }
-
-                // Step 2: Send cleaned HTML to backend for AI processing
-                setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'enriching' } : i));
-                const aiData = await geminiService.processImportedHtml(cleanedHtml);
-                
-                // Step 3: Frontend asks backend to convert currency
-                const convertedPrice = await apiService.convertCurrency(aiData.originalPrice, aiData.originalCurrency);
-
-                // Step 4: Combine all data into the final listing object
-                const finalListingData: EditableListing = {
-                    ...aiData,
-                    price: parseFloat(convertedPrice.toFixed(2)),
-                };
-                
-                setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'success', listing: finalListingData as ImportedListingData } : i));
-                setSelectedItems(prev => new Set(prev).add(item.id));
-
-            } catch (error: any) {
-                console.error(`Failed to process ${item.url}:`, error);
-                setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'error', errorMessage: error.message || 'Unknown error' } : i));
-            }
-            
-            if (initialItems.indexOf(item) < initialItems.length - 1) {
-                await new Promise(res => setTimeout(res, DELAY_BETWEEN_REQUESTS_MS));
-            }
+    const processUrl = async (itemToProcess: ImportItem) => {
+        updateItemStatus(itemToProcess.id, 'processing');
+        try {
+            const result = await apiService.processImportUrl(itemToProcess.url);
+            updateItemStatus(itemToProcess.id, 'success', result);
+        } catch (error: any) {
+            updateItemStatus(itemToProcess.id, 'error', undefined, error.message || 'Произошла неизвестная ошибка.');
         }
-        setIsImporting(false);
     };
 
-    const handleUpdateItem = (id: string, updatedListing: EditableListing) => {
-        setItems(prev => prev.map(item =>
-            item.id === id ? { ...item, listing: { ...item.listing, ...updatedListing } as any } : item
-        ));
+    const handleProcessAll = async () => {
+        setIsProcessing(true);
+        const itemsToProcess = importItems.filter(item => item.status === 'pending' || item.status === 'error');
+        for (const item of itemsToProcess) {
+            await processUrl(item);
+        }
+        setIsProcessing(false);
     };
 
-    const toggleItemSelection = (id: string) => {
-        const item = items.find(i => i.id === id);
-        if (!item || item.status === 'published' || item.status === 'publishing') return;
+    const handleUpdateListing = useCallback((id: string, updatedListing: EditableListing) => {
+        setImportItems(prev => prev.map(item => item.id === id ? { ...item, listing: updatedListing as ImportedListingData } : item));
+    }, []);
 
-        setSelectedItems(prev => {
-            const newSelection = new Set(prev);
-            if (newSelection.has(id)) {
-                newSelection.delete(id);
-            } else {
-                newSelection.add(id);
-            }
-            return newSelection;
-        });
+    const handlePublish = async (item: ImportItem) => {
+        if (!item.listing) return;
+        updateItemStatus(item.id, 'publishing');
+        try {
+            const finalData: Partial<Product> = {
+                title: item.listing.title,
+                description: item.listing.description,
+                price: item.listing.price,
+                category: item.listing.category,
+                dynamicAttributes: item.listing.dynamicAttributes,
+                giftWrapAvailable: item.listing.giftWrapAvailable,
+                productType: 'PHYSICAL',
+            };
+
+            await apiService.createListing(finalData, item.listing.imageUrls, undefined, user);
+            updateItemStatus(item.id, 'published');
+        } catch (error: any) {
+            updateItemStatus(item.id, 'publish_error', undefined, error.message || 'Ошибка публикации.');
+        }
     };
 
-    const handlePublish = async () => {
-        const itemsToPublish = items.filter(i => selectedItems.has(i.id) && i.status === 'success');
-        if (itemsToPublish.length === 0) return;
-    
+    const handlePublishAll = async () => {
         setIsPublishing(true);
-    
+        const itemsToPublish = importItems.filter(item => item.status === 'success');
         for (const item of itemsToPublish) {
-            setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'publishing' } : i));
-            try {
-                if (!item.listing?.imageUrls || item.listing.imageUrls.length === 0) {
-                    throw new Error("Нет изображений для загрузки.");
-                }
-    
-                const uploadedUrls = await Promise.all(
-                    item.listing.imageUrls.map(async (url) => {
-                        const result = await apiService.uploadFileFromUrl(url);
-                        return result.url;
-                    })
-                );
-                
-                const listingData: Partial<Product> = {
-                    title: item.listing.title,
-                    description: item.listing.description,
-                    price: item.listing.price,
-                    category: item.listing.category,
-                    dynamicAttributes: item.listing.dynamicAttributes || {},
-                    isAuction: item.listing.saleType === 'AUCTION',
-                    giftWrapAvailable: item.listing.giftWrapAvailable,
-                };
-    
-                await apiService.createListing(listingData, uploadedUrls, undefined, user);
-    
-                setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'published' } : i));
-            } catch (error) {
-                console.error(`Не удалось опубликовать ${item.url}:`, error);
-                const errorMessage = error instanceof Error ? error.message : 'Неизвестная ошибка';
-                setItems(prev => prev.map(i => i.id === item.id ? { ...i, status: 'publish_error', errorMessage } : i));
-            }
+            await handlePublish(item);
         }
-    
         setIsPublishing(false);
     };
+    
+    const removeItem = (id: string) => {
+        setImportItems(prev => prev.filter(item => item.id !== id));
+    };
 
-    const getStatusUI = (item: ImportItem) => {
-        switch(item.status) {
+    const getStatusComponent = (item: ImportItem) => {
+        switch (item.status) {
             case 'pending': return <span className="text-xs text-base-content/70">Ожидание</span>;
-            case 'scraping': return <span className="text-xs text-sky-400 flex items-center gap-1"><Spinner size="sm" /> Сбор HTML...</span>;
-            case 'parsing': 
-            case 'enriching': return <span className="text-xs text-purple-400 flex items-center gap-1"><Spinner size="sm" /> Анализ AI...</span>;
-            case 'success': return <span className="text-xs text-green-400 font-bold">Готово к публикации</span>;
-            case 'publishing': return <span className="text-xs text-yellow-400 flex items-center gap-1"><Spinner size="sm" /> Публикация...</span>;
-            case 'published': return <span className="text-xs text-green-400 font-bold flex items-center gap-1">✅ Опубликовано</span>;
-            case 'error': return <span className="text-xs text-red-400" title={item.errorMessage}>Ошибка импорта</span>;
-            case 'publish_error': return <span className="text-xs text-red-400" title={item.errorMessage}>Ошибка публикации</span>;
+            case 'processing': return <div className="flex items-center gap-2 text-xs text-sky-400"><Spinner size="sm" /> <span>Обработка...</span></div>;
+            case 'success': return <span className="text-xs text-green-400 font-semibold">Готово к публикации</span>;
+            case 'publishing': return <div className="flex items-center gap-2 text-xs text-purple-400"><Spinner size="sm" /> <span>Публикация...</span></div>;
+            case 'published': return <span className="text-xs text-green-400 font-semibold">✅ Опубликовано</span>;
+            case 'error': return <span className="text-xs text-red-500 tooltip" data-tip={item.errorMessage}>Ошибка</span>;
+            case 'publish_error': return <span className="text-xs text-red-500 tooltip" data-tip={item.errorMessage}>Ошибка публикации</span>;
+            default: return null;
         }
-    }
-
-    const isProcessing = isImporting || isPublishing;
+    };
 
     return (
-        <div className="max-w-4xl mx-auto">
-            <div className="text-center">
-                <h1 className="text-4xl font-bold text-white">Импорт с других платформ</h1>
-                <p className="text-lg text-base-content/70 mt-2">Перенесите свой магазин в CryptoCraft за пару кликов.</p>
-            </div>
-            
-            <div className="bg-base-100 p-6 sm:p-8 rounded-lg shadow-xl my-8">
-                <h2 className="text-xl font-semibold text-white mb-2">1. Вставьте ссылки на товары</h2>
-                <p className="text-sm text-base-content/70 mb-4">Вставьте каждую ссылку на новой строке.</p>
+        <div className="max-w-4xl mx-auto space-y-8">
+            <div className="bg-base-100 p-6 sm:p-8 rounded-lg shadow-xl">
+                <h1 className="text-3xl font-bold text-white mb-2">Импорт товаров</h1>
+                <p className="text-base-content/70 mb-6">Вставьте ссылки на товары с других площадок. Каждая ссылка с новой строки.</p>
                 <textarea
                     value={urls}
                     onChange={e => setUrls(e.target.value)}
-                    rows={6}
-                    placeholder="https://www.olx.ua/d/obyavlenie/..."
+                    rows={5}
+                    placeholder="https://...&#10;https://..."
                     className="w-full bg-base-200 border border-base-300 rounded-md p-3 font-mono text-sm"
-                    disabled={isProcessing}
                 />
                 <button
-                    onClick={handleStartImport}
-                    disabled={isProcessing || !urls.trim()}
-                    className="mt-4 w-full flex justify-center py-3 px-4 text-lg font-medium text-primary-content bg-primary hover:bg-primary-focus disabled:bg-gray-500"
+                    onClick={handleAddUrls}
+                    disabled={!urls.trim()}
+                    className="mt-4 w-full bg-secondary hover:bg-primary-focus text-white font-bold py-3 rounded-lg disabled:bg-gray-500"
                 >
-                    {isImporting ? <Spinner /> : 'Начать импорт'}
+                    Добавить в очередь
                 </button>
             </div>
-            
-            {items.length > 0 && (
-                 <div className="bg-base-100 p-6 sm:p-8 rounded-lg shadow-xl my-8">
-                     <h2 className="text-xl font-semibold text-white mb-4">2. Проверка и публикация</h2>
+            {importItems.length > 0 && (
+                <div className="bg-base-100 p-6 sm:p-8 rounded-lg shadow-xl">
+                    <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+                        <h2 className="text-2xl font-bold text-white">Очередь импорта ({importItems.length})</h2>
+                        <div className="flex gap-2">
+                             <button
+                                onClick={handleProcessAll}
+                                disabled={isProcessing || isPublishing}
+                                className="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center min-w-[120px] disabled:bg-gray-500"
+                            >
+                                {isProcessing ? <Spinner size="sm" /> : 'Обработать все'}
+                            </button>
+                             <button
+                                onClick={handlePublishAll}
+                                disabled={isPublishing || isProcessing || !importItems.some(i => i.status === 'success')}
+                                className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg flex items-center justify-center min-w-[120px] disabled:bg-gray-500"
+                            >
+                               {isPublishing ? <Spinner size="sm"/> : 'Опубликовать все'}
+                            </button>
+                        </div>
+                    </div>
+
                     <div className="space-y-4">
-                        {items.map(item => (
-                            <div key={item.id} className="border border-base-300 rounded-lg">
-                                <div className="p-3 bg-base-200/30 flex justify-between items-center gap-4">
-                                    <div className="flex items-center gap-4 min-w-0">
-                                         {(item.status === 'success' || item.status === 'published') && (
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedItems.has(item.id) || item.status === 'published'}
-                                                onChange={() => toggleItemSelection(item.id)}
-                                                disabled={isProcessing || item.status === 'published'}
-                                                className="flex-shrink-0 h-5 w-5 rounded bg-base-100 border-base-300 text-primary focus:ring-primary disabled:cursor-not-allowed"
-                                            />
-                                        )}
-                                        <p className="text-sm text-base-content truncate">{item.url}</p>
+                        {importItems.map(item => (
+                            <details key={item.id} className="border border-base-300 rounded-lg overflow-hidden group">
+                                <summary className="p-4 flex items-center justify-between cursor-pointer bg-base-100 hover:bg-base-300/50">
+                                    <div className="flex-1 overflow-hidden">
+                                        <p className="font-mono text-sm text-base-content/80 truncate" title={item.url}>{item.url}</p>
+                                        <div className="mt-1">{getStatusComponent(item)}</div>
                                     </div>
-                                    <div className="flex-shrink-0">{getStatusUI(item)}</div>
+                                    <div className="flex items-center gap-2 ml-4">
+                                        <button onClick={(e) => { e.preventDefault(); removeItem(item.id); }} className="text-red-500 hover:text-red-400 p-1"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg></button>
+                                        <span className="transform transition-transform group-open:rotate-180 text-base-content/70">▼</span>
+                                    </div>
+                                </summary>
+                                <div className="p-4">
+                                    {item.listing ? (
+                                        <EditableListingCard item={item} onUpdate={handleUpdateListing} disabled={isProcessing || isPublishing} />
+                                    ) : item.status === 'error' ? (
+                                         <p className="text-red-400 bg-red-500/10 p-3 rounded-md text-sm">{item.errorMessage}</p>
+                                    ) : (
+                                        <p className="text-sm text-base-content/70 text-center">Данные будут доступны после обработки.</p>
+                                    )}
+                                     {item.status === 'success' && (
+                                        <button onClick={() => handlePublish(item)} className="mt-3 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg">Опубликовать</button>
+                                    )}
                                 </div>
-                                {item.status === 'success' && item.listing && (
-                                    <EditableListingCard item={item} onUpdate={handleUpdateItem} disabled={isProcessing} />
-                                )}
-                            </div>
+                            </details>
                         ))}
                     </div>
-                    {items.some(i => i.status === 'success' || i.status === 'published') && (
-                        <div className="mt-6 border-t border-base-300 pt-6">
-                            <button
-                                onClick={handlePublish}
-                                disabled={isProcessing || selectedItems.size === 0}
-                                className="w-full flex justify-center py-3 px-4 text-lg font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-500"
-                            >
-                                {isPublishing ? <Spinner /> : `Опубликовать выбранное (${selectedItems.size})`}
-                            </button>
-                             <p className="text-xs text-base-content/70 text-center mt-2">Примечание: Изображения будут скачаны и загружены на наши серверы. Это может занять некоторое время.</p>
-                        </div>
-                    )}
                 </div>
             )}
-
         </div>
     );
 };

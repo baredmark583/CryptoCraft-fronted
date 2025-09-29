@@ -286,13 +286,11 @@ export const apiService = {
     });
   },
   
-  convertCurrency: async (amount: number, from: string): Promise<number> => {
-      // Mocked on frontend for now
-      await new Promise(res => setTimeout(res, 300));
-      // Simple mock conversion
-      const rates: Record<string, number> = { 'ГРН': 0.025, 'USD': 1, '$': 1, 'USDT': 1 };
-      const rate = Object.keys(rates).find(key => from.toUpperCase().includes(key.toUpperCase())) || 'USD';
-      return amount * (rates[rate] || 1);
+  processImportUrl: async (url: string): Promise<ImportedListingData> => {
+    return apiFetch('/import/process-url', {
+      method: 'POST',
+      body: JSON.stringify({ url }),
+    });
   },
 
   getProducts: async (filters?: any): Promise<Product[]> => {
