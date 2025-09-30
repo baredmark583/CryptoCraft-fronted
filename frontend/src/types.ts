@@ -122,6 +122,8 @@ export interface Message extends MessageContent {
   timestamp: number;
   senderName?: string;
   senderAvatar?: string;
+  // FIX: Add 'chat' property to Message interface to match backend socket payload.
+  chat?: { id: string };
 }
 
 export interface Chat {

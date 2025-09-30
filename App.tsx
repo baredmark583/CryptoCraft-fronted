@@ -1,10 +1,5 @@
-
-
-
-
 import React from 'react';
-// FIX: Upgraded react-router-dom to v6.
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AppContextProvider } from './hooks/useAppContext';
 import { AuthProvider } from './hooks/useAuth';
 import { TonConnectUIProvider } from './hooks/useTonConnect';
@@ -41,44 +36,44 @@ import CreateLiveStreamPage from './pages/CreateLiveStreamPage';
 import ProductListPage from './pages/ProductListPage';
 import ImportPage from './pages/ImportPage';
 
-const MainLayout: React.FC = () => {
+const AppContent: React.FC = () => {
+  const location = useLocation();
+  const isChatPage = location.pathname.startsWith('/chat');
+
   return (
-    <Router>
-      <div className="bg-base-100 min-h-screen flex flex-col font-sans text-base-content overflow-x-hidden">
-        <Header />
-        <main className="flex-grow container mx-auto px-4 py-8 pb-24 md:pb-8">
-          {/* FIX: Upgraded to react-router-dom v6 syntax. */}
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/products" element={<ProductListPage />} />
-            <Route path="/product/:id" element={<ProductDetailPage />} />
-            <Route path="/create" element={<CreateListingPage />} />
-            <Route path="/edit/:id" element={<EditListingPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/profile/:profileId" element={<ProfilePage />} />
-            <Route path="/search" element={<SearchResultsPage />} />
-            <Route path="/chat" element={<ChatPage />} />
-            <Route path="/chat/:chatId" element={<ChatPage />} />
-            <Route path="/cart" element={<CartPage />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/collection/:id" element={<CollectionDetailPage />} />
-            <Route path="/community" element={<CommunityHubPage />} />
-            <Route path="/thread/:id" element={<ForumThreadPage />} />
-            <Route path="/studio/:productId" element={<PhotoStudioPage />} />
-            <Route path="/verify" element={<VerificationPage />} />
-            <Route path="/auth-center" element={<AuthenticationCenterPage />} />
-            <Route path="/dispute/:orderId" element={<DisputeCenterPage />} />
-            <Route path="/live/create" element={<CreateLiveStreamPage />} />
-            <Route path="/live/:streamId" element={<LiveStreamPage />} />
-            <Route path="/governance" element={<GovernancePage />} />
-            <Route path="/proposal/:id" element={<ProposalDetailPage />} />
-            <Route path="/import" element={<ImportPage />} />
-          </Routes>
-        </main>
-        <Footer />
-        <MobileNavBar />
-      </div>
-    </Router>
+    <div className={`font-sans text-base-content ${isChatPage ? 'h-screen bg-white' : 'bg-base-100 min-h-screen flex flex-col overflow-x-hidden'}`}>
+      {!isChatPage && <Header />}
+      <main className={isChatPage ? 'h-full' : 'flex-grow container mx-auto px-4 py-8 pb-24 md:pb-8'}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/products" element={<ProductListPage />} />
+          <Route path="/product/:id" element={<ProductDetailPage />} />
+          <Route path="/create" element={<CreateListingPage />} />
+          <Route path="/edit/:id" element={<EditListingPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile/:profileId" element={<ProfilePage />} />
+          <Route path="/search" element={<SearchResultsPage />} />
+          <Route path="/chat" element={<ChatPage />} />
+          <Route path="/chat/:chatId" element={<ChatPage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/collection/:id" element={<CollectionDetailPage />} />
+          <Route path="/community" element={<CommunityHubPage />} />
+          <Route path="/thread/:id" element={<ForumThreadPage />} />
+          <Route path="/studio/:productId" element={<PhotoStudioPage />} />
+          <Route path="/verify" element={<VerificationPage />} />
+          <Route path="/auth-center" element={<AuthenticationCenterPage />} />
+          <Route path="/dispute/:orderId" element={<DisputeCenterPage />} />
+          <Route path="/live/create" element={<CreateLiveStreamPage />} />
+          <Route path="/live/:streamId" element={<LiveStreamPage />} />
+          <Route path="/governance" element={<GovernancePage />} />
+          <Route path="/proposal/:id" element={<ProposalDetailPage />} />
+          <Route path="/import" element={<ImportPage />} />
+        </Routes>
+      </main>
+      {!isChatPage && <Footer />}
+      {!isChatPage && <MobileNavBar />}
+    </div>
   );
 };
 
@@ -93,7 +88,9 @@ const App: React.FC = () => {
                 <CartProvider>
                   <WishlistProvider>
                     <IconProvider>
-                      <MainLayout />
+                       <Router>
+                        <AppContent />
+                      </Router>
                     </IconProvider>
                   </WishlistProvider>
                 </CartProvider>
