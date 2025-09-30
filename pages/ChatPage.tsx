@@ -251,8 +251,7 @@ const ChatPage: React.FC = () => {
             {chats.length > 0 ? (
             <ul>
                 {chats.map(chat => {
-                    // More robust defensive checks
-                    if (!chat || !chat.participant) {
+                    if (!chat || !chat.participant || !chat.participant.id) {
                         return null;
                     }
                     const participant = chat.participant;
@@ -299,7 +298,7 @@ const ChatPage: React.FC = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
               </button>
-              {selectedChat.participant && (
+              {selectedChat.participant && selectedChat.participant.id && (
                  <Link to={`/profile/${selectedChat.participant.id}`} className="flex items-center gap-3">
                     <img
                         src={selectedChat.participant.avatarUrl || 'https://via.placeholder.com/100'}
