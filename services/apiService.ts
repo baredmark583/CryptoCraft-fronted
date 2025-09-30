@@ -285,13 +285,6 @@ export const apiService = {
       body: JSON.stringify({ url }),
     });
   },
-  
-  scrapeUrl: async (url: string): Promise<{ html: string }> => {
-    return apiFetch('/scrape', {
-      method: 'POST',
-      body: JSON.stringify({ url }),
-    });
-  },
 
   getProducts: async (filters?: any): Promise<Product[]> => {
     const allProducts: Product[] = await apiFetch('/products');

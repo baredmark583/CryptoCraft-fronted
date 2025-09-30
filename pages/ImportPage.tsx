@@ -105,9 +105,18 @@ const ImportPage: React.FC = () => {
 
     const processUrl = async (itemToProcess: ImportItem) => {
         try {
-            // 1. Scrape via backend proxy
+            // 1. Scrape directly from frontend as requested
             updateItemStatus(itemToProcess.id, 'scraping');
-            const { html } = await apiService.scrapeUrl(itemToProcess.url);
+            
+            // This fetch call is likely to be blocked by CORS policy on many websites.
+            // This implementation follows the user's direct request.
+            const response = await fetch(itemToProcess.url);
+    
+            if (!response.ok) {
+                throw new Error(`Ошибка сети: ${response.status} ${response.statusText}`);
+            }
+            
+            const html = await response.text();
 
             // 2. Clean HTML on frontend
             updateItemStatus(itemToProcess.id, 'parsing');
@@ -142,7 +151,7 @@ const ImportPage: React.FC = () => {
             updateItemStatus(itemToProcess.id, 'success', { listing: result });
 
         } catch (error: any) {
-            updateItemStatus(itemToProcess.id, 'error', { errorMessage: error.message || 'Произошла неизвестная ошибка.' });
+            updateItemStatus(itemToProcess.id, 'error', { errorMessage: `Не удалось загрузить страницу напрямую. Ошибка: ${error.message}. Вероятнее всего, сайт блокирует прямые запросы из браузера (CORS).` });
         }
     };
 
@@ -152,7 +161,7 @@ const ImportPage: React.FC = () => {
         const itemsToProcess = importItems.filter(item => item.status === 'pending' || item.status === 'error');
         for (const item of itemsToProcess) {
             await processUrl(item);
-            await delay(2000); // Add a 2-second delay to avoid rate limiting
+            await delay(5000); // Add a 5-second delay to avoid rate limiting
         }
         setIsProcessing(false);
     };
