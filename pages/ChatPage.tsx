@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 // FIX: Upgraded to react-router-dom v6.
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
@@ -217,10 +213,10 @@ const ChatPage: React.FC = () => {
             {chats.map(chat => (
                 <li key={chat.id} onClick={() => navigate(`/chat/${chat.id}`)}
                 className={`p-4 flex items-center cursor-pointer transition-colors ${selectedChat?.id === chat.id ? 'bg-primary/20' : 'hover:bg-base-300/50'}`}>
-                <img src={chat.participant.avatarUrl} alt={chat.participant.name} className="w-12 h-12 rounded-full mr-4" />
+                <img src={chat.participant?.avatarUrl} alt={chat.participant?.name} className="w-12 h-12 rounded-full mr-4 bg-base-300" />
                 <div className="flex-grow overflow-hidden">
-                    <p className="font-semibold text-white truncate">{chat.participant.name}</p>
-                    <p className="text-sm text-base-content/70 truncate">{chat.lastMessage.text}</p>
+                    <p className="font-semibold text-white truncate">{chat.participant?.name || 'Чат'}</p>
+                    <p className="text-sm text-base-content/70 truncate">{chat.lastMessage?.text}</p>
                 </div>
                 </li>
             ))}
@@ -242,12 +238,12 @@ const ChatPage: React.FC = () => {
                        </svg>
                     }/>
                 </button>
-                <Link to={`/profile/${selectedChat.participant.id}`}>
-                    <img src={selectedChat.participant.avatarUrl} alt={selectedChat.participant.name} className="w-10 h-10 rounded-full mr-3" />
+                <Link to={selectedChat.participant ? `/profile/${selectedChat.participant.id}` : '/chat'}>
+                    <img src={selectedChat.participant?.avatarUrl} alt={selectedChat.participant?.name} className="w-10 h-10 rounded-full mr-3 bg-base-300" />
                 </Link>
                 <div className="flex items-center gap-2">
-                    <Link to={`/profile/${selectedChat.participant.id}`} className="text-lg font-bold text-white hover:underline">{selectedChat.participant.name}</Link>
-                    <VerifiedBadge level={selectedChat.participant.verificationLevel} />
+                    <Link to={selectedChat.participant ? `/profile/${selectedChat.participant.id}` : '/chat'} className="text-lg font-bold text-white hover:underline">{selectedChat.participant?.name || 'Чат'}</Link>
+                    {selectedChat.participant && <VerifiedBadge level={selectedChat.participant.verificationLevel} />}
                 </div>
             </div>
             <div className="flex-grow p-6 overflow-y-auto bg-base-200">
