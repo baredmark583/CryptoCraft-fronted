@@ -101,7 +101,7 @@ const ChatPage: React.FC = () => {
       setIsLoading(true);
       try {
         const chatData = await apiService.getChats();
-        setChats(chatData);
+        setChats(Array.isArray(chatData) ? chatData : []);
         if (chatId) {
           const currentChat = await apiService.getChatById(chatId);
           setSelectedChat(currentChat);
@@ -110,6 +110,7 @@ const ChatPage: React.FC = () => {
         }
       } catch (e) {
         console.error("Failed to fetch chats", e);
+        setChats([]); // Set to empty array on error to prevent crash
       } finally {
         setIsLoading(false);
       }
@@ -250,8 +251,14 @@ const ChatPage: React.FC = () => {
             {chats.length > 0 ? (
             <ul>
                 {chats.map(chat => {
+                    // More robust defensive checks
+                    if (!chat || !chat.participant) {
+                        return null;
+                    }
                     const participant = chat.participant;
-                    if (!participant) return null; // Defensive check
+                    const lastMessage = chat.lastMessage;
+                    const lastMessageText = lastMessage?.text || (lastMessage?.imageUrl ? 'Изображение' : 'Нет сообщений');
+
                     return (
                         <li
                             key={chat.id}
@@ -261,13 +268,13 @@ const ChatPage: React.FC = () => {
                             }`}
                         >
                             <img
-                            src={participant.avatarUrl}
-                            alt={participant.name}
+                            src={participant.avatarUrl || 'https://via.placeholder.com/100'}
+                            alt={participant.name || 'Пользователь'}
                             className="w-12 h-12 rounded-full mr-3 bg-gray-200"
                             />
                             <div className="flex-grow overflow-hidden">
-                                <p className="font-semibold text-gray-800 truncate">{participant.name}</p>
-                                <p className="text-sm text-gray-500 truncate">{chat.lastMessage?.text || (chat.lastMessage?.imageUrl ? 'Изображение' : 'Нет сообщений')}</p>
+                                <p className="font-semibold text-gray-800 truncate">{participant.name || 'Удаленный пользователь'}</p>
+                                <p className="text-sm text-gray-500 truncate">{lastMessageText}</p>
                             </div>
                         </li>
                     )
@@ -295,12 +302,12 @@ const ChatPage: React.FC = () => {
               {selectedChat.participant && (
                  <Link to={`/profile/${selectedChat.participant.id}`} className="flex items-center gap-3">
                     <img
-                        src={selectedChat.participant.avatarUrl}
-                        alt={selectedChat.participant.name}
+                        src={selectedChat.participant.avatarUrl || 'https://via.placeholder.com/100'}
+                        alt={selectedChat.participant.name || 'Пользователь'}
                         className="w-10 h-10 rounded-full bg-gray-300"
                     />
                     <div className="flex items-center gap-2">
-                        <span className="text-lg font-semibold text-gray-800 hover:underline">{selectedChat.participant.name}</span>
+                        <span className="text-lg font-semibold text-gray-800 hover:underline">{selectedChat.participant.name || 'Удаленный пользователь'}</span>
                         <VerifiedBadge level={selectedChat.participant.verificationLevel} />
                     </div>
                 </Link>
