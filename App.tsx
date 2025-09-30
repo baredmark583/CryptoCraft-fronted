@@ -47,7 +47,7 @@ const AppContent: React.FC = () => {
 
   // When on chat page, remove padding and container styles from main.
   const mainClass = isChatPage
-    ? "flex-grow"
+    ? "flex-grow overflow-hidden"
     : "flex-grow container mx-auto px-4 py-8 pb-24 md:pb-8";
 
   return (

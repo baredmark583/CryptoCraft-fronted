@@ -301,14 +301,14 @@ const ChatPage: React.FC = () => {
                 </svg>
               </button>
               {selectedChat.participant && selectedChat.participant.id && (
-                 <Link to={`/profile/${selectedChat.participant.id}`} className="flex items-center gap-3">
+                 <Link to={`/profile/${selectedChat.participant.id}`} className="flex items-center gap-3 flex-1 min-w-0">
                     <img
                         src={selectedChat.participant.avatarUrl || 'https://via.placeholder.com/100'}
                         alt={selectedChat.participant.name || 'Пользователь'}
                         className="w-10 h-10 rounded-full bg-gray-300"
                     />
-                    <div className="flex items-center gap-2">
-                        <span className="text-lg font-semibold text-gray-800 hover:underline">{selectedChat.participant.name || 'Удаленный пользователь'}</span>
+                    <div className="flex items-center gap-2 overflow-hidden">
+                        <span className="text-lg font-semibold text-gray-800 hover:underline truncate">{selectedChat.participant.name || 'Удаленный пользователь'}</span>
                         <VerifiedBadge level={selectedChat.participant.verificationLevel} />
                     </div>
                 </Link>
