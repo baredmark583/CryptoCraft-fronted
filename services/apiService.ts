@@ -108,16 +108,6 @@ let reviews: Review[] = [
     { id: 'rev-2', productId: 'prod-2', author: users[5], rating: 4, text: 'Красивое ожерелье, но доставка была долгой.', timestamp: Date.now() - 172800000 },
 ];
 
-let chats: Chat[] = [
-    { id: 'chat-1', participant: users[1], messages: [
-        { id: 'msg-1', senderId: 'buyer-1', text: 'Здравствуйте! Ожерелье еще в наличии?', timestamp: Date.now() - 3600000 },
-        { id: 'msg-2', senderId: 'user-2', text: 'Добрый день! Да, в наличии.', timestamp: Date.now() - 3540000 },
-    ], lastMessage: { id: 'msg-2', senderId: 'user-2', text: 'Добрый день! Да, в наличии.', timestamp: Date.now() - 3540000 } },
-    { id: 'chat-2', participant: users[2], messages: [
-        { id: 'msg-3', senderId: 'buyer-1', text: 'Торг уместен?', timestamp: Date.now() - 7200000 },
-    ], lastMessage: { id: 'msg-3', senderId: 'buyer-1', text: 'Торг уместен?', timestamp: Date.now() - 7200000 } },
-];
-
 let orders: Order[] = [
   { id: 'order-1', buyer: users[5], seller: users[0], items: [{ product: products[0], quantity: 1, price: 35, purchaseType: 'RETAIL' }], total: 35, status: 'SHIPPED', orderDate: Date.now() - 86400000, shippingAddress: { city: 'Киев', postOffice: 'Отделение №1', recipientName: 'Craft Enthusiast', phoneNumber: '+380991234567' }, shippingMethod: 'NOVA_POSHTA', paymentMethod: 'ESCROW', trackingNumber: '20450123456789' },
   { id: 'order-2', buyer: users[5], seller: users[1], items: [{ product: products[1], quantity: 1, price: 99, purchaseType: 'RETAIL' }], total: 99, status: 'DELIVERED', orderDate: Date.now() - 2 * 86400000, shippingAddress: { city: 'Киев', postOffice: 'Отделение №1', recipientName: 'Craft Enthusiast', phoneNumber: '+380991234567' }, shippingMethod: 'NOVA_POSHTA', paymentMethod: 'ESCROW' },
@@ -403,6 +393,33 @@ export const apiService = {
     });
   },
 
+  getChats: async (): Promise<Chat[]> => {
+    return apiFetch('/chats');
+  },
+
+  getChatById: async (chatId: string): Promise<Chat | null> => {
+    return apiFetch(`/chats/${chatId}`);
+  },
+  
+  findOrCreateChat: async (userId1: string, userId2: string): Promise<Chat> => {
+    return apiFetch('/chats', {
+        method: 'POST',
+        body: JSON.stringify({ recipientId: userId2 })
+    });
+  },
+
+  sendMessage: async (chatId: string, content: MessageContent): Promise<Message> => {
+    const payload = {
+        text: content.text,
+        imageUrl: content.imageUrl,
+        productContext: content.productContext ? { id: content.productContext.id } : undefined,
+    };
+    return apiFetch(`/chats/${chatId}/messages`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+    });
+  },
+
   // --- MOCKED API METHODS (for features not yet on backend) ---
   
   getReviewsByUserId: async (userId: string): Promise<Review[]> => {
@@ -423,53 +440,6 @@ export const apiService = {
     };
     reviews.unshift(newReview);
     return newReview;
-  },
-
-  getChats: async (userId: string): Promise<Chat[]> => {
-      await new Promise(res => setTimeout(res, 600));
-      return [...chats].sort((a, b) => b.lastMessage.timestamp - a.lastMessage.timestamp);
-  },
-
-  getChatById: async (chatId: string, userId: string): Promise<Chat | null> => {
-      await new Promise(res => setTimeout(res, 300));
-      return chats.find(c => c.id === chatId) || null;
-  },
-  
-  findOrCreateChat: async (userId1: string, userId2: string): Promise<Chat> => {
-      await new Promise(res => setTimeout(res, 300));
-      // Corrected: The participant should be the person we are trying to chat with (userId2).
-      const existingChat = chats.find(c => c.participant.id === userId2);
-      if(existingChat) return existingChat;
-      
-      // FIX: Fetch user from the API instead of relying on the local mock `users` array.
-      // This allows creating chats with users who were fetched from the backend.
-      const otherUser = await apiService.getUserById(userId2);
-      if(!otherUser) throw new Error("User not found");
-
-      const newChat: Chat = {
-          id: `chat-${Date.now()}`,
-          participant: otherUser,
-          messages: [],
-          lastMessage: {id: 'temp', senderId: '', timestamp: Date.now(), text: 'Чат создан'}
-      };
-      chats.push(newChat);
-      return newChat;
-  },
-
-  sendMessage: async (chatId: string, content: MessageContent, senderId: string): Promise<Message> => {
-    await new Promise(res => setTimeout(res, 250));
-    const chat = chats.find(c => c.id === chatId);
-    if (!chat) throw new Error("Chat not found");
-
-    const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      senderId,
-      timestamp: Date.now(),
-      ...content
-    };
-    chat.messages.push(newMessage);
-    chat.lastMessage = newMessage;
-    return newMessage;
   },
 
   getNotificationsByUserId: async (userId: string): Promise<Notification[]> => {

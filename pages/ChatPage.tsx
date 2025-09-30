@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 // FIX: Upgraded to react-router-dom v6.
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
@@ -35,10 +36,12 @@ const ChatPage: React.FC = () => {
   useEffect(() => {
     const fetchChats = async () => {
       setIsLoading(true);
-      const chatData = await apiService.getChats(user.id);
+      // FIX: apiService.getChats expects 0 arguments. The user is identified by the auth token on the backend.
+      const chatData = await apiService.getChats();
       setChats(chatData);
       if (chatId) {
-        const currentChat = await apiService.getChatById(chatId, user.id);
+        // FIX: apiService.getChatById expects 1 argument. The user is identified by the auth token on the backend.
+        const currentChat = await apiService.getChatById(chatId);
         setSelectedChat(currentChat || null);
       } else if (chatData.length > 0 && window.innerWidth >= 640) { // On desktop, select first chat
         const firstChatId = chatData[0].id;
@@ -54,7 +57,8 @@ const ChatPage: React.FC = () => {
     const fetchChatDetails = async () => {
         if (chatId && selectedChat?.id !== chatId) {
             setIsLoading(true);
-            const currentChat = await apiService.getChatById(chatId, user.id);
+            // FIX: apiService.getChatById expects 1 argument. The user is identified by the auth token on the backend.
+            const currentChat = await apiService.getChatById(chatId);
             setSelectedChat(currentChat || null);
             setIsLoading(false);
         }
@@ -79,7 +83,8 @@ const ChatPage: React.FC = () => {
                         productContext: product,
                         text: `Здравствуйте! Меня интересует это объявление.`
                     };
-                    const productMessage = await apiService.sendMessage(selectedChat.id, productMessageContent, user.id);
+                    // FIX: apiService.sendMessage expects 2 arguments. The sender ID is handled by the backend.
+                    const productMessage = await apiService.sendMessage(selectedChat.id, productMessageContent);
 
                     // Generate contextual quick replies based on product category
                     let replies: string[];
@@ -116,7 +121,14 @@ const ChatPage: React.FC = () => {
                     const quickRepliesContent: MessageContent = {
                         quickReplies: replies
                     };
-                    const repliesMessage = await apiService.sendMessage(selectedChat.id, quickRepliesContent, 'system');
+                    // FIX: The backend does not support creating system messages.
+                    // The quick replies message is constructed locally and added to the state for display.
+                    const repliesMessage: Message = {
+                        id: `system-${Date.now()}`,
+                        senderId: 'system',
+                        timestamp: Date.now(),
+                        ...quickRepliesContent
+                    };
 
                     setSelectedChat(prev => prev ? {...prev, messages: [...prev.messages, productMessage, repliesMessage]} : null);
 
@@ -151,7 +163,8 @@ const ChatPage: React.FC = () => {
       }
 
       try {
-        const sentMessage = await apiService.sendMessage(selectedChat.id, content, user.id);
+        // FIX: apiService.sendMessage expects 2 arguments. The sender ID is handled by the backend.
+        const sentMessage = await apiService.sendMessage(selectedChat.id, content);
         setSelectedChat(prev => prev ? {
             ...prev, 
             messages: prev.messages.map(m => m.id === tempId ? sentMessage : m)
