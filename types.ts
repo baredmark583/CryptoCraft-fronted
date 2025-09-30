@@ -397,7 +397,8 @@ export interface VerificationAnalysis {
 export interface ImportItem {
     id: string;
     url: string;
-    status: 'pending' | 'scraping' | 'parsing' | 'enriching' | 'success' | 'publishing' | 'published' | 'error' | 'publish_error';
+    // FIX: Add 'processing' to the status union type to match its usage in ImportPage.tsx.
+    status: 'pending' | 'processing' | 'scraping' | 'parsing' | 'enriching' | 'success' | 'publishing' | 'published' | 'error' | 'publish_error';
     listing?: ImportedListingData;
     errorMessage?: string;
 }
