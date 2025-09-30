@@ -1,10 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import { useTelegramBackButton } from '../hooks/useTelegram';
 import { apiService } from '../services/apiService';
+import { geminiService } from '../services/geminiService';
 import type { ImportItem, Product, ImportedListingData } from '../types';
 import Spinner from '../components/Spinner';
 import { useAuth } from '../hooks/useAuth';
-import { cloudinaryService } from '../services/cloudinaryService';
+import * as cheerio from 'cheerio';
 
 type EditableListing = Omit<ImportedListingData, 'price'> & { price?: number };
 
@@ -87,8 +88,8 @@ const ImportPage: React.FC = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
 
-    const updateItemStatus = useCallback((id: string, status: ImportItem['status'], listing?: ImportedListingData, errorMessage?: string) => {
-        setImportItems(prev => prev.map(item => item.id === id ? { ...item, status, listing: listing || item.listing, errorMessage } : item));
+    const updateItemStatus = useCallback((id: string, status: ImportItem['status'], data: { listing?: ImportedListingData, errorMessage?: string } = {}) => {
+        setImportItems(prev => prev.map(item => item.id === id ? { ...item, status, listing: data.listing || item.listing, errorMessage: data.errorMessage } : item));
     }, []);
 
     const handleAddUrls = () => {
@@ -103,12 +104,45 @@ const ImportPage: React.FC = () => {
     };
 
     const processUrl = async (itemToProcess: ImportItem) => {
-        updateItemStatus(itemToProcess.id, 'processing');
         try {
-            const result = await apiService.processImportUrl(itemToProcess.url);
-            updateItemStatus(itemToProcess.id, 'success', result);
+            // 1. Scrape via backend proxy
+            updateItemStatus(itemToProcess.id, 'scraping');
+            const { html } = await apiService.scrapeUrl(itemToProcess.url);
+
+            // 2. Clean HTML on frontend
+            updateItemStatus(itemToProcess.id, 'parsing');
+            const $ = cheerio.load(html);
+            const body = $('body');
+            body.find('script, style, link[rel="stylesheet"], noscript, iframe, footer, header, nav, svg, path, aside, form').remove();
+            
+            body.find('*').each(function () {
+                const element = $(this);
+                const preservedAttrs: { [key: string]: string } = {};
+                if (element.is('img')) {
+                    const src = element.attr('src');
+                    if(src) preservedAttrs.src = new URL(src, itemToProcess.url).href;
+                } else if (element.is('a')) {
+                     const href = element.attr('href');
+                     if(href) preservedAttrs.href = new URL(href, itemToProcess.url).href;
+                }
+                const currentAttrs = { ...element.attr() };
+                Object.keys(currentAttrs).forEach(attrName => element.removeAttr(attrName));
+                element.attr(preservedAttrs);
+            });
+
+            const cleanHtml = body.html();
+            if (!cleanHtml || cleanHtml.trim().length < 100) {
+              throw new Error('Очищенный HTML слишком короткий. Страница может быть пустой или заблокированной.');
+            }
+
+            // 3. Send clean HTML to AI for processing
+            updateItemStatus(itemToProcess.id, 'enriching');
+            const result = await geminiService.processImportedHtml(cleanHtml);
+            
+            updateItemStatus(itemToProcess.id, 'success', { listing: result });
+
         } catch (error: any) {
-            updateItemStatus(itemToProcess.id, 'error', undefined, error.message || 'Произошла неизвестная ошибка.');
+            updateItemStatus(itemToProcess.id, 'error', { errorMessage: error.message || 'Произошла неизвестная ошибка.' });
         }
     };
 
@@ -123,14 +157,21 @@ const ImportPage: React.FC = () => {
         setIsProcessing(false);
     };
 
-    const handleUpdateListing = useCallback((id: string, updatedListing: EditableListing) => {
-        setImportItems(prev => prev.map(item => item.id === id ? { ...item, listing: updatedListing as ImportedListingData } : item));
+    const handleUpdateListing = useCallback((id: string, updatedListing: ImportedListingData) => {
+        setImportItems(prev => prev.map(item => item.id === id ? { ...item, listing: updatedListing } : item));
     }, []);
 
     const handlePublish = async (item: ImportItem) => {
         if (!item.listing) return;
         updateItemStatus(item.id, 'publishing');
         try {
+            // Upload images from external URLs to our Cloudinary
+            const uploadedImageUrls = await Promise.all(
+                item.listing.imageUrls.slice(0, 5).map(url => 
+                    apiService.uploadFileFromUrl(url).then(res => res.url)
+                )
+            );
+            
             const finalData: Partial<Product> = {
                 title: item.listing.title,
                 description: item.listing.description,
@@ -141,10 +182,10 @@ const ImportPage: React.FC = () => {
                 productType: 'PHYSICAL',
             };
 
-            await apiService.createListing(finalData, item.listing.imageUrls, undefined, user);
+            await apiService.createListing(finalData, uploadedImageUrls, undefined, user);
             updateItemStatus(item.id, 'published');
         } catch (error: any) {
-            updateItemStatus(item.id, 'publish_error', undefined, error.message || 'Ошибка публикации.');
+            updateItemStatus(item.id, 'publish_error', { errorMessage: error.message || 'Ошибка публикации.' });
         }
     };
 
@@ -164,7 +205,9 @@ const ImportPage: React.FC = () => {
     const getStatusComponent = (item: ImportItem) => {
         switch (item.status) {
             case 'pending': return <span className="text-xs text-base-content/70">Ожидание</span>;
-            case 'processing': return <div className="flex items-center gap-2 text-xs text-sky-400"><Spinner size="sm" /> <span>Обработка...</span></div>;
+            case 'scraping': return <div className="flex items-center gap-2 text-xs text-sky-400"><Spinner size="sm" /> <span>Получение HTML...</span></div>;
+            case 'parsing': return <div className="flex items-center gap-2 text-xs text-sky-400"><Spinner size="sm" /> <span>Очистка...</span></div>;
+            case 'enriching': return <div className="flex items-center gap-2 text-xs text-sky-400"><Spinner size="sm" /> <span>Анализ AI...</span></div>;
             case 'success': return <span className="text-xs text-green-400 font-semibold">Готово к публикации</span>;
             case 'publishing': return <div className="flex items-center gap-2 text-xs text-purple-400"><Spinner size="sm" /> <span>Публикация...</span></div>;
             case 'published': return <span className="text-xs text-green-400 font-semibold">✅ Опубликовано</span>;

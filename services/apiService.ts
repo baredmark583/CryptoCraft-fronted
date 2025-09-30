@@ -286,8 +286,8 @@ export const apiService = {
     });
   },
   
-  processImportUrl: async (url: string): Promise<ImportedListingData> => {
-    return apiFetch('/import/process-url', {
+  scrapeUrl: async (url: string): Promise<{ html: string }> => {
+    return apiFetch('/scrape', {
       method: 'POST',
       body: JSON.stringify({ url }),
     });
