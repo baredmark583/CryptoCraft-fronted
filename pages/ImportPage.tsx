@@ -113,10 +113,12 @@ const ImportPage: React.FC = () => {
     };
 
     const handleProcessAll = async () => {
+        const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
         setIsProcessing(true);
         const itemsToProcess = importItems.filter(item => item.status === 'pending' || item.status === 'error');
         for (const item of itemsToProcess) {
             await processUrl(item);
+            await delay(2000); // Add a 2-second delay to avoid rate limiting
         }
         setIsProcessing(false);
     };
@@ -181,7 +183,8 @@ const ImportPage: React.FC = () => {
                     value={urls}
                     onChange={e => setUrls(e.target.value)}
                     rows={5}
-                    placeholder="https://...&#10;https://..."
+                    placeholder="https://...
+https://..."
                     className="w-full bg-base-200 border border-base-300 rounded-md p-3 font-mono text-sm"
                 />
                 <button
