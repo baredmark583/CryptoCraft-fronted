@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AppContextProvider } from './hooks/useAppContext';
 import { AuthProvider } from './hooks/useAuth';
@@ -9,6 +9,7 @@ import { CurrencyProvider } from './hooks/useCurrency';
 import { CartProvider } from './hooks/useCart';
 import { WishlistProvider } from './hooks/useWishlist';
 import { IconProvider } from './hooks/useIcons';
+import { useTelegram } from './hooks/useTelegram';
 
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -39,6 +40,14 @@ import ImportPage from './pages/ImportPage';
 const AppContent: React.FC = () => {
   const location = useLocation();
   const isChatPage = location.pathname.startsWith('/chat');
+  const { tg } = useTelegram();
+
+  // Force hide the Telegram MainButton as it sometimes appears unwantedly.
+  useEffect(() => {
+    if (tg?.MainButton) {
+      tg.MainButton.hide();
+    }
+  }, [tg]);
 
   // When on chat page, fix the screen height and prevent overflow.
   const appContainerClass = isChatPage
