@@ -30,6 +30,10 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwnMessage, onQuic
   const bubbleStyles = isOwnMessage ? 'rounded-br-none' : 'rounded-bl-none';
   const isSystemMessage = message.senderId === 'system';
 
+  const formattedTime = message.timestamp && typeof message.timestamp === 'number'
+    ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : '';
+
   return (
     <div className={`flex flex-col mb-2 ${alignment}`}>
       <div
@@ -44,7 +48,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwnMessage, onQuic
         )}
         {!isSystemMessage && (
              <p className={`text-xs mt-1 ${isOwnMessage ? 'text-blue-100' : 'text-gray-400'} text-right`}>
-                {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                {formattedTime}
             </p>
         )}
       </div>

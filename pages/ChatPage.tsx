@@ -9,6 +9,7 @@ import ChatMessage from '../components/ChatMessage';
 import VerifiedBadge from '../components/VerifiedBadge';
 import DynamicIcon from '../components/DynamicIcon';
 import { io, Socket } from 'socket.io-client';
+import { useTelegram } from '../hooks/useTelegram';
 
 const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:3001';
 
@@ -30,6 +31,7 @@ const ChatPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, token } = useAuth();
   const navigate = useNavigate();
+  const { tg } = useTelegram();
 
   const [chats, setChats] = useState<Chat[]>([]);
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
@@ -41,6 +43,13 @@ const ChatPage: React.FC = () => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Force hide the Telegram MainButton as it causes layout issues on this page.
+  useEffect(() => {
+    if (tg?.MainButton) {
+      tg.MainButton.hide();
+    }
+  }, [tg, chatId]);
 
   // Socket connection
   useEffect(() => {
