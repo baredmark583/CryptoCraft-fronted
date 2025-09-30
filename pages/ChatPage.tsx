@@ -234,14 +234,14 @@ const ChatPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-gray-100">
+      <div className="flex justify-center items-center h-full">
         <Spinner />
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-white text-gray-900 font-sans">
+    <div className="flex h-full bg-white text-gray-900 font-sans">
       {/* Chat List */}
       <div className={`w-full md:w-[360px] border-r border-gray-200 flex flex-col ${chatId ? 'hidden md:flex' : 'flex'}`}>
         <div className="p-4 border-b border-gray-200 bg-gray-50">
@@ -376,6 +376,5 @@ const ChatPage: React.FC = () => {
     </div>
   );
 };
-
 
 export default ChatPage;

@@ -40,11 +40,20 @@ const AppContent: React.FC = () => {
   const location = useLocation();
   const isChatPage = location.pathname.startsWith('/chat');
 
-  // Reverted the logic to hide navigation on chat page to prevent blank screen issues.
+  // When on chat page, fix the screen height and prevent overflow.
+  const appContainerClass = isChatPage
+    ? "bg-base-100 h-screen flex flex-col overflow-hidden font-sans text-base-content"
+    : "bg-base-100 min-h-screen flex flex-col overflow-x-hidden font-sans text-base-content";
+
+  // When on chat page, remove padding and container styles from main.
+  const mainClass = isChatPage
+    ? "flex-grow"
+    : "flex-grow container mx-auto px-4 py-8 pb-24 md:pb-8";
+
   return (
-    <div className="bg-base-100 min-h-screen flex flex-col overflow-x-hidden font-sans text-base-content">
+    <div className={appContainerClass}>
       <Header />
-      <main className="flex-grow container mx-auto px-4 py-8 pb-24 md:pb-8">
+      <main className={mainClass}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/products" element={<ProductListPage />} />
@@ -72,7 +81,7 @@ const AppContent: React.FC = () => {
           <Route path="/import" element={<ImportPage />} />
         </Routes>
       </main>
-      <Footer />
+      {!isChatPage && <Footer />}
       <MobileNavBar />
     </div>
   );
