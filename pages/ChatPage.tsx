@@ -251,7 +251,9 @@ const ChatPage: React.FC = () => {
             {chats.length > 0 ? (
             <ul>
                 {chats.map(chat => {
-                    if (!chat || !chat.participant || !chat.participant.id) {
+                    // More robust check for participant object and its properties
+                    if (!chat?.id || !chat.participant?.id || !chat.participant.name) {
+                        console.warn("Skipping render for malformed chat object:", chat);
                         return null;
                     }
                     const participant = chat.participant;
