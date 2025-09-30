@@ -437,10 +437,13 @@ export const apiService = {
   
   findOrCreateChat: async (userId1: string, userId2: string): Promise<Chat> => {
       await new Promise(res => setTimeout(res, 300));
-      const existingChat = chats.find(c => (c.participant.id === userId1 || c.participant.id === userId2));
+      // Corrected: The participant should be the person we are trying to chat with (userId2).
+      const existingChat = chats.find(c => c.participant.id === userId2);
       if(existingChat) return existingChat;
       
-      const otherUser = users.find(u => u.id === userId2);
+      // FIX: Fetch user from the API instead of relying on the local mock `users` array.
+      // This allows creating chats with users who were fetched from the backend.
+      const otherUser = await apiService.getUserById(userId2);
       if(!otherUser) throw new Error("User not found");
 
       const newChat: Chat = {
