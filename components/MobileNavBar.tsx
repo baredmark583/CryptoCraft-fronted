@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import DynamicIcon from './DynamicIcon';
 
 interface NavItemProps {
@@ -13,7 +13,7 @@ const NavItem: React.FC<NavItemProps> = ({ to, children, exact = false }) => (
         to={to} 
         end={exact}
         className={({ isActive }) => 
-            `flex flex-col items-center justify-center w-full text-xs transition-colors ${isActive ? 'text-primary' : 'text-base-content/70 hover:text-base-content'}`
+            `flex flex-col items-center justify-center flex-1 text-xs transition-colors h-full ${isActive ? 'text-primary' : 'text-base-content/70 hover:text-base-content'}`
         }
     >
         {children}
@@ -22,32 +22,30 @@ const NavItem: React.FC<NavItemProps> = ({ to, children, exact = false }) => (
 
 
 const MobileNavBar: React.FC = () => {
-    const navigate = useNavigate();
-
     return (
-        <nav className="block md:hidden fixed bottom-0 left-0 right-0 h-16 bg-base-200/90 backdrop-blur-lg border-t border-base-300 z-40 flex items-center justify-around px-2">
-            <button onClick={() => navigate(-1)} className="flex flex-col items-center justify-center w-full text-xs text-base-content/70 hover:text-base-content transition-colors">
-                <DynamicIcon name="back-arrow" className="h-6 w-6 mb-1" fallback={
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                    </svg>
-                }/>
-                <span>Назад</span>
-            </button>
+        <nav className="block md:hidden fixed bottom-0 left-0 right-0 h-16 bg-base-200/90 backdrop-blur-lg border-t border-base-300 z-40 flex items-center">
             <NavItem to="/" exact={true}>
                 <DynamicIcon name="mobile-nav-home" className="h-6 w-6 mb-1" fallback={
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3L2 12h3v8z"></path></svg>
                 }/>
                 <span>Главная</span>
             </NavItem>
-            <NavLink to="/create" className="flex items-center justify-center w-16 h-16 -mt-8 bg-primary hover:bg-primary-focus rounded-full shadow-lg text-primary-content">
-                <DynamicIcon name="add-image" className="h-8 w-8" fallback={
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+            <NavItem to="/products">
+                 <DynamicIcon name="mobile-nav-catalog" className="h-6 w-6 mb-1" fallback={
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 10h8v-8h-8z"></path></svg>
                 }/>
+                <span>Каталог</span>
+            </NavItem>
+             <NavLink to="/create" className="flex-1 h-full flex flex-col items-center justify-center" aria-label="Создать объявление">
+                <div className="flex items-center justify-center h-12 w-16 bg-primary rounded-2xl text-primary-content animate-pulse-primary shadow-lg shadow-primary/30">
+                     <DynamicIcon name="add-item-plus" className="h-7 w-7" fallback={
+                        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"></path></svg>
+                     }/>
+                </div>
             </NavLink>
             <NavItem to="/chat">
                 <DynamicIcon name="chat" className="h-6 w-6 mb-1" fallback={
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2m0 14H5.2L4 17.2V4h16z"></path></svg>
                 }/>
                 <span>Чаты</span>
             </NavItem>

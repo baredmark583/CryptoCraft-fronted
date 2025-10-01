@@ -54,8 +54,7 @@ const LiveStreamPage: React.FC = () => {
         const mockMsg = mockChatMessages[Math.floor(Math.random() * mockChatMessages.length)];
         const newChatMessage: Message = {
             id: `msg-${Date.now()}`,
-            senderId: `user-${Math.random()}`,
-            senderName: mockMsg.name,
+            sender: { id: `user-${Math.random()}`, name: mockMsg.name },
             text: mockMsg.text,
             timestamp: Date.now(),
         };
@@ -74,8 +73,7 @@ const LiveStreamPage: React.FC = () => {
     if (!newMessage.trim()) return;
     const userMessage: Message = {
         id: `msg-${Date.now()}`,
-        senderId: user.id,
-        senderName: user.name,
+        sender: { id: user.id, name: user.name, avatarUrl: user.avatarUrl },
         text: newMessage,
         timestamp: Date.now(),
     };
@@ -119,7 +117,7 @@ const LiveStreamPage: React.FC = () => {
             {stream.welcomeMessage && <div className="p-2 bg-base-300/50 rounded-md text-sm text-center text-amber-300 italic">{stream.welcomeMessage}</div>}
             {chatMessages.map(msg => (
                 <div key={msg.id}>
-                    <span className={`font-bold text-sm ${msg.senderId === user.id ? 'text-primary' : 'text-base-content'}`}>{msg.senderName || 'Гость'}:</span>
+                    <span className={`font-bold text-sm ${msg.sender?.id === user.id ? 'text-primary' : 'text-base-content'}`}>{msg.sender?.name || 'Гость'}:</span>
                     <span className="text-sm text-base-content/90 ml-2">{msg.text}</span>
                 </div>
             ))}

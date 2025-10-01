@@ -118,11 +118,8 @@ export interface MessageContent {
 
 export interface Message extends MessageContent {
   id: string;
-  senderId: string;
+  sender: Partial<User>;
   timestamp: number;
-  senderName?: string;
-  senderAvatar?: string;
-  // FIX: Add 'chat' property to Message interface to match backend socket payload.
   chat?: { id: string };
 }
 

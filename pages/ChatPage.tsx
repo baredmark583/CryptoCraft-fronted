@@ -67,7 +67,7 @@ const ChatPage: React.FC = () => {
     newSocket.on('newMessage', (newMessage: Message) => {
       setSelectedChat(prevChat => {
         if (prevChat && newMessage.chat && prevChat.id === newMessage.chat.id) {
-          const messagesWithoutReplies = prevChat.messages.filter(m => m.senderId !== 'system');
+          const messagesWithoutReplies = prevChat.messages.filter(m => m.sender?.id !== 'system');
           return { ...prevChat, messages: [...messagesWithoutReplies, newMessage] };
         }
         return prevChat;
@@ -171,7 +171,7 @@ const ChatPage: React.FC = () => {
 
             const repliesMessage: Message = {
               id: `system-${Date.now()}`,
-              senderId: 'system',
+              sender: { id: 'system' },
               timestamp: Date.now(),
               quickReplies: replies
             };
@@ -329,7 +329,7 @@ const ChatPage: React.FC = () => {
                     <ChatMessage
                       key={message.id}
                       message={message}
-                      isOwnMessage={message.senderId === user.id}
+                      isOwnMessage={message.sender?.id === user.id}
                       onQuickReplyClick={handleQuickReplyClick}
                       onImageClick={setViewingImage}
                     />

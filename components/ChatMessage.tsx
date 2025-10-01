@@ -31,7 +31,8 @@ const ProductContextCard: React.FC<{ product: Product; isOwnMessage: boolean }> 
 const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwnMessage, onQuickReplyClick, onImageClick }) => {
   const chatAlignment = isOwnMessage ? 'chat-end' : 'chat-start';
   const bubbleColor = isOwnMessage ? 'chat-bubble-primary' : 'chat-bubble-secondary';
-  const isSystemMessage = message.senderId === 'system';
+  // FIX: Property 'senderId' does not exist on type 'Message'. Use `sender.id` instead.
+  const isSystemMessage = message.sender?.id === 'system';
 
   const formattedTime = message.timestamp && typeof message.timestamp === 'number'
     ? new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -61,7 +62,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwnMessage, onQuic
             <img 
               src={message.imageUrl} 
               alt="Прикрепленное изображение" 
-              className="rounded-lg w-full max-w-[320px] h-auto my-1 cursor-pointer" 
+              className="rounded-lg w-full max-w-[60px] h-auto my-1 cursor-pointer" 
               onClick={() => onImageClick(message.imageUrl)}
             />
         )}
