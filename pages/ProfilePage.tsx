@@ -546,7 +546,7 @@ const ProfilePage: React.FC = () => {
             }
         };
         fetchProfileData();
-    }, [profileId, authUser.id]); // Removed dependencies that caused re-fetches on tab change
+    }, [profileId, authUser]); // Removed dependencies that caused re-fetches on tab change
 
     const isElectronicsSeller = useMemo(() => {
         if (!userProducts || userProducts.length === 0) return false;
