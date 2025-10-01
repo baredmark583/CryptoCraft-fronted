@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import DynamicIcon from './DynamicIcon';
 
 interface NavItemProps {
@@ -22,19 +22,24 @@ const NavItem: React.FC<NavItemProps> = ({ to, children, exact = false }) => (
 
 
 const MobileNavBar: React.FC = () => {
+    const navigate = useNavigate();
+
     return (
         <nav className="block md:hidden fixed bottom-0 left-0 right-0 h-16 bg-base-200/90 backdrop-blur-lg border-t border-base-300 z-40 flex items-center">
+            <button 
+                onClick={() => navigate(-1)} 
+                className="flex flex-col items-center justify-center flex-1 text-xs transition-colors h-full text-base-content/70 hover:text-base-content"
+            >
+                <DynamicIcon name="back-arrow" className="h-6 w-6 mb-1" fallback={
+                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M20 11v2H8l5.5 5.5l-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5L8 11z"></path></svg>
+                }/>
+                <span>Назад</span>
+            </button>
             <NavItem to="/" exact={true}>
                 <DynamicIcon name="mobile-nav-home" className="h-6 w-6 mb-1" fallback={
                     <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M10 20v-6h4v6h5v-8h3L12 3L2 12h3v8z"></path></svg>
                 }/>
                 <span>Главная</span>
-            </NavItem>
-            <NavItem to="/products">
-                 <DynamicIcon name="mobile-nav-catalog" className="h-6 w-6 mb-1" fallback={
-                    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 10h8v-8h-8z"></path></svg>
-                }/>
-                <span>Каталог</span>
             </NavItem>
              <NavLink to="/create" className="flex-1 h-full flex flex-col items-center justify-center" aria-label="Создать объявление">
                 <div className="flex items-center justify-center h-12 w-16 bg-primary rounded-2xl text-primary-content animate-pulse-primary shadow-lg shadow-primary/30">
