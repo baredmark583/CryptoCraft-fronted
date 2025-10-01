@@ -250,7 +250,7 @@ const ChatPage: React.FC = () => {
 
   return (
     <>
-      <div className="flex flex-1 bg-base-100 text-base-content font-sans h-screen md:h-auto">
+      <div className="flex flex-1 bg-base-100 text-base-content font-sans h-full">
         {/* Chat List */}
         <div className={`w-full md:w-[360px] border-r border-base-300 ${chatId ? 'hidden md:flex' : 'flex'} flex-col flex-1 h-full`}>
           <div className="p-4 border-b border-base-300 bg-base-200">
@@ -345,8 +345,8 @@ const ChatPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Input - Sticky bottom */}
-              <div className="flex-shrink-0 p-2 sm:p-4 bg-base-100 border-t border-base-300 sticky bottom-0 z-10">
+              {/* Input - Correct flex child */}
+              <div className="flex-shrink-0 p-2 sm:p-4 bg-base-100 border-t border-base-300">
                 <form onSubmit={handleSendTextMessage} className="flex items-center gap-1 sm:gap-2">
                   <input
                     type="file"

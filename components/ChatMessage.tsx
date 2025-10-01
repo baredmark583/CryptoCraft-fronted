@@ -61,7 +61,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwnMessage, onQuic
             <img 
               src={message.imageUrl} 
               alt="Прикрепленное изображение" 
-              className="rounded-lg max-w-xs h-auto my-1 cursor-pointer" 
+              className="rounded-lg w-full max-w-[320px] h-auto my-1 cursor-pointer" 
               onClick={() => onImageClick(message.imageUrl)}
             />
         )}
