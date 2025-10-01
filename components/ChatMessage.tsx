@@ -6,6 +6,7 @@ interface ChatMessageProps {
   message: Message;
   isOwnMessage: boolean;
   onQuickReplyClick: (text: string) => void;
+  onImageClick: (imageUrl: string) => void;
 }
 
 const ProductContextCard: React.FC<{ product: Product; isOwnMessage: boolean }> = ({ product, isOwnMessage }) => {
@@ -27,7 +28,7 @@ const ProductContextCard: React.FC<{ product: Product; isOwnMessage: boolean }> 
     );
 };
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwnMessage, onQuickReplyClick }) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwnMessage, onQuickReplyClick, onImageClick }) => {
   const chatAlignment = isOwnMessage ? 'chat-end' : 'chat-start';
   const bubbleColor = isOwnMessage ? 'chat-bubble-primary' : 'chat-bubble-secondary';
   const isSystemMessage = message.senderId === 'system';
@@ -57,7 +58,12 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwnMessage, onQuic
       <div className={`chat-bubble ${bubbleColor}`}>
         {message.productContext && <ProductContextCard product={message.productContext} isOwnMessage={isOwnMessage} />}
         {message.imageUrl && (
-            <img src={message.imageUrl} alt="Прикрепленное изображение" className="rounded-lg max-w-full h-auto my-1" />
+            <img 
+              src={message.imageUrl} 
+              alt="Прикрепленное изображение" 
+              className="rounded-lg max-w-xs h-auto my-1 cursor-pointer" 
+              onClick={() => onImageClick(message.imageUrl)}
+            />
         )}
         {message.text && (
             <p>{message.text}</p>

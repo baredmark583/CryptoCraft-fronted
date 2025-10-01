@@ -40,6 +40,7 @@ import ImportPage from './pages/ImportPage';
 const AppContent: React.FC = () => {
   const location = useLocation();
   const isChatPage = location.pathname.startsWith('/chat');
+  const isSpecificChatOpen = location.pathname.startsWith('/chat/') && location.pathname !== '/chat';
   const { tg } = useTelegram();
 
   // Force hide the Telegram MainButton as it sometimes appears unwantedly.
@@ -91,7 +92,7 @@ const AppContent: React.FC = () => {
         </Routes>
       </main>
       {!isChatPage && <Footer />}
-      <MobileNavBar />
+      { !isSpecificChatOpen && <MobileNavBar /> }
     </div>
   );
 };
