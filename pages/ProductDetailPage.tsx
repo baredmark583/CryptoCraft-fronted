@@ -26,11 +26,31 @@ const Countdown: React.FC<{ targetDate: number }> = ({ targetDate }) => {
     }
     
     return (
-        <div className="flex gap-4 text-center">
-            <div><span className="text-3xl font-bold">{days}</span><span className="block text-xs">дней</span></div>
-            <div><span className="text-3xl font-bold">{hours}</span><span className="block text-xs">часов</span></div>
-            <div><span className="text-3xl font-bold">{minutes}</span><span className="block text-xs">минут</span></div>
-            <div><span className="text-3xl font-bold">{seconds}</span><span className="block text-xs">секунд</span></div>
+        <div className="grid grid-flow-col gap-5 text-center auto-cols-max">
+            <div className="flex flex-col p-2 bg-neutral rounded-box text-neutral-content">
+                <span className="countdown font-mono text-3xl">
+                    <span style={{"--value": days} as React.CSSProperties}></span>
+                </span>
+                дней
+            </div>
+            <div className="flex flex-col p-2 bg-neutral rounded-box text-neutral-content">
+                <span className="countdown font-mono text-3xl">
+                    <span style={{"--value": hours} as React.CSSProperties}></span>
+                </span>
+                часов
+            </div>
+            <div className="flex flex-col p-2 bg-neutral rounded-box text-neutral-content">
+                <span className="countdown font-mono text-3xl">
+                    <span style={{"--value": minutes} as React.CSSProperties}></span>
+                </span>
+                минут
+            </div>
+             <div className="flex flex-col p-2 bg-neutral rounded-box text-neutral-content">
+                <span className="countdown font-mono text-3xl">
+                    <span style={{"--value": seconds} as React.CSSProperties}></span>
+                </span>
+                секунд
+            </div>
         </div>
     )
 }
@@ -165,191 +185,154 @@ const ProductDetailPage: React.FC = () => {
 
     return (
     <>
-        <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-12 lg:max-w-7xl lg:px-8">
-            <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8">
-                {/* Image gallery */}
-                <div className="flex flex-col-reverse">
-                    {/* Image selector */}
-                    <div className="mx-auto mt-6 hidden w-full max-w-2xl sm:block lg:max-w-none">
-                        <div className="grid grid-cols-4 gap-6" role="tablist" aria-orientation="horizontal">
-                            {product.imageUrls.map((url, index) => (
-                                <button key={index} onClick={() => setSelectedImageIndex(index)} className="relative flex h-24 cursor-pointer items-center justify-center rounded-md bg-white text-sm font-medium uppercase text-base-content hover:bg-base-300" role="tab">
-                                    <span className="absolute inset-0 overflow-hidden rounded-md">
-                                        <img src={url} alt="" className="h-full w-full object-cover object-center" />
-                                    </span>
-                                    {selectedImageIndex === index && <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-md ring-2 ring-primary ring-offset-2"></span>}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="aspect-h-1 aspect-w-1 w-full">
-                        <img src={displayedImage} alt={product.title} className="h-full w-full object-cover object-center sm:rounded-lg" />
+        <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8">
+            {/* Image gallery */}
+            <div className="flex flex-col-reverse">
+                {/* Image selector */}
+                <div className="mx-auto mt-6 hidden w-full max-w-2xl sm:block lg:max-w-none">
+                    <div className="tabs tabs-boxed">
+                        {product.imageUrls.map((url, index) => (
+                            <a key={index} role="tab" className={`tab h-24 w-24 ${selectedImageIndex === index ? 'tab-active' : ''}`} onClick={() => setSelectedImageIndex(index)}>
+                                <img src={url} alt="" className="h-full w-full object-cover object-center rounded-lg" />
+                            </a>
+                        ))}
                     </div>
                 </div>
 
-                {/* Product info */}
-                <div className="mt-10 px-4 sm:mt-16 sm:px-0 lg:mt-0">
-                    <h1 className="text-3xl font-bold tracking-tight text-neutral-900">{product.title}</h1>
-                    <div className="mt-3">
-                        <h2 className="sr-only">Информация о товаре</h2>
-                        <p className="text-3xl tracking-tight text-emerald-900">{getFormattedPrice(finalPrice)}</p>
+                <div className="w-full aspect-square">
+                    <img src={displayedImage} alt={product.title} className="h-full w-full object-cover object-center sm:rounded-lg" />
+                </div>
+            </div>
+
+            {/* Product info */}
+            <div className="mt-10 px-4 sm:mt-16 sm:px-0 lg:mt-0">
+                <h1 className="text-3xl font-bold tracking-tight text-base-content">{product.title}</h1>
+                <div className="mt-3">
+                    <h2 className="sr-only">Информация о товаре</h2>
+                    <div className="flex items-baseline">
+                        <p className="text-3xl tracking-tight text-primary">{getFormattedPrice(finalPrice)}</p>
                         {hasDiscount && <p className="text-xl text-base-content/50 line-through ml-2">{getFormattedPrice(displayPrice)}</p>}
                     </div>
+                </div>
 
-                    <div className="mt-3">
-                        <h3 className="sr-only">Отзывы</h3>
-                        <div className="flex items-center">
-                            <StarRating rating={product.seller.rating} />
-                            <p className="sr-only">{product.seller.rating} из 5 звезд</p>
-                            <span className="ml-3 text-sm font-medium text-primary hover:text-primary-focus">{reviews.length} отзывов</span>
+                <div className="mt-3">
+                    <h3 className="sr-only">Отзывы</h3>
+                    <div className="flex items-center">
+                        <StarRating rating={product.seller.rating} />
+                        <p className="sr-only">{product.seller.rating} из 5 звезд</p>
+                        <a href="#reviews" className="ml-3 text-sm font-medium text-primary hover:text-primary-focus">{reviews.length} отзывов</a>
+                    </div>
+                </div>
+
+                <div className="mt-6">
+                    <div className="collapse collapse-plus bg-base-100">
+                        <input type="radio" name="my-accordion-3" defaultChecked /> 
+                        <div className="collapse-title text-xl font-medium">
+                            Описание товара
+                        </div>
+                        <div className="collapse-content"> 
+                            <p className="text-base text-base-content/80 leading-relaxed">{product.description}</p>
                         </div>
                     </div>
+                </div>
 
-                   <div className="mt-6">
-
-
-  <details className="group border-b border-neutral-200 rounded-lg">
-    <summary className="flex w-full cursor-pointer items-center justify-between py-4 text-left text-neutral-900">
-      <span className="text-lg font-semibold">Описание товара</span>
-      <DynamicIcon name="accordion-arrow" className="h-6 w-6 transform transition-transform duration-300 group-open:rotate-180" fallback={
-        <svg
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="2"
-            stroke="currentColor"
-        >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-        </svg>
-      }/>
-    </summary>
-
-    <div className="pb-4 text-base text-base-content/80 leading-relaxed">
-      <p>{product.description}</p>
-    </div>
-  </details>
-</div>
-
-                    
-                    <form className="mt-6">
-                        {hasVariants && (
-                            <div className="space-y-4">
-                                {product.variantAttributes?.map(attr => (
-                                    <div key={attr.name}>
-                                        <div className="flex items-center justify-between">
-                                            <h3 className="text-sm font-medium text-white">{attr.name}</h3>
-                                        </div>
-                                        <fieldset className="mt-2">
-                                            <div className="flex flex-wrap gap-3">
-                                                {attr.options.map(option => (
-                                                    <button type="button" key={option} onClick={() => handleAttributeSelect(attr.name, option)} className={`relative flex items-center justify-center rounded-md border py-3 px-3 text-sm font-medium uppercase hover:bg-base-300 ${selectedAttributes[attr.name] === option ? 'border-primary' : 'border-base-300'}`}>
-                                                        {option}
-                                                        {selectedAttributes[attr.name] === option && <span aria-hidden="true" className="pointer-events-none absolute -inset-px rounded-md border-2 border-primary"></span>}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </fieldset>
+                <div className="mt-6">
+                    {hasVariants && (
+                        <div className="space-y-4">
+                            {product.variantAttributes?.map(attr => (
+                                <div key={attr.name}>
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-medium text-base-content">{attr.name}</h3>
                                     </div>
-                                ))}
-                            </div>
-                        )}
+                                    <div className="flex flex-wrap gap-2 mt-2">
+                                        {attr.options.map(option => (
+                                            <button type="button" key={option} onClick={() => handleAttributeSelect(attr.name, option)} className={`btn btn-sm ${selectedAttributes[attr.name] === option ? 'btn-primary' : 'btn-outline'}`}>
+                                                {option}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
 
-                        <div className="mt-10 flex">
-                            <button type="button" onClick={handleAddToCart} disabled={isOwner || !isStockAvailable} className="flex max-w-xs flex-1 items-center justify-center rounded-md border border-transparent bg-primary px-8 py-3 text-base font-medium text-white hover:bg-primary-focus focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-base-300 sm:w-full disabled:bg-gray-500 disabled:cursor-not-allowed">
-                                {isOwner ? "Это ваш товар" : (isStockAvailable ? "В корзину" : "Нет в наличии")}
-                            </button>
-                            <button type="button" onClick={handleWishlistClick} className={`ml-4 flex items-center justify-center rounded-md px-3 py-3 text-base-content/70 hover:bg-base-300 hover:text-red-500 ${isFavorited ? 'text-red-500' : ''}`}>
-                                <DynamicIcon name="wishlist-heart" className="h-6 w-6 flex-shrink-0" fallback={
-                                    <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
-                                }/>
-                                <span className="sr-only">Add to favorites</span>
-                            </button>
-                             <button type="button" onClick={handleShare} className="ml-2 flex items-center justify-center rounded-md px-3 py-3 text-base-content/70 hover:bg-base-300 hover:text-primary relative">
-                                <DynamicIcon name="share" className="h-6 w-6 flex-shrink-0" fallback={
+                    <div className="mt-10 flex gap-2">
+                        <button type="button" onClick={handleAddToCart} disabled={isOwner || !isStockAvailable} className="btn btn-primary flex-1">
+                            {isOwner ? "Это ваш товар" : (isStockAvailable ? "В корзину" : "Нет в наличии")}
+                        </button>
+                        <button type="button" onClick={handleWishlistClick} className={`btn btn-ghost btn-square ${isFavorited ? 'text-red-500' : ''}`}>
+                            <DynamicIcon name="wishlist-heart" className="h-6 w-6" fallback={
+                                <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
+                            }/>
+                        </button>
+                         <div className="tooltip" data-tip={copied ? "Скопировано!" : "Поделиться"}>
+                           <button type="button" onClick={handleShare} className="btn btn-ghost btn-square">
+                                <DynamicIcon name="share" className="h-6 w-6" fallback={
                                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M13 4.5a2.5 2.5 0 11.702 4.289l-3.41 1.95a2.5 2.5 0 110-1.478l3.41-1.95A2.5 2.5 0 0113 4.5zM4.5 8a2.5 2.5 0 100 5 2.5 2.5 0 000-5zm8.5 3.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z" /></svg>
                                 }/>
-                                {copied && <span className="absolute -top-6 right-0 text-xs bg-primary text-white px-2 py-1 rounded-md">Скопировано!</span>}
-                                <span className="sr-only">Share</span>
                             </button>
+                         </div>
+                    </div>
+                </div>
+                
+                {!isOwner && (
+                <div className="mt-8 border-t border-base-300/50 pt-6">
+                    <div className="flex items-center gap-4">
+                        <div className="avatar">
+                           <div className="w-16 rounded-full">
+                                <Link to={`/profile/${product.seller.id}`}>
+                                  <img src={product.seller.avatarUrl} alt={product.seller.name} />
+                                </Link>
+                           </div>
                         </div>
-                    </form>
-                    
-                    {!isOwner && (
-                    <div className="mt-8 border-t border-base-300/50 pt-6">
-                        <div className="flex items-center gap-4">
-                            <Link to={`/profile/${product.seller.id}`} className="flex-shrink-0">
-                                <img src={product.seller.avatarUrl} alt={product.seller.name} className="w-16 h-16 rounded-full" />
-                            </Link>
-                            <div className="flex-1">
-                                <p className="text-sm text-base-content/70">Продавец</p>
-                                <div className="flex items-center gap-2">
-                                     <Link to={`/profile/${product.seller.id}`} className="font-bold text-lg text-white hover:underline">{product.seller.name}</Link>
-                                     <VerifiedBadge level={product.seller.verificationLevel} />
-                                </div>
-                                 <Link to={`/profile/${product.seller.id}`} className="text-sm text-primary hover:underline">Все товары продавца &rarr;</Link>
+                        <div className="flex-1">
+                            <p className="text-sm text-base-content/70">Продавец</p>
+                            <div className="flex items-center gap-2">
+                                 <Link to={`/profile/${product.seller.id}`} className="font-bold text-lg text-base-content hover:underline">{product.seller.name}</Link>
+                                 <VerifiedBadge level={product.seller.verificationLevel} />
                             </div>
-                            <button onClick={handleContactSeller} className="bg-secondary hover:bg-primary-focus text-white font-semibold py-2 px-4 rounded-lg">
-                                Написать
-                            </button>
+                             <Link to={`/profile/${product.seller.id}`} className="text-sm text-primary hover:underline">Все товары продавца &rarr;</Link>
+                        </div>
+                        <button onClick={handleContactSeller} className="btn btn-secondary">
+                            Написать
+                        </button>
+                    </div>
+                </div>
+                )}
+                
+                <section className="mt-12 space-y-2">
+                    <div className="collapse collapse-arrow bg-base-100">
+                        <input type="radio" name="my-accordion-2" defaultChecked/> 
+                        <div className="collapse-title text-lg font-medium">Характеристики</div>
+                        <div className="collapse-content"> 
+                           <ul className="list-disc list-inside text-base-content/80">
+                                {Object.entries(product.dynamicAttributes).map(([key, value]) => (
+                                    <li key={key}><span className="font-semibold">{key}:</span> {value}</li>
+                                ))}
+                            </ul>
                         </div>
                     </div>
-                    )}
-                    
-                    <section className="mt-12">
-                        <h2 className="sr-only">Детали</h2>
-                        <div className="divide-y divide-base-300 border-t border-base-300">
-                             <details className="group" open>
-                                <summary className="flex w-full cursor-pointer items-center justify-between py-6 text-left text-neutral-900">
-                                    <span className="text-base font-medium">Характеристики</span>
-                                    <span className="ml-6 flex items-center">
-                                        <DynamicIcon name="accordion-arrow" className="h-6 w-6 transform transition-transform group-open:rotate-180" fallback={
-                                            <svg fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
-                                        }/>
-                                    </span>
-                                </summary>
-                                <div className="pb-6 prose prose-sm">
-                                    <ul role="list">
-                                        {Object.entries(product.dynamicAttributes).map(([key, value]) => (
-                                            <li key={key}><span className="font-semibold">{key}:</span> {value}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </details>
-                            <details className="group">
-                                <summary className="flex w-full cursor-pointer items-center justify-between py-6 text-left text-neutral-900">
-                                    <span className="text-base font-medium">Отзывы ({reviews.length})</span>
-                                     <span className="ml-6 flex items-center">
-                                        <DynamicIcon name="accordion-arrow" className="h-6 w-6 transform transition-transform group-open:rotate-180" fallback={
-                                            <svg fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
-                                        }/>
-                                    </span>
-                                </summary>
-                                <div className="pb-6 space-y-4">
-                                    {reviews.length > 0 ? (
-                                        reviews.map(review => (
-                                            <ReviewCard key={review.id} review={review} onImageClick={setViewingImage} />
-                                        ))
-                                    ) : (
-                                        <p className="text-base-content/70">Отзывов пока нет.</p>
-                                    )}
-                                </div>
-                            </details>
-                             <details className="group">
-                                <summary className="flex w-full cursor-pointer items-center justify-between py-6 text-left text-neutral-900">
-                                    <span className="text-base font-medium">Доставка и Возврат</span>
-                                    <span className="ml-6 flex items-center">
-                                         <DynamicIcon name="accordion-arrow" className="h-6 w-6 transform transition-transform group-open:rotate-180" fallback={
-                                            <svg fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" /></svg>
-                                        }/>
-                                    </span>
-                                </summary>
-                                <div className="pb-6 prose prose-sm text-base-content/80">
-                                    <p>Мы предлагаем быструю доставку через Нова Пошта и Укрпошта. Возврат возможен в течение 14 дней, если товар не был в использовании и сохранил товарный вид.</p>
-                                </div>
-                            </details>
+                    <div id="reviews" className="collapse collapse-arrow bg-base-100">
+                        <input type="radio" name="my-accordion-2" /> 
+                        <div className="collapse-title text-lg font-medium">Отзывы ({reviews.length})</div>
+                        <div className="collapse-content space-y-4"> 
+                            {reviews.length > 0 ? (
+                                reviews.map(review => (
+                                    <ReviewCard key={review.id} review={review} onImageClick={setViewingImage} />
+                                ))
+                            ) : (
+                                <p className="text-base-content/70">Отзывов пока нет.</p>
+                            )}
                         </div>
-                    </section>
-                </div>
+                    </div>
+                    <div className="collapse collapse-arrow bg-base-100">
+                        <input type="radio" name="my-accordion-2" /> 
+                        <div className="collapse-title text-lg font-medium">Доставка и Возврат</div>
+                        <div className="collapse-content"> 
+                            <p className="text-base-content/80">Мы предлагаем быструю доставку через Нова Пошта и Укрпошта. Возврат возможен в течение 14 дней, если товар не был в использовании и сохранил товарный вид.</p>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
         
