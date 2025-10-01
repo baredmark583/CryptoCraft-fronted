@@ -1,11 +1,9 @@
 
-
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import { useAuth } from '../hooks/useAuth';
-import type { User, Product, Order, Collection, WorkshopPost, TrackingEvent } from '../types';
+import type { User, Product, Order, TrackingEvent } from '../types';
 import Spinner from '../components/Spinner';
 import ProductCard from '../components/ProductCard';
 import StarRating from '../components/StarRating';
@@ -13,8 +11,6 @@ import ReviewModal from '../components/ReviewModal';
 import OpenDisputeModal from '../components/OpenDisputeModal';
 import PromoteListingModal from '../components/PromoteListingModal';
 import ProductAnalyticsModal from '../components/ProductAnalyticsModal';
-import CreateWorkshopPost from '../components/CreateWorkshopPost';
-import WorkshopPostCard from '../components/WorkshopPostCard';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import WishlistTab from '../components/WishlistTab';
 import SettingsTab from '../components/SettingsTab';
@@ -28,6 +24,19 @@ import { useTelegramBackButton } from '../hooks/useTelegram';
 import DynamicIcon from '../components/DynamicIcon';
 
 export type ProfileTab = 'dashboard' | 'listings' | 'workshop' | 'wishlist' | 'collections' | 'purchases' | 'sales' | 'analytics' | 'wallet' | 'settings';
+
+const TABS: { id: ProfileTab; label: string; visible: (isOwnProfile: boolean) => boolean; icon: React.ReactNode; }[] = [
+    { id: 'dashboard', label: 'Сводка', visible: isOwn => isOwn, icon: <DynamicIcon name="dashboard" className="h-5 w-5" fallback={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zM12.5 8.5a.5.5 0 01.5.5v2a.5.5 0 01-1 0v-2a.5.5 0 01.5-.5zM10 8a.5.5 0 01.5.5v4a.5.5 0 01-1 0v-4A.5.5 0 0110 8zM7.5 9.5a.5.5 0 01.5.5v1a.5.5 0 01-1 0v-1a.5.5 0 01.5-.5z" /></svg>} /> },
+    { id: 'listings', label: 'Товары', visible: () => true, icon: <DynamicIcon name="listings" className="h-5 w-5" fallback={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M3.75 3A1.75 1.75 0 002 4.75v10.5c0 .966.784 1.75 1.75 1.75h12.5A1.75 1.75 0 0018 15.25V4.75A1.75 1.75 0 0016.25 3H3.75zM7 7.25a.75.75 0 011.5 0V8h.5a.75.75 0 010 1.5H8v.5a.75.75 0 01-1.5 0v-.5H6a.75.75 0 010-1.5h.5V7.25zM11 8a1 1 0 100-2 1 1 0 000 2z" /></svg>} /> },
+    { id: 'workshop', label: 'Мастерская', visible: () => true, icon: <DynamicIcon name="workshop" className="h-5 w-5" fallback={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /></svg>} /> },
+    { id: 'wishlist', label: 'Избранное', visible: () => true, icon: <DynamicIcon name="wishlist-heart" className="h-5 w-5" fallback={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M9.653 16.915l-.005-.003-.019-.01a20.759 20.759 0 01-1.162-.682 22.045 22.045 0 01-2.582-1.9-22.348 22.348 0 01-2.949-2.582 20.759 20.759 0 01-1.162-.682A9.96 9.96 0 012 10V6.652a2.492 2.492 0 011.666-2.311 2.493 2.493 0 012.134.12l.28.168c.002 0 .003.001.005.002l.004.002c.002 0 .003.001.005.002l.005.002a.002.002 0 00.005 0l.005-.002.004-.002a.002.002 0 00.005-.002l.004-.002.28-.168a2.493 2.493 0 012.134-.12 2.492 2.492 0 011.666 2.311V10c0 1.638-.403 3.228-1.162 4.682-.01.012-.02.023-.03.034l-.005.003z" /></svg>} /> },
+    { id: 'collections', label: 'Коллекции', visible: () => true, icon: <DynamicIcon name="collection-add" className="h-5 w-5" fallback={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5.5 16.5A1.5 1.5 0 014 15V5.5A1.5 1.5 0 015.5 4h9A1.5 1.5 0 0116 5.5V15a1.5 1.5 0 01-1.5 1.5h-9zM10 6a.75.75 0 00-1.5 0v1.5H7a.75.75 0 000 1.5h1.5V10a.75.75 0 001.5 0V9h1.5a.75.75 0 000-1.5H10V6z" /></svg>} /> },
+    { id: 'purchases', label: 'Мои покупки', visible: isOwn => isOwn, icon: <DynamicIcon name="purchases" className="h-5 w-5" fallback={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5.5 3.5A1.5 1.5 0 017 2h6.5a1.5 1.5 0 011.06.44l3.5 3.5a1.5 1.5 0 01.44 1.06V16.5A1.5 1.5 0 0117 18H7a1.5 1.5 0 01-1.5-1.5v-13z" /></svg>} /> },
+    { id: 'sales', label: 'Мои продажи', visible: isOwn => isOwn, icon: <DynamicIcon name="sales" className="h-5 w-5" fallback={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 005 18h10a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4z" clipRule="evenodd" /></svg>} /> },
+    { id: 'analytics', label: 'Аналитика', visible: isOwn => isOwn, icon: <DynamicIcon name="analytics" className="h-5 w-5" fallback={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M11 2a1 1 0 10-2 0v1a1 1 0 102 0V2zM15.657 5.657a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 14.95a1 1 0 001.414 1.414l.707-.707a1 1 0 00-1.414-1.414l-.707.707zM2 10a1 1 0 011-1h1a1 1 0 110 2H3a1 1 0 01-1-1zM10 4a6 6 0 100 12 6 6 0 000-12zM10 16a6 6 0 01-6-6 6 6 0 1112 0 6 6 0 01-6 6z" /></svg>} /> },
+    { id: 'wallet', label: 'Кошелек', visible: isOwn => isOwn, icon: <DynamicIcon name="wallet" className="h-5 w-5" fallback={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M2.5 4A1.5 1.5 0 014 2.5h12A1.5 1.5 0 0117.5 4v1.543a.75.75 0 001.5 0V4A3 3 0 0016 1H4a3 3 0 00-3 3v10a3 3 0 003 3h12a3 3 0 003-3v-1.543a.75.75 0 00-1.5 0V16a1.5 1.5 0 01-1.5 1.5H4A1.5 1.5 0 012.5 16V4z" /><path d="M12.25 8.25a.75.75 0 000 1.5h1.5a.75.75 0 000-1.5h-1.5z" /></svg>} /> },
+    { id: 'settings', label: 'Настройки', visible: isOwn => isOwn, icon: <DynamicIcon name="settings" className="h-5 w-5" fallback={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M11.078 2.25c-.217-.065-.437-.1-.668-.124a1.86 1.86 0 00-.74-.037 3.39 3.39 0 00-1.01.242 1.86 1.86 0 01-.668.379 1.86 1.86 0 00-.668.668 3.39 3.39 0 00-.242 1.01c-.012.245-.03.49-.037.74a1.86 1.86 0 00.124.668 1.86 1.86 0 01.379.668 1.86 1.86 0 00.668.668 3.39 3.39 0 001.01.242c.245.013.49.03.74.037a1.86 1.86 0 00.668-.124 1.86 1.86 0 01.668-.379 1.86 1.86 0 00.668-.668 3.39 3.39 0 00.242-1.01c.013-.245.03-.49.037-.74a1.86 1.86 0 00-.124-.668 1.86 1.86 0 01-.379-.668 1.86 1.86 0 00-.668-.668 3.39 3.39 0 00-1.01-.242zM10 8a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" /><path d="M10 18a8 8 0 100-16 8 8 0 000 16zM15.432 4.568a.75.75 0 011.06 1.06l-1.06-1.06zM4.568 15.432a.75.75 0 101.06-1.06l-1.06 1.06z" /><path fillRule="evenodd" d="M10 3a7 7 0 100 14 7 7 0 000-14zM4.568 4.568a7 7 0 019.9 9.9l-1.06-1.06a5.5 5.5 0 00-7.78-7.78l-1.06-1.06z" clipRule="evenodd" /></svg>} /> },
+];
 
 const PurchasesTab: React.FC = () => {
     const { user } = useAuth();
@@ -86,7 +95,7 @@ const PurchasesTab: React.FC = () => {
     };
 
     if (isLoading) return <div className="flex justify-center py-8"><Spinner /></div>;
-    if (purchases.length === 0) return <div className="text-center py-16 bg-base-100 rounded-lg"><p className="text-base-content/70">У вас пока нет покупок.</p></div>;
+    if (purchases.length === 0) return <div className="text-center py-16"><p className="text-base-content/70">У вас пока нет покупок.</p></div>;
 
     return (
         <>
@@ -96,7 +105,7 @@ const PurchasesTab: React.FC = () => {
                     const canViewNft = order.authenticationRequested && product.nftTokenId && ['SHIPPED', 'DELIVERED', 'COMPLETED', 'NFT_ISSUED'].includes(order.status);
 
                     return (
-                        <div key={order.id} className="card bg-base-100 p-4 border border-base-300">
+                        <div key={order.id} className="card bg-base-200/50 p-4">
                             <div className="flex justify-between items-start mb-2">
                                 <div>
                                     <p className="text-sm text-base-content/70">Заказ #{order.id} от {new Date(order.orderDate).toLocaleDateString()}</p>
@@ -207,13 +216,13 @@ const SalesTab: React.FC = () => {
     };
 
     if (isLoading) return <div className="flex justify-center py-8"><Spinner /></div>;
-    if (sales.length === 0) return <div className="text-center py-16 bg-base-100 rounded-lg"><p className="text-base-content/70">У вас пока нет продаж.</p></div>;
+    if (sales.length === 0) return <div className="text-center py-16"><p className="text-base-content/70">У вас пока нет продаж.</p></div>;
 
     return (
         <>
             <div className="space-y-4">
                 {sales.map(order => (
-                     <div key={order.id} className="card bg-base-100 p-4 border border-base-300">
+                     <div key={order.id} className="card bg-base-200/50 p-4">
                         <div className="flex justify-between items-start mb-2">
                              <div>
                                 <p className="text-sm text-base-content/70">Заказ #{order.id} от {new Date(order.orderDate).toLocaleDateString()}</p>
@@ -280,21 +289,21 @@ const ListingsTab: React.FC<{ products: Product[], isOwnProfile: boolean, onProd
         setPromotingProduct(null);
     }
     
-    if (products.length === 0) return <div className="text-center py-16 bg-base-100 rounded-lg"><p className="text-base-content/70">У этого пользователя пока нет товаров.</p></div>
+    if (products.length === 0) return <div className="text-center py-16"><p className="text-base-content/70">У этого пользователя пока нет товаров.</p></div>
     
     return (
         <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {products.map(product => (
                     <div key={product.id}>
                         <ProductCard product={product} />
                         {isOwnProfile && (
                             <div className="mt-2 flex gap-2">
-                                <Link to={`/edit/${product.id}`} className="flex-1 text-center text-sm bg-base-100 hover:bg-base-300 text-white font-semibold py-2 px-3 rounded-lg transition-colors">
+                                <Link to={`/edit/${product.id}`} className="flex-1 text-center text-sm bg-base-200/50 hover:bg-base-300/50 text-white font-semibold py-2 px-3 rounded-lg transition-colors">
                                     Редактировать
                                 </Link>
-                                <button onClick={() => setAnalyticsProduct(product)} className="text-sm p-2 rounded-lg bg-base-100 hover:bg-base-300" title="Аналитика"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path d="M11 2a1 1 0 10-2 0v1a1 1 0 102 0V2zM15.657 5.657a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 14.95a1 1 0 001.414 1.414l.707-.707a1 1 0 00-1.414-1.414l-.707.707zM2 10a1 1 0 011-1h1a1 1 0 110 2H3a1 1 0 01-1-1zM10 4a6 6 0 100 12 6 6 0 000-12zM10 16a6 6 0 01-6-6 6 6 0 1112 0 6 6 0 01-6 6z" /></svg></button>
-                                <button onClick={() => setPromotingProduct(product)} className="text-sm p-2 rounded-lg bg-base-100 hover:bg-base-300" title="Продвигать"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-yellow-400"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 00-1.5 0v4.59L7.3 9.24a.75.75 0 00-1.1 1.02l3.25 3.5a.75.75 0 001.1 0l3.25-3.5a.75.75 0 10-1.1-1.02l-1.95 2.1V6.75z" clipRule="evenodd" /></svg></button>
+                                <button onClick={() => setAnalyticsProduct(product)} className="text-sm p-2 rounded-lg bg-base-200/50 hover:bg-base-300/50" title="Аналитика"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5"><path d="M11 2a1 1 0 10-2 0v1a1 1 0 102 0V2zM15.657 5.657a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 14.95a1 1 0 001.414 1.414l.707-.707a1 1 0 00-1.414-1.414l-.707.707zM2 10a1 1 0 011-1h1a1 1 0 110 2H3a1 1 0 01-1-1zM10 4a6 6 0 100 12 6 6 0 000-12zM10 16a6 6 0 01-6-6 6 6 0 1112 0 6 6 0 01-6 6z" /></svg></button>
+                                <button onClick={() => setPromotingProduct(product)} className="text-sm p-2 rounded-lg bg-base-200/50 hover:bg-base-300/50" title="Продвигать"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-yellow-400"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 00-1.5 0v4.59L7.3 9.24a.75.75 0 00-1.1 1.02l3.25 3.5a.75.75 0 001.1 0l3.25-3.5a.75.75 0 10-1.1-1.02l-1.95 2.1V6.75z" clipRule="evenodd" /></svg></button>
                             </div>
                         )}
                     </div>
@@ -325,11 +334,11 @@ const TabContent: React.FC<TabContentProps> = ({ activeTab, user, isOwnProfile, 
         case 'listings':
             return <ListingsTab products={products} isOwnProfile={isOwnProfile} onProductUpdate={onProductUpdate} setActiveTab={setActiveTab} />;
         case 'workshop':
-            return <div className="text-center py-16 bg-base-100 rounded-lg"><p className="text-base-content/70">Content for Workshop coming soon.</p></div>;
+            return <div className="text-center py-16"><p className="text-base-content/70">Раздел "Мастерская" в разработке.</p></div>;
         case 'wishlist':
             return <WishlistTab />;
         case 'collections':
-             return <div className="text-center py-16 bg-base-100 rounded-lg"><p className="text-base-content/70">Content for Collections coming soon.</p></div>;
+             return <div className="text-center py-16"><p className="text-base-content/70">Раздел "Коллекции" в разработке.</p></div>;
         case 'purchases':
             return isOwnProfile ? <PurchasesTab /> : null;
         case 'sales':
@@ -341,142 +350,8 @@ const TabContent: React.FC<TabContentProps> = ({ activeTab, user, isOwnProfile, 
         case 'settings':
             return isOwnProfile ? <SettingsTab user={user} /> : null;
         default:
-            return null;
+            return <ListingsTab products={products} isOwnProfile={isOwnProfile} onProductUpdate={onProductUpdate} setActiveTab={setActiveTab} />;
     }
-};
-
-const ProfilePage: React.FC = () => {
-    const { profileId } = useParams<{ profileId?: string }>();
-    const { user: authUser } = useAuth();
-    const navigate = useNavigate();
-    const [profileUser, setProfileUser] = useState<User | null>(null);
-    const [userProducts, setUserProducts] = useState<Product[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isContacting, setIsContacting] = useState(false);
-    
-    const isOwnProfile = !profileId || profileId === authUser.id;
-    useTelegramBackButton(!isOwnProfile);
-
-    const initialTab: ProfileTab = isOwnProfile ? 'dashboard' : 'listings';
-    const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab);
-
-    useEffect(() => {
-        const fetchProfileData = async () => {
-            setIsLoading(true);
-            try {
-                const targetUserId = profileId || authUser.id;
-                let userToSet: User | null;
-
-                if (isOwnProfile) {
-                    userToSet = authUser;
-                } else {
-                    userToSet = await apiService.getUserById(targetUserId) || null;
-                }
-
-                if (userToSet) {
-                    setProfileUser(userToSet);
-                    const products = await apiService.getProductsBySellerId(targetUserId);
-                    setUserProducts(products);
-                } else {
-                    setProfileUser(null);
-                    setUserProducts([]);
-                }
-                
-                setActiveTab(isOwnProfile ? 'dashboard' : 'listings');
-
-            } catch (error) {
-                console.error("Failed to fetch profile user data:", error);
-                setProfileUser(null);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchProfileData();
-    }, [profileId, authUser, isOwnProfile]);
-
-    const isElectronicsSeller = useMemo(() => {
-        if (!userProducts || userProducts.length === 0) return false;
-        const electronicsCount = userProducts.filter(p => p.category === 'Электроника').length;
-        // Render specialized dashboard if at least 50% of products are electronics
-        return (electronicsCount / userProducts.length) >= 0.5;
-    }, [userProducts]);
-    
-    const handleProductUpdate = (updatedProduct: Product) => {
-        setUserProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
-    };
-
-    const handleContactSeller = async () => {
-        if (!profileUser || profileUser.id === authUser.id) return;
-        setIsContacting(true);
-        try {
-            const chat = await apiService.findOrCreateChat(authUser.id, profileUser.id);
-            navigate(`/chat/${chat.id}`);
-        } catch (error) {
-            console.error("Failed to create or find chat:", error);
-            alert("Не удалось начать чат.");
-        } finally {
-            setIsContacting(false);
-        }
-    };
-
-    const renderTabs = () => {
-        const tabs: { id: ProfileTab; label: string; visible: boolean }[] = [
-            { id: 'dashboard', label: 'Сводка', visible: isOwnProfile },
-            { id: 'listings', label: 'Товары', visible: true },
-            { id: 'workshop', label: 'Мастерская', visible: true },
-            { id: 'wishlist', label: 'Избранное', visible: true },
-            { id: 'collections', label: 'Коллекции', visible: true },
-            { id: 'purchases', label: 'Мои покупки', visible: isOwnProfile },
-            { id: 'sales', label: 'Мои продажи', visible: isOwnProfile },
-            { id: 'analytics', label: 'Аналитика', visible: isOwnProfile },
-            { id: 'wallet', label: 'Кошелек', visible: isOwnProfile },
-            { id: 'settings', label: 'Настройки', visible: isOwnProfile },
-        ];
-
-        return (
-            <div className="border-b border-base-300 mb-6">
-                <nav className="-mb-px flex space-x-6 overflow-x-auto">
-                    {tabs.filter(t => t.visible).map(tab => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                                activeTab === tab.id
-                                    ? 'border-primary text-primary'
-                                    : 'text-base-content/70 hover:text-white hover:border-gray-300'
-                            }`}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
-                </nav>
-            </div>
-        );
-    };
-
-    if (isLoading) return <div className="flex justify-center items-center h-96"><Spinner /></div>;
-    if (!profileUser) return <div className="text-center text-xl text-base-content/70">Профиль не найден.</div>;
-
-    return (
-        <div>
-            <ProfileHeader 
-                user={profileUser} 
-                isOwnProfile={isOwnProfile} 
-                onContactSeller={handleContactSeller}
-                isContacting={isContacting}
-            />
-            {renderTabs()}
-            <TabContent 
-                activeTab={activeTab} 
-                user={profileUser} 
-                isOwnProfile={isOwnProfile}
-                products={userProducts}
-                onProductUpdate={handleProductUpdate}
-                setActiveTab={setActiveTab} 
-                isElectronicsSeller={isElectronicsSeller}
-            />
-        </div>
-    );
 };
 
 interface ProfileHeaderProps {
@@ -485,7 +360,6 @@ interface ProfileHeaderProps {
     onContactSeller: () => void;
     isContacting: boolean;
 }
-
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, isOwnProfile, onContactSeller, isContacting }) => {
     return (
         <div className="mb-8">
@@ -567,5 +441,183 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, isOwnProfile, onCon
         </div>
     );
 }
+
+interface ProfileNavProps {
+    isOwnProfile: boolean;
+    activeTab: ProfileTab;
+    setActiveTab: (tab: ProfileTab) => void;
+}
+const ProfileNav: React.FC<ProfileNavProps> = ({ isOwnProfile, activeTab, setActiveTab }) => {
+    return (
+        <nav className="bg-base-100 p-4 rounded-lg shadow-lg sticky top-24">
+            <ul className="space-y-1">
+                {TABS.filter(t => t.visible(isOwnProfile)).map(tab => (
+                    <li key={tab.id}>
+                        <button
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`w-full flex items-center gap-3 p-3 text-left rounded-md transition-colors ${
+                                activeTab === tab.id
+                                    ? 'bg-primary text-primary-content font-bold'
+                                    : 'text-base-content/80 hover:bg-base-300'
+                            }`}
+                        >
+                            {tab.icon}
+                            <span>{tab.label}</span>
+                        </button>
+                    </li>
+                ))}
+            </ul>
+        </nav>
+    );
+};
+
+const ProfileNavMobile: React.FC<ProfileNavProps> = ({ isOwnProfile, activeTab, setActiveTab }) => {
+    const visibleTabs = TABS.filter(t => t.visible(isOwnProfile));
+    return (
+        <div className="form-control w-full">
+             <select 
+                className="select select-bordered" 
+                value={activeTab} 
+                onChange={(e) => setActiveTab(e.target.value as ProfileTab)}
+            >
+                {visibleTabs.map(tab => (
+                    <option key={tab.id} value={tab.id}>
+                        {tab.label}
+                    </option>
+                ))}
+            </select>
+        </div>
+    );
+};
+
+
+const ProfilePage: React.FC = () => {
+    const { profileId } = useParams<{ profileId?: string }>();
+    const { user: authUser } = useAuth();
+    const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    
+    const [profileUser, setProfileUser] = useState<User | null>(null);
+    const [userProducts, setUserProducts] = useState<Product[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isContacting, setIsContacting] = useState(false);
+    
+    const isOwnProfile = !profileId || profileId === authUser.id;
+    useTelegramBackButton(!isOwnProfile);
+
+    const initialTab: ProfileTab = isOwnProfile ? 'dashboard' : 'listings';
+    const activeTab = (searchParams.get('tab') as ProfileTab) || initialTab;
+    
+    const setActiveTab = (tab: ProfileTab) => {
+        setSearchParams({ tab });
+    };
+
+    useEffect(() => {
+        const fetchProfileData = async () => {
+            setIsLoading(true);
+            try {
+                const targetUserId = profileId || authUser.id;
+                let userToSet: User | null;
+
+                if (isOwnProfile) {
+                    userToSet = authUser;
+                } else {
+                    userToSet = await apiService.getUserById(targetUserId) || null;
+                }
+
+                if (userToSet) {
+                    setProfileUser(userToSet);
+                    const products = await apiService.getProductsBySellerId(targetUserId);
+                    setUserProducts(products);
+                } else {
+                    setProfileUser(null);
+                    setUserProducts([]);
+                }
+                
+                // Ensure tab is valid after fetching data
+                if (!searchParams.get('tab')) {
+                     setActiveTab(isOwnProfile ? 'dashboard' : 'listings');
+                }
+
+            } catch (error) {
+                console.error("Failed to fetch profile user data:", error);
+                setProfileUser(null);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchProfileData();
+    }, [profileId, authUser.id]); // Removed dependencies that caused re-fetches on tab change
+
+    const isElectronicsSeller = useMemo(() => {
+        if (!userProducts || userProducts.length === 0) return false;
+        const electronicsCount = userProducts.filter(p => p.category === 'Электроника').length;
+        // Render specialized dashboard if at least 50% of products are electronics
+        return (electronicsCount / userProducts.length) >= 0.5;
+    }, [userProducts]);
+    
+    const handleProductUpdate = (updatedProduct: Product) => {
+        setUserProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
+    };
+
+    const handleContactSeller = async () => {
+        if (!profileUser || profileUser.id === authUser.id) return;
+        setIsContacting(true);
+        try {
+            const chat = await apiService.findOrCreateChat(authUser.id, profileUser.id);
+            navigate(`/chat/${chat.id}`);
+        } catch (error) {
+            console.error("Failed to create or find chat:", error);
+            alert("Не удалось начать чат.");
+        } finally {
+            setIsContacting(false);
+        }
+    };
+
+    if (isLoading) return <div className="flex justify-center items-center h-96"><Spinner /></div>;
+    if (!profileUser) return <div className="text-center text-xl text-base-content/70">Профиль не найден.</div>;
+
+    return (
+        <div>
+            <ProfileHeader 
+                user={profileUser} 
+                isOwnProfile={isOwnProfile} 
+                onContactSeller={handleContactSeller}
+                isContacting={isContacting}
+            />
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mt-8">
+                <aside className="hidden md:block md:col-span-1">
+                    <ProfileNav 
+                        isOwnProfile={isOwnProfile}
+                        activeTab={activeTab}
+                        setActiveTab={setActiveTab}
+                    />
+                </aside>
+                
+                <div className="md:hidden">
+                     <ProfileNavMobile
+                        isOwnProfile={isOwnProfile}
+                        activeTab={activeTab}
+                        setActiveTab={setActiveTab}
+                     />
+                </div>
+
+                <main className="md:col-span-3">
+                    <div className="bg-base-100 p-4 sm:p-6 rounded-lg shadow-lg min-h-[400px]">
+                        <TabContent 
+                            activeTab={activeTab} 
+                            user={profileUser} 
+                            isOwnProfile={isOwnProfile}
+                            products={userProducts}
+                            onProductUpdate={handleProductUpdate}
+                            setActiveTab={setActiveTab} 
+                            isElectronicsSeller={isElectronicsSeller}
+                        />
+                    </div>
+                </main>
+            </div>
+        </div>
+    );
+};
 
 export default ProfilePage;
