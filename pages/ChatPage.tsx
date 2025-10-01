@@ -284,7 +284,7 @@ const ChatPage: React.FC = () => {
       </div>
 
       {/* Message Area */}
-      <div className={`w-full md:flex-1 flex flex-col ${chatId ? 'flex' : 'hidden md:flex'}`}>
+      <div className={`w-full md:flex-1 flex flex-col overflow-hidden ${chatId ? 'flex' : 'hidden md:flex'}`}>
         {selectedChat ? (
           <>
             {/* Header */}
