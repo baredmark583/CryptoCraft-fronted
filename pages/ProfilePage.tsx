@@ -361,7 +361,7 @@ interface ProfileHeaderProps {
 }
 const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, isOwnProfile, onContactSeller, isContacting }) => {
     return (
-        <div className="mb-8">
+        <div>
             <div className="h-48 bg-base-100 rounded-lg overflow-hidden mb-[-4rem] sm:mb-[-5rem]">
                 {user.headerImageUrl ? (
                     <img src={user.headerImageUrl} alt={`${user.name}'s header`} className="w-full h-full object-cover" />
@@ -448,7 +448,7 @@ interface ProfileNavProps {
 }
 const ProfileNav: React.FC<ProfileNavProps> = ({ isOwnProfile, activeTab, setActiveTab }) => {
     return (
-        <nav className="bg-base-100 p-4 rounded-lg shadow-lg sticky top-24">
+        <nav className="p-4">
             <ul className="space-y-1">
                 {TABS.filter(t => t.visible(isOwnProfile)).map(tab => (
                     <li key={tab.id}>
@@ -470,26 +470,6 @@ const ProfileNav: React.FC<ProfileNavProps> = ({ isOwnProfile, activeTab, setAct
     );
 };
 
-const ProfileNavMobile: React.FC<ProfileNavProps> = ({ isOwnProfile, activeTab, setActiveTab }) => {
-    const visibleTabs = TABS.filter(t => t.visible(isOwnProfile));
-    return (
-        <div className="form-control w-full">
-             <select 
-                className="select select-bordered" 
-                value={activeTab} 
-                onChange={(e) => setActiveTab(e.target.value as ProfileTab)}
-            >
-                {visibleTabs.map(tab => (
-                    <option key={tab.id} value={tab.id}>
-                        {tab.label}
-                    </option>
-                ))}
-            </select>
-        </div>
-    );
-};
-
-
 const ProfilePage: React.FC = () => {
     const { profileId } = useParams<{ profileId?: string }>();
     const { user: authUser } = useAuth();
@@ -500,6 +480,7 @@ const ProfilePage: React.FC = () => {
     const [userProducts, setUserProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isContacting, setIsContacting] = useState(false);
+    const [isNavOpen, setIsNavOpen] = useState(false);
     
     const isOwnProfile = !profileId || profileId === authUser.id;
     useTelegramBackButton(!isOwnProfile);
@@ -509,6 +490,11 @@ const ProfilePage: React.FC = () => {
     
     const setActiveTab = (tab: ProfileTab) => {
         setSearchParams({ tab });
+    };
+    
+    const setActiveTabAndCloseNav = (tab: ProfileTab) => {
+        setSearchParams({ tab });
+        setIsNavOpen(false); // Close nav on mobile after selection
     };
 
     useEffect(() => {
@@ -533,7 +519,6 @@ const ProfilePage: React.FC = () => {
                     setUserProducts([]);
                 }
                 
-                // Ensure tab is valid after fetching data
                 if (!searchParams.get('tab')) {
                      setActiveTab(isOwnProfile ? 'dashboard' : 'listings');
                 }
@@ -546,12 +531,11 @@ const ProfilePage: React.FC = () => {
             }
         };
         fetchProfileData();
-    }, [profileId, authUser.id]); // Removed dependencies that caused re-fetches on tab change
+    }, [profileId, authUser.id]);
 
     const isElectronicsSeller = useMemo(() => {
         if (!userProducts || userProducts.length === 0) return false;
         const electronicsCount = userProducts.filter(p => p.category === 'Электроника').length;
-        // Render specialized dashboard if at least 50% of products are electronics
         return (electronicsCount / userProducts.length) >= 0.5;
     }, [userProducts]);
     
@@ -577,45 +561,61 @@ const ProfilePage: React.FC = () => {
     if (!profileUser) return <div className="text-center text-xl text-base-content/70">Профиль не найден.</div>;
 
     return (
-        <div>
-            <ProfileHeader 
-                user={profileUser} 
-                isOwnProfile={isOwnProfile} 
-                onContactSeller={handleContactSeller}
-                isContacting={isContacting}
-            />
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mt-8">
-                <aside className="hidden md:block md:col-span-1">
-                    <ProfileNav 
-                        isOwnProfile={isOwnProfile}
-                        activeTab={activeTab}
-                        setActiveTab={setActiveTab}
-                    />
-                </aside>
-                
-                <div className="md:hidden">
-                     <ProfileNavMobile
-                        isOwnProfile={isOwnProfile}
-                        activeTab={activeTab}
-                        setActiveTab={setActiveTab}
-                     />
+        <>
+            {/* Sidebar Navigation */}
+            <aside className={`fixed top-0 left-0 z-40 w-64 h-screen bg-base-200 border-r border-base-300 transition-transform md:translate-x-0 ${isNavOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <div className="flex items-center justify-between p-4 border-b border-base-300 h-16">
+                     <Link to="/profile" className="text-xl font-bold text-white">
+                        Мой Профиль
+                     </Link>
+                     <button className="md:hidden p-1 text-2xl" onClick={() => setIsNavOpen(false)}>&times;</button>
+                </div>
+                <ProfileNav 
+                    isOwnProfile={isOwnProfile}
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTabAndCloseNav}
+                />
+            </aside>
+            
+            {/* Overlay for mobile */}
+            {isNavOpen && <div className="fixed inset-0 bg-black/60 z-30 md:hidden" onClick={() => setIsNavOpen(false)}></div>}
+
+            <div className="md:ml-64">
+                {/* Mobile Header with Hamburger */}
+                <div className="md:hidden flex items-center justify-between p-4 bg-base-100/80 backdrop-blur-lg sticky top-0 z-20 shadow-sm h-16">
+                    <button onClick={() => setIsNavOpen(true)}>
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+                    </button>
+                    <h1 className="text-lg font-bold text-white">
+                        {TABS.find(t => t.id === activeTab)?.label || 'Профиль'}
+                    </h1>
+                    <div className="w-6"></div> {/* Placeholder for alignment */}
                 </div>
 
-                <main className="md:col-span-3">
-                    <div className="bg-base-100 p-4 sm:p-6 rounded-lg shadow-lg min-h-[400px]">
-                        <TabContent 
-                            activeTab={activeTab} 
-                            user={profileUser} 
-                            isOwnProfile={isOwnProfile}
-                            products={userProducts}
-                            onProductUpdate={handleProductUpdate}
-                            setActiveTab={setActiveTab} 
-                            isElectronicsSeller={isElectronicsSeller}
-                        />
-                    </div>
-                </main>
+                <div className="p-4 md:p-6">
+                    <ProfileHeader 
+                        user={profileUser} 
+                        isOwnProfile={isOwnProfile} 
+                        onContactSeller={handleContactSeller}
+                        isContacting={isContacting}
+                    />
+            
+                    <main className="mt-8">
+                         <div className="bg-base-100 p-4 sm:p-6 rounded-lg shadow-lg min-h-[400px]">
+                            <TabContent 
+                                activeTab={activeTab} 
+                                user={profileUser} 
+                                isOwnProfile={isOwnProfile}
+                                products={userProducts}
+                                onProductUpdate={handleProductUpdate}
+                                setActiveTab={setActiveTab} 
+                                isElectronicsSeller={isElectronicsSeller}
+                            />
+                        </div>
+                    </main>
+                </div>
             </div>
-        </div>
+        </>
     );
 };
 
