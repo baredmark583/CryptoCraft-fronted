@@ -142,7 +142,9 @@ const ChatPage: React.FC = () => {
 
   // Scroll to bottom
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
   }, [selectedChat?.messages, typingUsers]);
   
   // Handle product context from URL
@@ -225,6 +227,7 @@ const ChatPage: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // TODO: Добавь transformation в cloudinaryService для thumbnail, напр. { width: 300, crop: 'limit' }
     const imageUrl = await cloudinaryService.uploadImage(file);
     handleSend({ imageUrl });
 
@@ -244,13 +247,13 @@ const ChatPage: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-1 bg-base-100 text-base-content font-sans">
+    <div className="flex flex-1 bg-base-100 text-base-content font-sans h-screen md:h-auto">
       {/* Chat List */}
-      <div className={`w-full md:w-[360px] border-r border-base-300 ${chatId ? 'hidden md:flex' : 'flex'} flex-col flex-1`}>
+      <div className={`w-full md:w-[360px] border-r border-base-300 ${chatId ? 'hidden md:flex' : 'flex'} flex-col flex-1 h-full`}>
         <div className="p-4 border-b border-base-300 bg-base-200">
           <h2 className="text-xl font-semibold text-base-content">Сообщения</h2>
         </div>
-        <ul className="menu p-0 flex-1 overflow-y-auto">
+        <ul className="menu p-0 flex-1 overflow-y-auto h-full">
           {chats.length > 0 ? (
             chats.map(chat => {
                 if (!chat?.id || !chat.participant?.id || !chat.participant.name) {
@@ -284,14 +287,15 @@ const ChatPage: React.FC = () => {
       </div>
 
       {/* Message Area */}
-      <div className={`w-full md:flex-1 flex flex-col overflow-hidden ${chatId ? 'flex' : 'hidden md:flex'}`}>
+      <div className={`w-full md:flex-1 flex flex-col h-full overflow-hidden ${chatId ? 'flex' : 'hidden md:flex'}`}>
         {selectedChat ? (
           <>
             {/* Header */}
-            <div className="p-3 border-b border-base-300 bg-base-200 flex items-center shadow-sm">
+            <div className="p-3 border-b border-base-300 bg-base-200 flex items-center shadow-sm flex-shrink-0">
               <button
                 onClick={() => navigate('/chat')}
                 className="btn btn-ghost btn-square md:hidden mr-2"
+                aria-label="Вернуться к списку чатов"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -314,29 +318,32 @@ const ChatPage: React.FC = () => {
               )}
             </div>
 
-            {/* Messages */}
-            <div className="flex-grow p-4 sm:p-6 overflow-y-auto bg-base-200">
-              {selectedChat.messages.map(message => (
-                <ChatMessage
-                  key={message.id}
-                  message={message}
-                  isOwnMessage={message.senderId === user.id}
-                  onQuickReplyClick={handleQuickReplyClick}
-                />
-              ))}
-              {isTyping && (
-                <div className="chat chat-start">
-                  <div className="chat-bubble">
-                    <span className="loading loading-dots loading-sm"></span>
+            {/* Messages Wrapper */}
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 bg-base-200 min-h-0">
+                {selectedChat.messages.map(message => (
+                  <ChatMessage
+                    key={message.id}
+                    message={message}
+                    isOwnMessage={message.senderId === user.id}
+                    onQuickReplyClick={handleQuickReplyClick}
+                  />
+                ))}
+                {isTyping && (
+                  <div className="chat chat-start">
+                    <div className="chat-bubble">
+                      <span className="loading loading-dots loading-sm"></span>
+                    </div>
                   </div>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
+                )}
+                <div ref={messagesEndRef} />
+              </div>
             </div>
 
-            {/* Input */}
-            <div className="p-2 sm:p-4 bg-base-100 border-t border-base-300 mb-16 md:mb-0">
-              <form onSubmit={handleSendTextMessage} className="flex items-center space-x-2">
+            {/* Input - Sticky bottom */}
+            <div className="flex-shrink-0 p-2 sm:p-4 bg-base-100 border-t border-base-300 sticky bottom-0 z-10 mb-16 md:mb-0">
+              <form onSubmit={handleSendTextMessage} className="flex items-center gap-1 sm:gap-2">
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -348,6 +355,7 @@ const ChatPage: React.FC = () => {
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   className="btn btn-ghost btn-circle"
+                  aria-label="Прикрепить файл"
                 >
                   <DynamicIcon name="attachment-clip" className="w-6 h-6" fallback={
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -367,6 +375,7 @@ const ChatPage: React.FC = () => {
                 <button
                   type="submit"
                   className="btn btn-primary btn-circle"
+                  aria-label="Отправить сообщение"
                 >
                   <DynamicIcon name="send-arrow" className="w-5 h-5" fallback={
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
