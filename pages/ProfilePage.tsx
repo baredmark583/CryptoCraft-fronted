@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { apiService } from '../services/apiService';
@@ -95,7 +96,7 @@ const PurchasesTab: React.FC = () => {
                     const canViewNft = order.authenticationRequested && product.nftTokenId && ['SHIPPED', 'DELIVERED', 'COMPLETED', 'NFT_ISSUED'].includes(order.status);
 
                     return (
-                        <div key={order.id} className="bg-base-100 p-4 rounded-lg">
+                        <div key={order.id} className="card bg-base-100 p-4 border border-base-300">
                             <div className="flex justify-between items-start mb-2">
                                 <div>
                                     <p className="text-sm text-base-content/70">Заказ #{order.id} от {new Date(order.orderDate).toLocaleDateString()}</p>
@@ -212,7 +213,7 @@ const SalesTab: React.FC = () => {
         <>
             <div className="space-y-4">
                 {sales.map(order => (
-                     <div key={order.id} className="bg-base-100 p-4 rounded-lg">
+                     <div key={order.id} className="card bg-base-100 p-4 border border-base-300">
                         <div className="flex justify-between items-start mb-2">
                              <div>
                                 <p className="text-sm text-base-content/70">Заказ #{order.id} от {new Date(order.orderDate).toLocaleDateString()}</p>

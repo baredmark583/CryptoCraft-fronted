@@ -24,7 +24,7 @@ const Countdown: React.FC<{ targetDate: number }> = ({ targetDate }) => {
 const AuctionCard: React.FC<AuctionCardProps> = ({ product }) => {
 
   return (
-    <div className="bg-base-100 rounded-lg overflow-hidden group transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1">
+    <div className="card bg-base-100 border border-base-300 group transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1">
       <Link to={`/product/${product.id}`} className="block">
         <div className="relative">
             <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden">

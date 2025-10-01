@@ -49,7 +49,7 @@ const CartPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           {Object.values(groupedBySeller).map(({ seller, items }) => (
-            <div key={seller.id} className="bg-base-100 rounded-lg shadow-lg">
+            <div key={seller.id} className="card bg-base-100 border border-base-300 shadow-lg">
               <div className="p-4 border-b border-base-300">
                 <h2 className="font-semibold text-white">Продавец: <Link to={`/profile/${seller.id}`} className="text-secondary hover:underline">{seller.name}</Link></h2>
               </div>
@@ -87,27 +87,29 @@ const CartPage: React.FC = () => {
         </div>
 
         <div className="lg:col-span-1">
-          <div className="bg-base-100 rounded-lg shadow-lg p-6 sticky top-24">
-            <h2 className="text-xl font-bold text-white mb-4">Итог заказа</h2>
-            <div className="flex justify-between text-base-content mb-2">
-              <span>Товары ({cartItems.reduce((sum, i) => sum + i.quantity, 0)})</span>
-              <span>{getFormattedPrice(cartTotal)}</span>
+          <div className="card bg-base-100 border border-base-300 shadow-lg sticky top-24">
+            <div className="card-body p-6">
+              <h2 className="text-xl font-bold text-white mb-4">Итог заказа</h2>
+              <div className="flex justify-between text-base-content mb-2">
+                <span>Товары ({cartItems.reduce((sum, i) => sum + i.quantity, 0)})</span>
+                <span>{getFormattedPrice(cartTotal)}</span>
+              </div>
+               <div className="flex justify-between text-base-content mb-4">
+                <span>Доставка</span>
+                <span className="text-green-400">Рассчитывается</span>
+              </div>
+              <div className="border-t border-base-300 my-4"></div>
+              <div className="flex justify-between text-white font-bold text-lg mb-6">
+                <span>Всего</span>
+                <span>{getFormattedPrice(cartTotal)}</span>
+              </div>
+              <button 
+                onClick={() => navigate('/checkout')}
+                className="w-full bg-primary hover:bg-primary-focus text-primary-content font-bold py-3 rounded-lg transition-colors flex justify-center items-center"
+              >
+                Перейти к оформлению
+              </button>
             </div>
-             <div className="flex justify-between text-base-content mb-4">
-              <span>Доставка</span>
-              <span className="text-green-400">Рассчитывается</span>
-            </div>
-            <div className="border-t border-base-300 my-4"></div>
-            <div className="flex justify-between text-white font-bold text-lg mb-6">
-              <span>Всего</span>
-              <span>{getFormattedPrice(cartTotal)}</span>
-            </div>
-            <button 
-              onClick={() => navigate('/checkout')}
-              className="w-full bg-primary hover:bg-primary-focus text-primary-content font-bold py-3 rounded-lg transition-colors flex justify-center items-center"
-            >
-              Перейти к оформлению
-            </button>
           </div>
         </div>
       </div>

@@ -361,7 +361,7 @@ const ChatPage: React.FC = () => {
                     value={messageText}
                     onChange={handleTyping}
                     placeholder="Напишите сообщение..."
-                    className="input input-bordered w-full rounded-full"
+                    className="input input-bordered w-full"
                   />
                 </div>
                 <button

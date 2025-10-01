@@ -388,14 +388,17 @@ const CreateListingPage: React.FC = () => {
 
     return (
         <div className="max-w-4xl mx-auto space-y-8">
-            <div className="bg-base-100 p-6 sm:p-8 rounded-lg shadow-xl">
+            <div className="card bg-base-100 shadow-xl border border-base-300">
+              <div className="card-body p-6 sm:p-8">
                 <h1 className="text-3xl font-bold text-center mb-2 text-white">Групповое создание объявлений</h1>
                 <p className="text-center text-base-content/70 mb-8">Подготовьте несколько товаров и опубликуйте их все разом.</p>
                 <AIGenerateForm onGenerated={handleAddItemToBatch} disabled={isPublishing} />
+              </div>
             </div>
 
             {batchItems.length > 0 && (
-                <div className="bg-base-100 p-6 sm:p-8 rounded-lg shadow-xl">
+                <div className="card bg-base-100 shadow-xl border border-base-300">
+                  <div className="card-body p-6 sm:p-8">
                     <h2 className="text-2xl font-bold text-white mb-4">Пакет для публикации ({batchItems.length})</h2>
                     {isLoadingCategories ? <Spinner /> : (
                         <div className="space-y-4 mb-6">
@@ -418,6 +421,7 @@ const CreateListingPage: React.FC = () => {
                     >
                         {isPublishing ? <Spinner size="sm"/> : `Опубликовать пакет (${batchItems.filter(i => i.status === 'review').length})`}
                     </button>
+                  </div>
                 </div>
             )}
         </div>

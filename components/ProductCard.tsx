@@ -44,7 +44,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSoldView = false }
 
   return (
     <>
-      <div className="bg-base-100 rounded-lg overflow-hidden group transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1 flex flex-col h-full">
+      <div className="card bg-base-100 border border-base-300 group transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1 flex flex-col h-full">
         <Link to={`/product/${product.id}`} className="block">
           <div className="relative">
             <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden">
