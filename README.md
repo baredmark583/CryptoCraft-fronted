@@ -67,16 +67,23 @@ TELEGRAM_BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN
 API_KEY=YOUR_GEMINI_API_KEY
 CLOUDINARY_URL=cloudinary://API_KEY:API_SECRET@CLOUD_NAME
 
-# CORS (для локальной разработки)
+# CORS
+# Для локальной разработки (оставьте эти значения):
 FRONTEND_URL=http://localhost:3000
 ADMIN_URL=http://localhost:5173
+# Для продакшена (пример):
+# FRONTEND_URL=https://cryptocraft-fronted.onrender.com
+# ADMIN_URL=https://administrator-zoai.onrender.com
 ```
 
 Создайте файл `.env` в **корневой папке проекта** (`/.env`) для фронтенда:
 
 ```env
 # URL вашего бэкенда
+# Для локальной разработки:
 VITE_API_BASE_URL=http://localhost:3001
+# Для продакшена (это значение нужно установить в переменных окружения на Render):
+# VITE_API_BASE_URL=https://babak-mtwl.onrender.com
 
 # API ключ Gemini для frontend-сервисов (если необходимо)
 GEMINI_API_KEY=YOUR_GEMINI_API_KEY
