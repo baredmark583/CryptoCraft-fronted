@@ -15,7 +15,6 @@ import WishlistTab from '../components/WishlistTab';
 import SettingsTab from '../components/SettingsTab';
 import WalletTab from '../components/WalletTab';
 import DashboardTab from '../components/DashboardTab';
-import VerifiedBadge from '../components/VerifiedBadge';
 import AuthenticationRequestModal from '../components/AuthenticationRequestModal';
 import ElectronicsDashboardTab from '../components/ElectronicsDashboardTab';
 import NFTCertificateModal from '../components/NFTCertificateModal';
@@ -375,8 +374,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, isOwnProfile, onCon
                 <div className="flex-1 flex flex-col sm:flex-row items-center justify-center sm:justify-between w-full pt-4 sm:pt-12">
                     <div className="text-center sm:text-left">
                         <h1 className="text-3xl font-bold text-white flex items-center justify-center sm:justify-start gap-2">
-                            {user.name} 
-                            {user.verificationLevel && user.verificationLevel !== 'NONE' && <VerifiedBadge level={user.verificationLevel} />}
+                            {user.name}
                         </h1>
                         <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
                             <StarRating rating={user.rating} />
@@ -397,7 +395,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, isOwnProfile, onCon
                     </div>
 
                      <div className="flex flex-col sm:flex-row items-center gap-4 mt-4 sm:mt-0">
-                        {isOwnProfile && user.verificationLevel === 'PRO' && (
+                        {isOwnProfile && (
                             <Link 
                                 to="/governance" 
                                 className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-lg transition-colors shadow-lg"
@@ -411,7 +409,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, isOwnProfile, onCon
                                 Управление DAO
                             </Link>
                         )}
-                        {isOwnProfile && user.verificationLevel === 'PRO' && (
+                        {isOwnProfile && (
                             <Link 
                                 to="/live/create" 
                                 className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-lg transition-colors shadow-lg animate-pulse"
@@ -428,11 +426,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ user, isOwnProfile, onCon
                             <button onClick={onContactSeller} disabled={isContacting} className="bg-primary hover:bg-primary-focus text-white font-bold py-2 px-4 rounded-lg">
                                 {isContacting ? <Spinner size="sm" /> : 'Написать'}
                             </button>
-                        )}
-                        {isOwnProfile && user.verificationLevel === 'NONE' && (
-                             <Link to="/verify" className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-lg">
-                                Стать Pro-продавцом
-                            </Link>
                         )}
                     </div>
                 </div>

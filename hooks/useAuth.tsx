@@ -19,9 +19,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   useEffect(() => {
     const authenticate = async () => {
-      const hash = window.location.hash.slice(1);
-      const params = new URLSearchParams(hash);
-      const tgWebAppData = params.get('tgWebAppData');
+      // FIX: Changed from location.hash to window.Telegram.WebApp.initData for better TWA compatibility.
+      const tgWebAppData = (window as any).Telegram?.WebApp?.initData;
       
       try {
         if (tgWebAppData) {
@@ -31,7 +30,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           localStorage.setItem('authToken', access_token);
           setToken(access_token);
           setUser(userData);
-          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          // Clean up URL if needed
+          if (window.location.hash.includes('tgWebAppData')) {
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+          }
         } else {
           // If no TWA data is found, we do nothing, which will cause the auth hook to throw an error.
           // This is the desired behavior for a production TWA.

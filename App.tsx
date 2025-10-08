@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { AppContextProvider } from './hooks/useAppContext';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
 import { TonConnectUIProvider } from './hooks/useTonConnect';
 import { NotificationsProvider } from './hooks/useNotifications';
@@ -27,7 +26,6 @@ import CommunityHubPage from './pages/CommunityHubPage';
 import ForumThreadPage from './pages/ForumThreadPage';
 import PhotoStudioPage from './pages/PhotoStudioPage';
 import CheckoutPage from './pages/CheckoutPage';
-import VerificationPage from './pages/VerificationPage';
 import AuthenticationCenterPage from './pages/AuthenticationCenterPage';
 import DisputeCenterPage from './pages/DisputeCenterPage';
 import LiveStreamPage from './pages/LiveStreamPage';
@@ -81,7 +79,6 @@ const AppContent: React.FC = () => {
           <Route path="/community" element={<CommunityHubPage />} />
           <Route path="/thread/:id" element={<ForumThreadPage />} />
           <Route path="/studio/:productId" element={<PhotoStudioPage />} />
-          <Route path="/verify" element={<VerificationPage />} />
           <Route path="/auth-center" element={<AuthenticationCenterPage />} />
           <Route path="/dispute/:orderId" element={<DisputeCenterPage />} />
           <Route path="/live/create" element={<CreateLiveStreamPage />} />
@@ -99,27 +96,25 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <AppContextProvider>
-      <AuthProvider>
-        <TonConnectUIProvider>
-          <NotificationsProvider>
-            <CollectionsProvider>
-              <CurrencyProvider>
-                <CartProvider>
-                  <WishlistProvider>
-                    <IconProvider>
-                       <Router>
-                        <AppContent />
-                      </Router>
-                    </IconProvider>
-                  </WishlistProvider>
-                </CartProvider>
-              </CurrencyProvider>
-            </CollectionsProvider>
-          </NotificationsProvider>
-        </TonConnectUIProvider>
-      </AuthProvider>
-    </AppContextProvider>
+    <AuthProvider>
+      <TonConnectUIProvider>
+        <NotificationsProvider>
+          <CollectionsProvider>
+            <CurrencyProvider>
+              <CartProvider>
+                <WishlistProvider>
+                  <IconProvider>
+                      <Router>
+                      <AppContent />
+                    </Router>
+                  </IconProvider>
+                </WishlistProvider>
+              </CartProvider>
+            </CurrencyProvider>
+          </CollectionsProvider>
+        </NotificationsProvider>
+      </TonConnectUIProvider>
+    </AuthProvider>
   );
 };
 

@@ -65,10 +65,6 @@ const GovernancePage: React.FC = () => {
 
     useEffect(() => {
         const fetchProposals = async () => {
-            if (user.verificationLevel !== 'PRO') {
-                setIsLoading(false);
-                return;
-            }
             try {
                 const data = await apiService.getProposals();
                 setProposals(data);
@@ -79,22 +75,10 @@ const GovernancePage: React.FC = () => {
             }
         };
         fetchProposals();
-    }, [user.verificationLevel]);
+    }, []);
     
     if (isLoading) {
         return <div className="flex justify-center items-center h-96"><Spinner /></div>;
-    }
-
-    if (user.verificationLevel !== 'PRO') {
-        return (
-             <div className="text-center py-20 bg-base-100 rounded-lg">
-                <h1 className="text-3xl font-bold text-white mb-4">Доступ для Pro-продавцов</h1>
-                <p className="text-base-content/70 mb-8">Система управления DAO доступна только для пользователей со статусом PRO.</p>
-                <Link to="/verify" className="bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-6 rounded-lg transition-colors">
-                    Стать Pro-продавцом
-                </Link>
-            </div>
-        );
     }
     
     return (
