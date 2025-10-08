@@ -38,6 +38,7 @@ import CreateLiveStreamPage from './pages/CreateLiveStreamPage';
 import ProductListPage from './pages/ProductListPage';
 import ImportPage from './pages/ImportPage';
 
+// This component contains the main application layout and routes for authenticated users.
 const AppContent: React.FC = () => {
   const location = useLocation();
   const isChatPage = location.pathname.startsWith('/chat');
@@ -94,34 +95,30 @@ const AppContent: React.FC = () => {
   );
 };
 
-const AppWithProviders: React.FC = () => (
-  <TonConnectUIProvider>
-    <NotificationsProvider>
-      <CollectionsProvider>
-        <CurrencyProvider>
-          <CartProvider>
-            <WishlistProvider>
-              <IconProvider>
-                <Router>
-                  <AppContent />
-                </Router>
-              </IconProvider>
-            </WishlistProvider>
-          </CartProvider>
-        </CurrencyProvider>
-      </CollectionsProvider>
-    </NotificationsProvider>
-  </TonConnectUIProvider>
+// This component wraps the main app content with providers that are specific to an authenticated user.
+const AuthenticatedApp: React.FC = () => (
+  <NotificationsProvider>
+    <CollectionsProvider>
+      <CurrencyProvider>
+        <CartProvider>
+          <WishlistProvider>
+            <AppContent />
+          </WishlistProvider>
+        </CartProvider>
+      </CurrencyProvider>
+    </CollectionsProvider>
+  </NotificationsProvider>
 );
 
-const AppUnauthenticated: React.FC = () => (
-    <Router>
-        <Routes>
-            <Route path="*" element={<LandingPage />} />
-        </Routes>
-    </Router>
+// This component defines the routes for an unauthenticated user, primarily the landing page.
+const UnauthenticatedApp: React.FC = () => (
+    <Routes>
+        <Route path="*" element={<LandingPage />} />
+    </Routes>
 );
 
+// This component handles the initial loading and authentication check,
+// then renders the appropriate part of the application.
 const AppInitializer: React.FC = () => {
   const { user, isLoading } = useAuth();
   if (isLoading) {
@@ -131,14 +128,22 @@ const AppInitializer: React.FC = () => {
       </div>
     );
   }
-  return user ? <AppWithProviders /> : <AppUnauthenticated />;
+  return user ? <AuthenticatedApp /> : <UnauthenticatedApp />;
 }
 
+// The root App component sets up the global providers that are needed
+// for both authenticated and unauthenticated experiences.
 const App: React.FC = () => {
   return (
     <AppContextProvider>
       <AuthProvider>
-        <AppInitializer />
+        <TonConnectUIProvider>
+          <IconProvider>
+            <Router>
+              <AppInitializer />
+            </Router>
+          </IconProvider>
+        </TonConnectUIProvider>
       </AuthProvider>
     </AppContextProvider>
   );
