@@ -22,7 +22,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       try {
         if (tgWebAppData) {
-          // --- Production/TWA Logic ---
+          // --- TWA Logic ---
           console.log("TWA data found, authenticating with backend...");
           const { access_token, user: userData } = await apiService.loginWithTelegram(tgWebAppData);
           localStorage.setItem('authToken', access_token);
@@ -31,12 +31,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           if (window.location.hash.includes('tgWebAppData')) {
             window.history.replaceState(null, '', window.location.pathname + window.location.search);
           }
-        } else if ((import.meta as any).env.DEV) {
-          // --- Development/Browser Logic ---
-          console.warn("TWA data not found. Running in dev mode with mock user.");
+        } else {
+          // --- Browser Fallback Logic (for dev and prod) ---
+          console.warn("TWA data not found. Running in browser mode with mock user.");
           const mockUser: User = {
             id: 'dev-user-1',
-            name: 'Dev User',
+            name: 'Browser User',
             avatarUrl: 'https://picsum.photos/seed/dev-user/100/100',
             balance: 1000,
             commissionOwed: 50,
@@ -45,14 +45,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             reviews: [],
             verificationLevel: 'PRO',
             role: 'USER',
-            email: 'dev@example.com'
+            email: 'browser@example.com'
           };
           setUser(mockUser);
-          setToken('mock-dev-token');
-        } else {
-          // --- Production/Browser Logic ---
-          // User is not authenticated. The app will show a landing/login page.
-          console.log("Not in TWA context. User is unauthenticated.");
+          setToken('mock-browser-token');
         }
       } catch (error) {
         console.error("Authentication failed:", error);
