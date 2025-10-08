@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { AuthProvider } from './hooks/useAuth';
+import { AuthProvider, useAuth } from './hooks/useAuth';
+import { AppContextProvider } from './hooks/useAppContext';
 import { TonConnectUIProvider } from './hooks/useTonConnect';
 import { NotificationsProvider } from './hooks/useNotifications';
 import { CollectionsProvider } from './hooks/useCollections';
@@ -13,6 +14,8 @@ import { useTelegram } from './hooks/useTelegram';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import MobileNavBar from './components/MobileNavBar';
+import Spinner from './components/Spinner';
+import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import CreateListingPage from './pages/CreateListingPage';
@@ -41,19 +44,16 @@ const AppContent: React.FC = () => {
   const isSpecificChatOpen = location.pathname.startsWith('/chat/') && location.pathname !== '/chat';
   const { tg } = useTelegram();
 
-  // Force hide the Telegram MainButton as it sometimes appears unwantedly.
   useEffect(() => {
     if (tg?.MainButton) {
       tg.MainButton.hide();
     }
   }, [tg]);
 
-  // When on chat page, fix the screen height and prevent overflow.
   const appContainerClass = isChatPage
     ? "bg-base-100 h-screen flex flex-col overflow-hidden font-sans text-base-content"
     : "bg-base-100 min-h-screen flex flex-col overflow-x-hidden font-sans text-base-content";
 
-  // When on chat page, remove padding and container styles from main.
   const mainClass = isChatPage
     ? "flex-grow overflow-hidden"
     : "flex-grow container mx-auto px-4 py-8 pb-24 md:pb-8";
@@ -94,27 +94,53 @@ const AppContent: React.FC = () => {
   );
 };
 
+const AppWithProviders: React.FC = () => (
+  <TonConnectUIProvider>
+    <NotificationsProvider>
+      <CollectionsProvider>
+        <CurrencyProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <IconProvider>
+                <Router>
+                  <AppContent />
+                </Router>
+              </IconProvider>
+            </WishlistProvider>
+          </CartProvider>
+        </CurrencyProvider>
+      </CollectionsProvider>
+    </NotificationsProvider>
+  </TonConnectUIProvider>
+);
+
+const AppUnauthenticated: React.FC = () => (
+    <Router>
+        <Routes>
+            <Route path="*" element={<LandingPage />} />
+        </Routes>
+    </Router>
+);
+
+const AppInitializer: React.FC = () => {
+  const { user, isLoading } = useAuth();
+  if (isLoading) {
+    return (
+      <div className="bg-base-200 min-h-screen flex items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+  return user ? <AppWithProviders /> : <AppUnauthenticated />;
+}
+
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <TonConnectUIProvider>
-        <NotificationsProvider>
-          <CollectionsProvider>
-            <CurrencyProvider>
-              <CartProvider>
-                <WishlistProvider>
-                  <IconProvider>
-                      <Router>
-                      <AppContent />
-                    </Router>
-                  </IconProvider>
-                </WishlistProvider>
-              </CartProvider>
-            </CurrencyProvider>
-          </CollectionsProvider>
-        </NotificationsProvider>
-      </TonConnectUIProvider>
-    </AuthProvider>
+    <AppContextProvider>
+      <AuthProvider>
+        <AppInitializer />
+      </AuthProvider>
+    </AppContextProvider>
   );
 };
 

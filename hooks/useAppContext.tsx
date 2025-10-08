@@ -7,10 +7,9 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // By setting `isTwa` to true, we ensure the application always runs in full TWA mode,
-  // simplifying development and removing the "showcase" version.
   const value = useMemo(() => ({
-    isTwa: true,
+    // The presence of the Telegram WebApp object is a reliable indicator.
+    isTwa: !!(window as any).Telegram?.WebApp?.initData,
   }), []);
 
   return (
