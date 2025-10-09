@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../services/apiService';
 import type { Product, FeedItem } from '../types';
@@ -57,6 +58,10 @@ const PersonalizedFeed: React.FC = () => {
     const [followingFeed, setFollowingFeed] = useState<{ items: FeedItem[], isDiscovery: boolean } | null>(null);
 
     const fetchData = useCallback(async () => {
+        if (!user) {
+            setIsLoading(false);
+            return;
+        }
         setIsLoading(true);
         try {
             if (activeTab === 'forYou') {
@@ -71,7 +76,7 @@ const PersonalizedFeed: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [activeTab, user.id]);
+    }, [activeTab, user]);
 
     useEffect(() => {
         fetchData();
@@ -133,6 +138,7 @@ const PersonalizedFeed: React.FC = () => {
 };
 
 const HomePage: React.FC = () => {
+  const { user } = useAuth();
   return (
     <div className="space-y-12">
       <PromotionalBanner />
@@ -141,7 +147,7 @@ const HomePage: React.FC = () => {
 
       <FeaturedProducts />
       
-      <PersonalizedFeed />
+      {user && <PersonalizedFeed />}
       
     </div>
   );

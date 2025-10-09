@@ -494,7 +494,7 @@ const ProfilePage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isContacting, setIsContacting] = useState(false);
     
-    const isOwnProfile = !profileId || profileId === authUser.id;
+    const isOwnProfile = !profileId || profileId === authUser?.id;
     useTelegramBackButton(!isOwnProfile);
 
     const initialTab: ProfileTab = isOwnProfile ? 'dashboard' : 'listings';
@@ -508,7 +508,14 @@ const ProfilePage: React.FC = () => {
         const fetchProfileData = async () => {
             setIsLoading(true);
             try {
-                const targetUserId = profileId || authUser.id;
+                const targetUserId = profileId || authUser?.id;
+                if (!targetUserId) {
+                    // This can happen if the user is not logged in and visits /profile
+                    // The ProtectedRoute should handle this, but as a safeguard:
+                    setIsLoading(false);
+                    return;
+                }
+
                 let userToSet: User | null;
 
                 if (isOwnProfile) {
@@ -553,7 +560,7 @@ const ProfilePage: React.FC = () => {
     };
 
     const handleContactSeller = async () => {
-        if (!profileUser || profileUser.id === authUser.id) return;
+        if (!profileUser || profileUser.id === authUser?.id) return;
         setIsContacting(true);
         try {
             const chat = await apiService.findOrCreateChat(authUser.id, profileUser.id);

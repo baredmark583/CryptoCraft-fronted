@@ -30,7 +30,7 @@ export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ child
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const markAllAsRead = useCallback(async () => {
-    if (unreadCount === 0) return;
+    if (unreadCount === 0 || !user) return;
     
     // Optimistic UI update
     setNotifications(prev => 
@@ -38,7 +38,7 @@ export const NotificationsProvider: React.FC<{ children: ReactNode }> = ({ child
     );
     
     await apiService.markAllNotificationsAsRead(user.id);
-  }, [user.id, unreadCount]);
+  }, [user, unreadCount]);
 
   return (
     <NotificationsContext.Provider value={{ notifications, unreadCount, markAllAsRead }}>
