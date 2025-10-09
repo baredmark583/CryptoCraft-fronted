@@ -178,6 +178,10 @@ export const apiService = {
     return apiFetch('/categories');
   },
 
+  getMe: async (): Promise<User> => {
+    return apiFetch('/auth/me');
+  },
+
   loginWithTelegram: async (initData: string): Promise<{ access_token: string; user: User }> => {
     return apiFetch('/auth/telegram', {
       method: 'POST',

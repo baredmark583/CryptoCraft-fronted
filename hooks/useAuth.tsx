@@ -33,16 +33,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             window.history.replaceState(null, '', window.location.pathname + window.location.search);
           }
         } else {
-          // --- Browser Logic ---
-          // No TWA, no auto-login. The user must use the login widget.
-          // For simplicity, we clear any previous session on page refresh.
-          // A real-world app might use a /me endpoint to validate an existing token.
-          localStorage.removeItem('authToken');
-          setToken(null);
-          setUser(null);
+          // --- Browser Logic with persistent session ---
+          const existingToken = localStorage.getItem('authToken');
+          if (existingToken) {
+            setToken(existingToken);
+            console.log("Found existing token, validating with /me endpoint...");
+            const userData = await apiService.getMe(); // apiFetch will use the token from localStorage
+            setUser(userData);
+            console.log("Token validation successful. User is logged in.");
+          } else {
+            console.log("No TWA or token found. User is unauthenticated.");
+          }
         }
       } catch (error) {
-        console.error("Authentication failed:", error);
+        console.error("Authentication failed during initial load:", error);
         localStorage.removeItem('authToken');
         setToken(null);
         setUser(null);
