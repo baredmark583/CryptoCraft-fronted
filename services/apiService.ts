@@ -184,6 +184,13 @@ export const apiService = {
       body: JSON.stringify({ initData }),
     });
   },
+  
+  loginWithTelegramWidget: async (widgetData: any): Promise<{ access_token: string; user: User }> => {
+    return apiFetch('/auth/telegram/web-login', {
+      method: 'POST',
+      body: JSON.stringify(widgetData),
+    });
+  },
 
   uploadFile: async (file: File): Promise<{ url: string }> => {
     const formData = new FormData();

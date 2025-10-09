@@ -1,7 +1,7 @@
 import React from 'react';
 import ShowcaseHeader from '../components/ShowcaseHeader';
 import ShowcaseFooter from '../components/ShowcaseFooter';
-import DynamicIcon from '../components/DynamicIcon';
+import TelegramLoginButton from '../components/TelegramLoginButton';
 
 const FeatureCard: React.FC<{ icon: string; title: string; children: React.ReactNode }> = ({ icon, title, children }) => (
   <div className="bg-base-100 p-6 rounded-lg text-center">
@@ -25,23 +25,12 @@ const LandingPage: React.FC = () => {
         <p className="mt-4 max-w-2xl text-lg text-base-content/80">
           Buy and sell unique goods using cryptocurrency, with listings created in seconds by our powerful AI assistant.
         </p>
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 w-full max-w-md">
-          <a 
-            href="https://t.me/crypcraft_bot" // From useTonConnect.tsx
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="w-full flex items-center justify-center gap-3 bg-sky-500 hover:bg-sky-600 text-white font-bold py-4 px-6 rounded-lg text-lg transition-transform hover:scale-105"
-          >
-            <DynamicIcon name="telegram-logo" className="w-7 h-7" fallback={
-                <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
-                    <path d="M9.78 18.65l.28-4.23l7.68-6.92c.34-.31-.07-.46-.52-.19L7.74 13.3L3.64 12c-.88-.25-.89-.86.2-1.3l15.97-6.16c.73-.33 1.43.18 1.15 1.3l-2.72 12.57c-.28 1.13-1.04 1.4-1.74.88l-4.98-3.9z" />
-                </svg>
-            }/>
-            Open in Telegram
-          </a>
+        <div className="mt-10 flex flex-col items-center justify-center gap-4 w-full max-w-md">
+          <h2 className="text-lg font-semibold text-white">Войдите, чтобы начать</h2>
+          <TelegramLoginButton />
         </div>
         <p className="mt-4 text-sm text-base-content/60">
-          CryptoCraft is designed for the Telegram ecosystem.
+          CryptoCraft is also available as a Mini App inside Telegram.
         </p>
       </main>
       <div className="container mx-auto px-4 py-16">

@@ -7,13 +7,14 @@ interface AuthContextType {
   token: string | null;
   isLoading: boolean;
   updateUser: (updates: Partial<User>) => void;
+  loginWithTelegramWidget: (data: any) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('authToken'));
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
@@ -32,23 +33,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             window.history.replaceState(null, '', window.location.pathname + window.location.search);
           }
         } else {
-          // --- Browser Fallback Logic (for dev and prod) ---
-          console.warn("TWA data not found. Running in browser mode with mock user.");
-          const mockUser: User = {
-            id: 'dev-user-1',
-            name: 'Browser User',
-            avatarUrl: 'https://picsum.photos/seed/dev-user/100/100',
-            balance: 1000,
-            commissionOwed: 50,
-            following: [],
-            rating: 4.8,
-            reviews: [],
-            verificationLevel: 'PRO',
-            role: 'USER',
-            email: 'browser@example.com'
-          };
-          setUser(mockUser);
-          setToken('mock-browser-token');
+          // --- Browser Logic ---
+          // No TWA, no auto-login. The user must use the login widget.
+          // For simplicity, we clear any previous session on page refresh.
+          // A real-world app might use a /me endpoint to validate an existing token.
+          localStorage.removeItem('authToken');
+          setToken(null);
+          setUser(null);
         }
       } catch (error) {
         console.error("Authentication failed:", error);
@@ -63,12 +54,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     authenticate();
   }, []);
 
+  const loginWithTelegramWidget = async (data: any) => {
+    try {
+      const { access_token, user: userData } = await apiService.loginWithTelegramWidget(data);
+      localStorage.setItem('authToken', access_token);
+      setToken(access_token);
+      setUser(userData);
+    } catch (error) {
+      console.error("Telegram web login failed:", error);
+      throw error;
+    }
+  };
+
   const updateUser = (updates: Partial<User>) => {
       setUser(prevUser => prevUser ? {...prevUser, ...updates} : null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, updateUser }}>
+    <AuthContext.Provider value={{ user, token, isLoading, updateUser, loginWithTelegramWidget }}>
       {children}
     </AuthContext.Provider>
   );
@@ -79,7 +82,6 @@ export const useAuth = () => {
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  // The app now handles the case where a user might be null.
   return context;
 };
 
