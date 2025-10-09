@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import type { User } from '../types';
 import { apiService } from '../services/apiService';
 
@@ -12,11 +12,41 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// This type needs to be available for the window object declaration
+interface TelegramUserData {
+    id: number;
+    first_name: string;
+    last_name?: string;
+    username?: string;
+    photo_url?: string;
+    auth_date: number;
+    hash: string;
+}
+
+declare global {
+    interface Window {
+        onTelegramAuth: (user: TelegramUserData) => void;
+    }
+}
+
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
+  const loginWithTelegramWidget = useCallback(async (data: any) => {
+    try {
+      const { access_token, user: userData } = await apiService.loginWithTelegramWidget(data);
+      localStorage.setItem('authToken', access_token);
+      setToken(access_token);
+      setUser(userData);
+    } catch (error) {
+      console.error("Telegram web login failed:", error);
+      throw error;
+    }
+  }, []);
+
   useEffect(() => {
     const authenticate = async () => {
       // Source 1: The official Telegram WebApp object
@@ -69,17 +99,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     authenticate();
   }, []);
 
-  const loginWithTelegramWidget = async (data: any) => {
-    try {
-      const { access_token, user: userData } = await apiService.loginWithTelegramWidget(data);
-      localStorage.setItem('authToken', access_token);
-      setToken(access_token);
-      setUser(userData);
-    } catch (error) {
-      console.error("Telegram web login failed:", error);
-      throw error;
-    }
-  };
+  // Effect to handle the global callback for the Telegram Login Widget
+  useEffect(() => {
+    window.onTelegramAuth = (user: TelegramUserData) => {
+        loginWithTelegramWidget(user).catch(error => {
+            console.error("Telegram login failed via widget callback", error);
+            alert("Login failed. Please try again.");
+        });
+    };
+    // No cleanup function here, as the callback should be available globally
+    // for the entire lifetime of the app.
+  }, [loginWithTelegramWidget]);
+
 
   const updateUser = (updates: Partial<User>) => {
       setUser(prevUser => prevUser ? {...prevUser, ...updates} : null);
