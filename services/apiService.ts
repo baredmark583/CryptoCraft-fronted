@@ -46,7 +46,7 @@ const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
     if (contentType && contentType.indexOf("application/json") !== -1) {
         return response.json();
     }
-    return;
+    return null;
   } catch (error) {
     console.error(`API fetch error: ${options.method || 'GET'} ${endpoint}`, error);
     throw error;

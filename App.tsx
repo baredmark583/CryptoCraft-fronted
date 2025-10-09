@@ -15,7 +15,6 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import MobileNavBar from './components/MobileNavBar';
 import Spinner from './components/Spinner';
-import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import CreateListingPage from './pages/CreateListingPage';
@@ -37,6 +36,9 @@ import ProposalDetailPage from './pages/ProposalDetailPage';
 import CreateLiveStreamPage from './pages/CreateLiveStreamPage';
 import ProductListPage from './pages/ProductListPage';
 import ImportPage from './pages/ImportPage';
+import ProtectedRoute from './components/ProtectedRoute';
+import VerificationPage from './pages/VerificationPage';
+
 
 // This component contains the main application layout and routes for authenticated users.
 const AppContent: React.FC = () => {
@@ -67,26 +69,29 @@ const AppContent: React.FC = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/products" element={<ProductListPage />} />
           <Route path="/product/:id" element={<ProductDetailPage />} />
-          <Route path="/create" element={<CreateListingPage />} />
-          <Route path="/edit/:id" element={<EditListingPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/profile/:profileId" element={<ProfilePage />} />
           <Route path="/search" element={<SearchResultsPage />} />
-          <Route path="/chat" element={<ChatPage />} />
-          <Route path="/chat/:chatId" element={<ChatPage />} />
           <Route path="/cart" element={<CartPage />} />
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/collection/:id" element={<CollectionDetailPage />} />
           <Route path="/community" element={<CommunityHubPage />} />
           <Route path="/thread/:id" element={<ForumThreadPage />} />
-          <Route path="/studio/:productId" element={<PhotoStudioPage />} />
-          <Route path="/auth-center" element={<AuthenticationCenterPage />} />
-          <Route path="/dispute/:orderId" element={<DisputeCenterPage />} />
-          <Route path="/live/create" element={<CreateLiveStreamPage />} />
           <Route path="/live/:streamId" element={<LiveStreamPage />} />
-          <Route path="/governance" element={<GovernancePage />} />
-          <Route path="/proposal/:id" element={<ProposalDetailPage />} />
-          <Route path="/import" element={<ImportPage />} />
+
+          {/* Protected Routes */}
+          <Route path="/create" element={<ProtectedRoute><CreateListingPage /></ProtectedRoute>} />
+          <Route path="/edit/:id" element={<ProtectedRoute><EditListingPage /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+          <Route path="/chat/:chatId" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+          <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+          <Route path="/collection/:id" element={<ProtectedRoute><CollectionDetailPage /></ProtectedRoute>} />
+          <Route path="/studio/:productId" element={<ProtectedRoute><PhotoStudioPage /></ProtectedRoute>} />
+          <Route path="/auth-center" element={<ProtectedRoute><AuthenticationCenterPage /></ProtectedRoute>} />
+          <Route path="/dispute/:orderId" element={<ProtectedRoute><DisputeCenterPage /></ProtectedRoute>} />
+          <Route path="/live/create" element={<ProtectedRoute><CreateLiveStreamPage /></ProtectedRoute>} />
+          <Route path="/governance" element={<ProtectedRoute><GovernancePage /></ProtectedRoute>} />
+          <Route path="/proposal/:id" element={<ProtectedRoute><ProposalDetailPage /></ProtectedRoute>} />
+          <Route path="/import" element={<ProtectedRoute><ImportPage /></ProtectedRoute>} />
+          <Route path="/verify" element={<ProtectedRoute><VerificationPage /></ProtectedRoute>} />
         </Routes>
       </main>
       {!isChatPage && <Footer />}
@@ -110,17 +115,10 @@ const AuthenticatedApp: React.FC = () => (
   </NotificationsProvider>
 );
 
-// This component defines the routes for an unauthenticated user, primarily the landing page.
-const UnauthenticatedApp: React.FC = () => (
-    <Routes>
-        <Route path="*" element={<LandingPage />} />
-    </Routes>
-);
-
 // This component handles the initial loading and authentication check,
 // then renders the appropriate part of the application.
 const AppInitializer: React.FC = () => {
-  const { user, isLoading } = useAuth();
+  const { isLoading } = useAuth();
   if (isLoading) {
     return (
       <div className="bg-base-200 min-h-screen flex items-center justify-center">
@@ -128,7 +126,8 @@ const AppInitializer: React.FC = () => {
       </div>
     );
   }
-  return user ? <AuthenticatedApp /> : <UnauthenticatedApp />;
+  // The app is now always rendered, letting internal components and routes handle auth state.
+  return <AuthenticatedApp />;
 }
 
 // The root App component sets up the global providers that are needed

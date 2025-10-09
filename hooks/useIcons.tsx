@@ -17,7 +17,9 @@ export const IconProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const fetchIcons = async () => {
       try {
         const publicIcons = await apiService.getPublicIcons();
-        setIcons(publicIcons);
+        if (Array.isArray(publicIcons)) {
+          setIcons(publicIcons);
+        }
       } catch (error) {
         console.error("Failed to fetch public icons:", error);
         // It's okay to fail, the app will use fallback icons
