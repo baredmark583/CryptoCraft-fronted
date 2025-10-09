@@ -38,6 +38,7 @@ import ProductListPage from './pages/ProductListPage';
 import ImportPage from './pages/ImportPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import VerificationPage from './pages/VerificationPage';
+import DashboardPage from './pages/DashboardPage';
 
 
 // This component contains the main application layout and routes for authenticated users.
@@ -77,6 +78,7 @@ const AppContent: React.FC = () => {
           <Route path="/live/:streamId" element={<LiveStreamPage />} />
 
           {/* Protected Routes */}
+          <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
           <Route path="/create" element={<ProtectedRoute><CreateListingPage /></ProtectedRoute>} />
           <Route path="/edit/:id" element={<ProtectedRoute><EditListingPage /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />

@@ -21,10 +21,9 @@ import NFTCertificateModal from '../components/NFTCertificateModal';
 import { useTelegramBackButton } from '../hooks/useTelegram';
 import DynamicIcon from '../components/DynamicIcon';
 
-export type ProfileTab = 'dashboard' | 'listings' | 'workshop' | 'wishlist' | 'collections' | 'purchases' | 'sales' | 'analytics' | 'wallet' | 'settings';
+export type ProfileTab = 'listings' | 'workshop' | 'wishlist' | 'collections' | 'purchases' | 'sales' | 'analytics' | 'wallet' | 'settings';
 
 const TABS: { id: ProfileTab; label: string; visible: (isOwnProfile: boolean) => boolean; icon: React.ReactNode; }[] = [
-    { id: 'dashboard', label: 'Сводка', visible: isOwn => isOwn, icon: <DynamicIcon name="dashboard" className="h-5 w-5" fallback={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5 3a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2H5zM12.5 8.5a.5.5 0 01.5.5v2a.5.5 0 01-1 0v-2a.5.5 0 01.5-.5zM10 8a.5.5 0 01.5.5v4a.5.5 0 01-1 0v-4A.5.5 0 0110 8zM7.5 9.5a.5.5 0 01.5.5v1a.5.5 0 01-1 0v-1a.5.5 0 01.5-.5z" /></svg>} /> },
     { id: 'listings', label: 'Товары', visible: () => true, icon: <DynamicIcon name="listings" className="h-5 w-5" fallback={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M3.75 3A1.75 1.75 0 002 4.75v10.5c0 .966.784 1.75 1.75 1.75h12.5A1.75 1.75 0 0018 15.25V4.75A1.75 1.75 0 0016.25 3H3.75zM7 7.25a.75.75 0 011.5 0V8h.5a.75.75 0 010 1.5H8v.5a.75.75 0 01-1.5 0v-.5H6a.75.75 0 010-1.5h.5V7.25zM11 8a1 1 0 100-2 1 1 0 000 2z" /></svg>} /> },
     { id: 'workshop', label: 'Мастерская', visible: () => true, icon: <DynamicIcon name="workshop" className="h-5 w-5" fallback={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M5.433 13.917l1.262-3.155A4 4 0 017.58 9.42l6.92-6.918a2.121 2.121 0 013 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 01-.65-.65z" /></svg>} /> },
     { id: 'wishlist', label: 'Избранное', visible: () => true, icon: <DynamicIcon name="wishlist-heart" className="h-5 w-5" fallback={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M9.653 16.915l-.005-.003-.019-.01a20.759 20.759 0 01-1.162-.682 22.045 22.045 0 01-2.582-1.9-22.348 22.348 0 01-2.949-2.582 20.759 20.759 0 01-1.162-.682A9.96 9.96 0 012 10V6.652a2.492 2.492 0 011.666-2.311 2.493 2.493 0 012.134.12l.28.168c.002 0 .003.001.005.002l.004.002c.002 0 .003.001.005.002l.005.002a.002.002 0 00.005 0l.005-.002.004-.002a.002.002 0 00.005-.002l.004-.002.28-.168a2.493 2.493 0 012.134-.12 2.492 2.492 0 011.666 2.311V10c0 1.638-.403 3.228-1.162 4.682-.01.012-.02.023-.03.034l-.005.003z" /></svg>} /> },
@@ -324,11 +323,6 @@ interface TabContentProps {
 }
 const TabContent: React.FC<TabContentProps> = ({ activeTab, user, isOwnProfile, products, onProductUpdate, setActiveTab, isElectronicsSeller }) => {
     switch (activeTab) {
-        case 'dashboard':
-            if (!isOwnProfile) return null;
-            return isElectronicsSeller ? 
-                <ElectronicsDashboardTab user={user} products={products} onProductUpdate={onProductUpdate} setActiveTab={setActiveTab} /> : 
-                <DashboardTab sellerId={user.id} setActiveTab={setActiveTab} />;
         case 'listings':
             return <ListingsTab products={products} isOwnProfile={isOwnProfile} onProductUpdate={onProductUpdate} setActiveTab={setActiveTab} />;
         case 'workshop':
@@ -497,7 +491,7 @@ const ProfilePage: React.FC = () => {
     const isOwnProfile = !profileId || profileId === authUser?.id;
     useTelegramBackButton(!isOwnProfile);
 
-    const initialTab: ProfileTab = isOwnProfile ? 'dashboard' : 'listings';
+    const initialTab: ProfileTab = isOwnProfile ? 'listings' : 'listings';
     const activeTab = (searchParams.get('tab') as ProfileTab) || initialTab;
     
     const setActiveTab = (tab: ProfileTab) => {
@@ -535,7 +529,7 @@ const ProfilePage: React.FC = () => {
                 
                 // Ensure tab is valid after fetching data
                 if (!searchParams.get('tab')) {
-                     setActiveTab(isOwnProfile ? 'dashboard' : 'listings');
+                     setActiveTab(isOwnProfile ? 'listings' : 'listings');
                 }
 
             } catch (error) {

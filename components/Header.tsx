@@ -149,7 +149,7 @@ const Header: React.FC = () => {
                     }
                   </Link>
 
-                  <Link to="/profile" className="hidden md:flex items-center space-x-2">
+                  <Link to="/dashboard" className="hidden md:flex items-center space-x-2">
                     <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full border-2 border-base-300" />
                   </Link>
 
