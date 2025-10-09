@@ -19,7 +19,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   useEffect(() => {
     const authenticate = async () => {
-      const tgWebAppData = (window as any).Telegram?.WebApp?.initData;
+      // Source 1: The official Telegram WebApp object
+      let tgWebAppData = (window as any).Telegram?.WebApp?.initData;
+
+      // Source 2: The URL hash parameter (fallback for some web clients)
+      if (!tgWebAppData) {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1)); // Remove '#'
+        if (hashParams.has('tgWebAppData')) {
+          tgWebAppData = hashParams.get('tgWebAppData');
+          console.log("TWA data found in URL hash.");
+        }
+      }
       
       try {
         if (tgWebAppData) {
@@ -29,6 +39,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           localStorage.setItem('authToken', access_token);
           setToken(access_token);
           setUser(userData);
+          // Clean up the URL hash
           if (window.location.hash.includes('tgWebAppData')) {
             window.history.replaceState(null, '', window.location.pathname + window.location.search);
           }
