@@ -15,6 +15,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
                     <div className="flex justify-center">
                          <TelegramLoginButton />
                     </div>
+                    <p className="text-xs text-base-content/50 mt-4">
+                        Видите ошибку "Bot domain invalid"? Убедитесь, что домен этого сайта добавлен в настройках вашего бота через @BotFather.
+                    </p>
                 </div>
             </div>
         </div>
