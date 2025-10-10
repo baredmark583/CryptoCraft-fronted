@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { VectorMap } from "@react-jvectormap/core";
@@ -8,6 +9,7 @@ import { useAuth } from '../hooks/useAuth';
 import { apiService } from '../services/apiService';
 import type { Order } from '../types';
 import Spinner from '../components/Spinner';
+import DynamicIcon from '../components/DynamicIcon';
 
 // --- Local Components ---
 
@@ -101,24 +103,38 @@ const DashboardPage: React.FC = () => {
         };
         fetchData();
     }, [user]);
-
-    // Mock data for charts
-    const salesChartData = [
-        { name: "Jan", Sales: 168 }, { name: "Feb", Sales: 385 }, { name: "Mar", Sales: 201 },
-        { name: "Apr", Sales: 298 }, { name: "May", Sales: 187 }, { name: "Jun", Sales: 195 },
-        { name: "Jul", Sales: 291 }, { name: "Aug", Sales: 110 }, { name: "Sep", Sales: 215 },
-        { name: "Oct", Sales: 390 }, { name: "Nov", Sales: 280 }, { name: "Dec", Sales: 112 },
-    ];
-
-    const revenueChartData = [
-        { name: "Jan", Sales: 180, Revenue: 40 }, { name: "Feb", Sales: 190, Revenue: 30 },
-        { name: "Mar", Sales: 170, Revenue: 50 }, { name: "Apr", Sales: 160, Revenue: 40 },
-        { name: "May", Sales: 175, Revenue: 55 }, { name: "Jun", Sales: 165, Revenue: 40 },
-        { name: "Jul", Sales: 170, Revenue: 70 }, { name: "Aug", Sales: 205, Revenue: 100 },
-        { name: "Sep", Sales: 230, Revenue: 110 }, { name: "Oct", Sales: 210, Revenue: 120 },
-        { name: "Nov", Sales: 240, Revenue: 150 }, { name: "Dec", Sales: 235, Revenue: 140 },
-    ];
     
+    const { totalSales, totalPurchases, salesChartData, revenueChartData } = useMemo(() => {
+        const monthlySales: Record<string, number> = {};
+        const monthlyRevenue: Record<string, number> = {};
+
+        sales.forEach(order => {
+            const month = new Date(order.orderDate).toLocaleString('en-US', { month: 'short' });
+            monthlySales[month] = (monthlySales[month] || 0) + 1;
+            monthlyRevenue[month] = (monthlyRevenue[month] || 0) + order.total;
+        });
+
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        
+        const finalSalesData = monthNames.map(month => ({
+            name: month,
+            Sales: monthlySales[month] || 0,
+        }));
+
+        const finalRevenueData = monthNames.map(month => ({
+            name: month,
+            Sales: monthlySales[month] || 0,
+            Revenue: monthlyRevenue[month] || 0,
+        }));
+        
+        return { 
+            totalSales: sales.length, 
+            totalPurchases: purchases.length, 
+            salesChartData: finalSalesData, 
+            revenueChartData: finalRevenueData 
+        };
+    }, [sales, purchases]);
+
     if (isLoading) {
         return <div className="flex justify-center py-16"><Spinner size="lg"/></div>;
     }
@@ -129,8 +145,8 @@ const DashboardPage: React.FC = () => {
             <div className="grid grid-cols-12 gap-4 md:gap-6">
                 <div className="col-span-12 space-y-6 xl:col-span-8">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
-                        <StatCard title="Всего покупок" value={purchases.length} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>} change={-9.05} />
-                        <StatCard title="Всего продаж" value={sales.length} icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>} change={11.01} />
+                        <StatCard title="Всего покупок" value={totalPurchases} icon={<DynamicIcon name="cart" className="h-6 w-6" fallback={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c.51 0 .962-.328 1.093-.828l2.842-7.094a.75.75 0 00-.143-.882zM7.5 14.25L5.106 5.165A.75.75 0 004.269 4.5H2.25" /></svg>} />} change={-9.05} />
+                        <StatCard title="Всего продаж" value={totalSales} icon={<DynamicIcon name="sales" className="h-6 w-6" fallback={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>} />} change={11.01} />
                     </div>
                     <div className="card bg-base-100 border border-base-300 shadow-lg p-4 sm:p-6">
                         <h3 className="card-title text-lg mb-4">Продажи за месяц</h3>
@@ -161,7 +177,8 @@ const DashboardPage: React.FC = () => {
                                 markerStyle={{ initial: { fill: "oklch(92% 0.084 155.995)" } as any }} // secondary
                                 markers={[{ latLng: [48.37, 31.16], name: "Ukraine" }]}
                                 zoomOnScroll={false}
-                                containerClassName="h-full w-full"
+                                // FIX: Replaced invalid `containerClassName` prop with `className`.
+                                className="h-full w-full"
                             />
                         </div>
                     </div>

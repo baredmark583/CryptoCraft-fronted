@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useCurrency, Currency } from '../hooks/useCurrency';
+import DynamicIcon from './DynamicIcon';
 
 const CurrencySwitcher: React.FC = () => {
   const { currency, setCurrency } = useCurrency();
@@ -30,9 +31,11 @@ const CurrencySwitcher: React.FC = () => {
         className="flex items-center justify-center w-20 h-10 bg-base-100 border border-base-300 rounded-lg text-sm font-semibold"
       >
         {currency}
-        <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 ml-1 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <DynamicIcon name="chevron-down" className={`h-4 w-4 ml-1 transition-transform ${isOpen ? 'rotate-180' : ''}`} fallback={
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+        } />
       </button>
       {isOpen && (
         <div className="absolute top-full right-0 mt-2 w-28 bg-base-100 rounded-lg shadow-2xl border border-base-300 z-50 animate-fade-in-down">

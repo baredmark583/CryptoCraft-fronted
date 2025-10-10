@@ -521,6 +521,11 @@ export const apiService = {
       return { items: feedItems, isDiscovery: false };
   },
   
+  getPostsBySellerId: async (sellerId: string): Promise<WorkshopPost[]> => {
+      await new Promise(res => setTimeout(res, 500));
+      return workshopPosts.filter(p => p.sellerId === sellerId).sort((a,b) => b.timestamp - a.timestamp);
+  },
+
   likeWorkshopPost: async (postId: string, userId: string): Promise<void> => {
       await new Promise(res => setTimeout(res, 150));
       const post = workshopPosts.find(p => p.id === postId);

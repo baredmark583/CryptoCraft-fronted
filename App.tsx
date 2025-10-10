@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
@@ -35,7 +36,8 @@ import GovernancePage from './pages/GovernancePage';
 import ProposalDetailPage from './pages/ProposalDetailPage';
 import CreateLiveStreamPage from './pages/CreateLiveStreamPage';
 import ProductListPage from './pages/ProductListPage';
-import ImportPage from './pages/ImportPage';
+// FIX: Changed import to a named import to resolve "no default export" error.
+import { ImportPage } from './pages/ImportPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import VerificationPage from './pages/VerificationPage';
 import DashboardPage from './pages/DashboardPage';

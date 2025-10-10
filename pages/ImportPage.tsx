@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { useTelegramBackButton } from '../hooks/useTelegram';
 import { apiService } from '../services/apiService';
@@ -6,6 +7,7 @@ import type { ImportItem, Product, ImportedListingData } from '../types';
 import Spinner from '../components/Spinner';
 import { useAuth } from '../hooks/useAuth';
 import * as cheerio from 'cheerio';
+import DynamicIcon from '../components/DynamicIcon';
 
 type EditableListing = Omit<ImportedListingData, 'price'> & { price?: number };
 
@@ -80,7 +82,8 @@ const EditableListingCard: React.FC<EditableListingProps> = ({ item, onUpdate, d
     );
 };
 
-const ImportPage: React.FC = () => {
+// FIX: Changed to a named export to resolve module resolution issues.
+export const ImportPage: React.FC = () => {
     useTelegramBackButton(true);
     const { user } = useAuth();
     const [urls, setUrls] = useState('');
@@ -278,22 +281,26 @@ https://..."
                                         <div className="mt-1">{getStatusComponent(item)}</div>
                                     </div>
                                     <div className="flex items-center gap-2 ml-4">
-                                        <button onClick={(e) => { e.preventDefault(); removeItem(item.id); }} className="text-red-500 hover:text-red-400 p-1"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg></button>
+                                        <button onClick={(e) => { e.preventDefault(); removeItem(item.id); }} className="text-red-500 hover:text-red-400 p-1 disabled:opacity-50" disabled={isProcessing || isPublishing}>
+                                            <DynamicIcon name="delete-item" className="w-5 h-5" fallback={
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 4.8108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                                            }/>
+                                        </button>
                                         <span className="transform transition-transform group-open:rotate-180 text-base-content/70">▼</span>
                                     </div>
                                 </summary>
-                                <div className="p-4">
-                                    {item.listing ? (
-                                        <EditableListingCard item={item} onUpdate={handleUpdateListing} disabled={isProcessing || isPublishing} />
-                                    ) : item.status === 'error' ? (
-                                         <p className="text-red-400 bg-red-500/10 p-3 rounded-md text-sm">{item.errorMessage}</p>
-                                    ) : (
-                                        <p className="text-sm text-base-content/70 text-center">Данные будут доступны после обработки.</p>
-                                    )}
-                                     {item.status === 'success' && (
-                                        <button onClick={() => handlePublish(item)} className="mt-3 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg">Опубликовать</button>
-                                    )}
-                                </div>
+                                {item.listing && (
+                                    <div className="p-4 border-t border-base-300">
+                                        <EditableListingCard item={item} onUpdate={handleUpdateListing} disabled={item.status !== 'success'} />
+                                         <button
+                                            onClick={() => handlePublish(item)}
+                                            disabled={isPublishing || isProcessing || item.status !== 'success'}
+                                            className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg flex items-center justify-center disabled:bg-gray-500"
+                                        >
+                                            {item.status === 'publishing' ? <Spinner size="sm" /> : (item.status === 'published' ? 'Опубликовано' : 'Опубликовать этот товар')}
+                                        </button>
+                                    </div>
+                                )}
                             </details>
                         ))}
                     </div>
@@ -302,5 +309,4 @@ https://..."
         </div>
     );
 };
-
-export default ImportPage;
+ 
