@@ -104,66 +104,12 @@ const products: Product[] = [
 ];
 
 
-let reviews: Review[] = [
-    { id: 'rev-1', productId: 'prod-1', author: users[5], rating: 5, text: 'Отличная чашка, очень качественная работа!', timestamp: Date.now() - 86400000, imageUrl: 'https://picsum.photos/seed/rev1/400/400' },
-    { id: 'rev-2', productId: 'prod-2', author: users[5], rating: 4, text: 'Красивое ожерелье, но доставка была долгой.', timestamp: Date.now() - 172800000 },
-];
-
 let orders: Order[] = [
   { id: 'order-1', buyer: users[5], seller: users[0], items: [{ product: products[0], quantity: 1, price: 35, purchaseType: 'RETAIL' }], total: 35, status: 'SHIPPED', orderDate: Date.now() - 86400000, shippingAddress: { city: 'Киев', postOffice: 'Отделение №1', recipientName: 'Craft Enthusiast', phoneNumber: '+380991234567' }, shippingMethod: 'NOVA_POSHTA', paymentMethod: 'ESCROW', trackingNumber: '20450123456789' },
   { id: 'order-2', buyer: users[5], seller: users[1], items: [{ product: products[1], quantity: 1, price: 99, purchaseType: 'RETAIL' }], total: 99, status: 'DELIVERED', orderDate: Date.now() - 2 * 86400000, shippingAddress: { city: 'Киев', postOffice: 'Отделение №1', recipientName: 'Craft Enthusiast', phoneNumber: '+380991234567' }, shippingMethod: 'NOVA_POSHTA', paymentMethod: 'ESCROW' },
   { id: 'order-3', buyer: users[0], seller: users[5], items: [{ product: products[4], quantity: 1, price: 950, purchaseType: 'RETAIL' }], total: 950, status: 'PAID', orderDate: Date.now() - 3 * 86400000, shippingAddress: { city: 'Львов', postOffice: 'Отделение №5', recipientName: 'Pottery Master', phoneNumber: '+380507654321' }, shippingMethod: 'NOVA_POSHTA', paymentMethod: 'ESCROW', smartContractAddress: '0:abc...def', transactionHash: 'tx_hash_123' },
   { id: 'order-4', buyer: users[5], seller: users[4], items: [{ product: products[5], quantity: 1, price: 55000, purchaseType: 'RETAIL' }], total: 55000, status: 'SHIPPED_TO_EXPERT', orderDate: Date.now() - 4 * 86400000, shippingAddress: { city: 'Киев', postOffice: 'Отделение №1', recipientName: 'Craft Enthusiast', phoneNumber: '+380991234567' }, shippingMethod: 'NOVA_POSHTA', paymentMethod: 'ESCROW', authenticationRequested: true, authenticationEvents: [{ status: 'SHIPPED_TO_EXPERT', timestamp: Date.now() - 3 * 86400000, comment: "Seller has shipped the car to CryptoCraft hub." }] },
   { id: 'order-5', buyer: users[5], seller: users[4], items: [{ product: products[7], quantity: 1, price: 8500, purchaseType: 'RETAIL' }], total: 8500, status: 'NFT_ISSUED', orderDate: Date.now() - 5 * 86400000, shippingAddress: { city: 'Киев', postOffice: 'Отделение №1', recipientName: 'Craft Enthusiast', phoneNumber: '+380991234567' }, shippingMethod: 'NOVA_POSHTA', paymentMethod: 'ESCROW', authenticationRequested: true, authenticationEvents: [{ status: 'NFT_ISSUED', timestamp: Date.now() - 4 * 86400000, comment: "NFT Certificate minted." }] },
-];
-
-let notifications: Notification[] = [
-    { id: 'notif-1', userId: 'user-1', type: 'new_message', text: 'У вас новое сообщение от Jewelry Queen', link: '/chat/chat-1', timestamp: Date.now() - 3600000, read: false },
-    { id: 'notif-2', userId: 'user-1', type: 'sale', text: 'Поздравляем! Вы продали "Handmade Ceramic Mug"', link: '/profile?tab=sales', timestamp: Date.now() - 86400000, read: true },
-    { id: 'notif-3', userId: 'user-2', type: 'new_review', text: 'Craft Enthusiast оставил отзыв 4 звезды на ваш товар.', link: '/profile', timestamp: Date.now() - 172800000, read: true },
-    { id: 'notif-4', userId: 'user-1', type: 'outbid', text: 'Вашу ставку на "Картина Закат" перебили!', link: '/product/prod-7', timestamp: Date.now() - 1800000, read: false },
-    { id: 'notif-5', userId: 'user-3', type: 'auction_ended_seller', text: 'Ваш аукцион "Картина Закат" завершился! Победитель - buyer-1.', link: '/product/prod-7', timestamp: Date.now(), read: false },
-    { id: 'notif-6', userId: 'user-1', type: 'new_dispute_seller', text: 'Покупатель открыл спор по заказу #order-1.', link: '/dispute/order-1', timestamp: Date.now() - 900000, read: false },
-];
-
-let collections: Collection[] = [
-    { id: 'col-1', userId: 'buyer-1', name: 'Вдохновение для дома', productIds: ['prod-1'] },
-    { id: 'col-2', userId: 'buyer-1', name: 'Подарки', productIds: ['prod-1', 'prod-2'] },
-];
-
-let workshopPosts: WorkshopPost[] = [
-    { id: 'post-1', sellerId: 'user-1', text: 'Работаю над новой партией чашек! Скоро в продаже. #керамика #ручнаяработа', imageUrl: 'https://picsum.photos/seed/post1/600/400', timestamp: Date.now() - 2 * 86400000, likedBy: ['buyer-1', 'user-2'], comments: [{id: 'wc-1', author: users[5], text: 'Очень красиво!', timestamp: Date.now() - 86400000}] },
-    { id: 'post-2', sellerId: 'user-2', text: 'Новое поступление лунных камней для ваших украшений.', timestamp: Date.now() - 3 * 86400000, likedBy: ['buyer-1'], comments: [] },
-];
-
-let forumThreads: ForumThread[] = [
-    { id: 'thread-1', title: 'Как правильно фотографировать товары для продажи?', author: users[0], createdAt: Date.now() - 5 * 86400000, replyCount: 2, lastReplyAt: Date.now() - 86400000, isPinned: true },
-    { id: 'thread-2', title: 'Обсуждение: Комиссии на платформе', author: users[2], createdAt: Date.now() - 2 * 86400000, replyCount: 0, lastReplyAt: Date.now() - 2 * 86400000 },
-];
-
-let forumPosts: ForumPost[] = [
-    { id: 'fp-1', threadId: 'thread-1', author: users[0], content: 'Коллеги, поделитесь советами, как вы делаете такие красивые фото? У меня получается не очень.', createdAt: Date.now() - 5 * 86400000 },
-    { id: 'fp-2', threadId: 'thread-1', author: users[3], content: 'Главное - это хороший дневной свет! И не используйте вспышку.', createdAt: Date.now() - 4 * 86400000 },
-    { id: 'fp-3', threadId: 'thread-1', author: users[1], content: 'Согласна! Еще можно использовать Lightroom для небольшой коррекции.', createdAt: Date.now() - 86400000 },
-];
-
-let promoCodes: PromoCode[] = [
-    { id: 'promo-1', sellerId: 'user-1', code: 'CRAFT10', discountType: 'PERCENTAGE', discountValue: 10, isActive: true, uses: 5, scope: 'ENTIRE_ORDER' },
-    { id: 'promo-2', sellerId: 'user-2', code: 'JEWEL20', discountType: 'PERCENTAGE', discountValue: 20, isActive: true, uses: 2, minPurchaseAmount: 100, scope: 'CATEGORY', applicableCategory: 'Ювелирные изделия' },
-];
-
-let disputes: Dispute[] = [
-    { id: 'order-1', order: orders.find(o => o.id === 'order-1')!, messages: [
-        { id: 'dm-1', senderId: 'buyer-1', senderName: 'Craft Enthusiast', senderAvatar: 'https://picsum.photos/seed/buyer1/100/100', timestamp: Date.now() - 900000, text: 'Я получил чашку, но она разбита! Требую возврата.' },
-        { id: 'dm-2', senderId: 'user-1', senderName: 'Pottery Master', senderAvatar: 'https://picsum.photos/seed/seller1/100/100', timestamp: Date.now() - 840000, text: 'Я очень хорошо упаковал ее. Возможно, это вина службы доставки.' },
-        { id: 'dm-3', senderId: 'arbitrator-01', senderName: 'CryptoCraft Support', senderAvatar: 'https://picsum.photos/seed/support/100/100', timestamp: Date.now() - 600000, text: 'Здравствуйте. Я арбитр CryptoCraft. Пожалуйста, предоставьте фото упаковки и поврежденного товара.' },
-    ], status: 'UNDER_REVIEW' }
-];
-
-let liveStreams: LiveStream[] = [
-    { id: 'stream-1', title: 'Новая коллекция керамики!', seller: users[0], status: 'LIVE', featuredProductId: 'prod-1', welcomeMessage: 'Всем привет! Сегодня показываю новые поступления, задавайте вопросы!' },
-    { id: 'stream-2', title: 'Эксклюзивные украшения', seller: users[1], status: 'UPCOMING', featuredProductId: 'prod-2', scheduledStartTime: Date.now() + 2 * 60 * 60 * 1000 },
-    { id: 'stream-3', title: 'Винтажные находки', seller: users[2], status: 'ENDED', featuredProductId: 'prod-3' },
 ];
 
 // --- API SERVICE IMPLEMENTATION ---
@@ -435,258 +381,144 @@ export const apiService = {
   // --- MOCKED API METHODS (for features not yet on backend) ---
   
   getReviewsByUserId: async (userId: string): Promise<Review[]> => {
-      await new Promise(res => setTimeout(res, 400));
-      return reviews.filter(r => r.productId.startsWith('prod-') && products.find(p => p.id === r.productId)?.seller.id === userId);
+    return apiFetch(`/reviews/user/${userId}`);
   },
   
   submitReview: async (productId: string, author: User, rating: number, text: string, imageUrl?: string): Promise<Review> => {
-    await new Promise(res => setTimeout(res, 600));
-    const newReview: Review = {
-        id: `rev-${Date.now()}`,
-        productId,
-        author,
-        rating,
-        text,
-        timestamp: Date.now(),
-        imageUrl
-    };
-    reviews.unshift(newReview);
-    return newReview;
+    // The author is determined by the auth token on the backend.
+    return apiFetch('/reviews', {
+        method: 'POST',
+        body: JSON.stringify({ productId, rating, text, imageUrl }),
+    });
   },
 
   getNotificationsByUserId: async (userId: string): Promise<Notification[]> => {
-      await new Promise(res => setTimeout(res, 800));
-      return [...notifications].sort((a,b) => b.timestamp - a.timestamp);
+      // Backend gets userId from token
+      return apiFetch('/notifications');
   },
 
   markAllNotificationsAsRead: async (userId: string): Promise<void> => {
-      await new Promise(res => setTimeout(res, 200));
-      notifications = notifications.map(n => n.userId === userId ? { ...n, read: true } : n);
+      // Backend gets userId from token
+      return apiFetch('/notifications/read', { method: 'POST' });
   },
   
   getCollectionsByUserId: async (userId: string): Promise<Collection[]> => {
-      await new Promise(res => setTimeout(res, 400));
-      return collections.filter(c => c.userId === userId);
+      // Backend gets userId from token
+      return apiFetch('/collections');
   },
   
   getCollectionById: async (id: string, userId: string): Promise<{collection: Collection, products: Product[]} | null> => {
-      await new Promise(res => setTimeout(res, 500));
-      const collection = collections.find(c => c.id === id && c.userId === userId);
-      if (!collection) return null;
-      const collectionProducts = products.filter(p => collection.productIds.includes(p.id));
-      return { collection, products: collectionProducts };
+      // Backend can perform auth check using token.
+      return apiFetch(`/collections/${id}`);
   },
   
   createCollection: async (userId: string, name: string): Promise<Collection> => {
-      await new Promise(res => setTimeout(res, 300));
-      const newCollection: Collection = {
-          id: `col-${Date.now()}`,
-          userId,
-          name,
-          productIds: [],
-      };
-      collections.push(newCollection);
-      return newCollection;
+      // Backend gets userId from token.
+      return apiFetch('/collections', {
+          method: 'POST',
+          body: JSON.stringify({ name }),
+      });
   },
   
   addProductToCollection: async (collectionId: string, productId: string): Promise<void> => {
-      await new Promise(res => setTimeout(res, 200));
-      const collection = collections.find(c => c.id === collectionId);
-      if(collection && !collection.productIds.includes(productId)) {
-          collection.productIds.push(productId);
-      }
+      return apiFetch(`/collections/${collectionId}/products`, {
+          method: 'POST',
+          body: JSON.stringify({ productId }),
+      });
   },
 
   removeProductFromCollection: async (collectionId: string, productId: string): Promise<void> => {
-      await new Promise(res => setTimeout(res, 200));
-      const collection = collections.find(c => c.id === collectionId);
-      if(collection) {
-          collection.productIds = collection.productIds.filter(id => id !== productId);
-      }
+      return apiFetch(`/collections/${collectionId}/products/${productId}`, {
+          method: 'DELETE',
+      });
   },
   
   getFeedForUser: async(userId: string): Promise<{ items: FeedItem[], isDiscovery: boolean }> => {
-      await new Promise(res => setTimeout(res, 700));
-      const followingIds = users.find(u => u.id === userId)?.following || [];
-      
-      if (followingIds.length === 0) {
-          const popularSellers = users.filter(u => u.rating > 4.8);
-          const feedPosts = workshopPosts.filter(p => popularSellers.some(s => s.id === p.sellerId));
-          const feedItems: FeedItem[] = feedPosts.map(post => ({ post, seller: users.find(u => u.id === post.sellerId)! }));
-          return { items: feedItems.slice(0, 5), isDiscovery: true };
-      }
-      
-      const feedPosts = workshopPosts.filter(p => followingIds.includes(p.sellerId));
-      const feedItems: FeedItem[] = feedPosts.map(post => ({ post, seller: users.find(u => u.id === post.sellerId)! }));
-      return { items: feedItems, isDiscovery: false };
+      // Backend gets userId from token.
+      return apiFetch('/workshop/feed');
   },
   
   getPostsBySellerId: async (sellerId: string): Promise<WorkshopPost[]> => {
-      await new Promise(res => setTimeout(res, 500));
-      return workshopPosts.filter(p => p.sellerId === sellerId).sort((a,b) => b.timestamp - a.timestamp);
+      return apiFetch(`/workshop/posts/user/${sellerId}`);
   },
 
   likeWorkshopPost: async (postId: string, userId: string): Promise<void> => {
-      await new Promise(res => setTimeout(res, 150));
-      const post = workshopPosts.find(p => p.id === postId);
-      if (post) {
-          const index = post.likedBy.indexOf(userId);
-          if (index > -1) {
-              post.likedBy.splice(index, 1);
-          } else {
-              post.likedBy.push(userId);
-          }
-      }
+      // Backend gets userId from token.
+      return apiFetch(`/workshop/posts/${postId}/like`, { method: 'POST' });
   },
 
   addCommentToWorkshopPost: async (postId: string, userId: string, text: string): Promise<WorkshopComment> => {
-      await new Promise(res => setTimeout(res, 400));
-      const post = workshopPosts.find(p => p.id === postId);
-      const author = users.find(u => u.id === userId);
-      if (!post || !author) throw new Error("Post or user not found");
-      const newComment: WorkshopComment = {
-          id: `wc-${Date.now()}`,
-          author,
-          text,
-          timestamp: Date.now(),
-      };
-      post.comments.push(newComment);
-      return newComment;
+      // Backend gets userId from token.
+      return apiFetch(`/workshop/posts/${postId}/comments`, {
+          method: 'POST',
+          body: JSON.stringify({ text }),
+      });
   },
   
   createWorkshopPost: async (postData: { sellerId: string; text: string; imageUrl?: string }): Promise<WorkshopPost> => {
-      await new Promise(res => setTimeout(res, 500));
-      const author = users.find(u => u.id === postData.sellerId);
-      if (!author) throw new Error("User not found");
-      const newPost: WorkshopPost = {
-          id: `post-${Date.now()}`,
-          sellerId: postData.sellerId,
-          text: postData.text,
-          imageUrl: postData.imageUrl,
-          timestamp: Date.now(),
-          likedBy: [],
-          comments: [],
-      };
-      workshopPosts.unshift(newPost);
-      return newPost;
+      // Backend gets sellerId from token.
+      return apiFetch('/workshop/posts', {
+          method: 'POST',
+          body: JSON.stringify({ text: postData.text, imageUrl: postData.imageUrl }),
+      });
   },
 
    getForumThreads: async (): Promise<ForumThread[]> => {
-        await new Promise(res => setTimeout(res, 600));
-        return [...forumThreads].sort((a, b) => (b.isPinned ? 1 : -1) - (a.isPinned ? -1 : 1) || b.lastReplyAt - a.lastReplyAt);
+       return apiFetch('/forum/threads');
    },
    
    getForumThreadById: async (id: string): Promise<ForumThread | null> => {
-       await new Promise(res => setTimeout(res, 300));
-       return forumThreads.find(t => t.id === id) || null;
+       return apiFetch(`/forum/threads/${id}`);
    },
 
    getForumPostsByThreadId: async (threadId: string): Promise<ForumPost[]> => {
-       await new Promise(res => setTimeout(res, 400));
-       return forumPosts.filter(p => p.threadId === threadId).sort((a,b) => a.createdAt - b.createdAt);
+       return apiFetch(`/forum/threads/${threadId}/posts`);
    },
    
    createForumThread: async (title: string, content: string, author: User): Promise<ForumThread> => {
-       await new Promise(res => setTimeout(res, 500));
-       const now = Date.now();
-       const newThread: ForumThread = {
-           id: `thread-${now}`,
-           title,
-           author,
-           createdAt: now,
-           lastReplyAt: now,
-           replyCount: 1,
-       };
-       const newPost: ForumPost = {
-           id: `fp-${now}`,
-           threadId: newThread.id,
-           author,
-           content,
-           createdAt: now,
-       };
-       forumThreads.unshift(newThread);
-       forumPosts.push(newPost);
-       return newThread;
+       // Backend gets author from token.
+       return apiFetch('/forum/threads', {
+           method: 'POST',
+           body: JSON.stringify({ title, content }),
+       });
    },
    
    createForumPost: async (threadId: string, content: string, author: User): Promise<ForumPost> => {
-       await new Promise(res => setTimeout(res, 400));
-       const thread = forumThreads.find(t => t.id === threadId);
-       if (!thread) throw new Error("Thread not found");
-       
-       const now = Date.now();
-       const newPost: ForumPost = {
-           id: `fp-${now}`,
-           threadId,
-           author,
-           content,
-           createdAt: now,
-       };
-       forumPosts.push(newPost);
-       thread.replyCount++;
-       thread.lastReplyAt = now;
-       return newPost;
+       // Backend gets author from token.
+       return apiFetch(`/forum/threads/${threadId}/posts`, {
+           method: 'POST',
+           body: JSON.stringify({ content }),
+       });
    },
    
     getSellerAnalytics: async (sellerId: string, period: '7d' | '30d' | 'all'): Promise<SellerAnalytics> => {
-        await new Promise(res => setTimeout(res, 900));
-        const days = period === '7d' ? 7 : 30;
-        return {
-            profileVisits: Math.floor(Math.random() * 500 * (days/7)),
-            totalProductViews: Math.floor(Math.random() * 2000 * (days/7)),
-            totalSales: Math.floor(Math.random() * 50 * (days/7)),
-            conversionRate: parseFloat((Math.random() * 5).toFixed(2)),
-            salesOverTime: Array.from({length: days}, (_, i) => ({ date: `Day ${i+1}`, value: Math.floor(Math.random() * 10) })),
-            viewsOverTime: Array.from({length: days}, (_, i) => ({ date: `Day ${i+1}`, value: Math.floor(Math.random() * 100) })),
-            topProducts: products.filter(p => p.seller.id === sellerId).slice(0, 3).map(p => ({ id: p.id, title: p.title, imageUrl: p.imageUrls[0], views: Math.floor(Math.random() * 500), sales: Math.floor(Math.random() * 20) })),
-            trafficSources: [
-                { source: 'Поиск CryptoCraft', visits: 120 },
-                { source: 'Прямые заходы', visits: 80 },
-                { source: 'Telegram', visits: 65 },
-                { source: 'Другое', visits: 30 },
-            ]
-        };
+        return apiFetch(`/analytics/seller/${sellerId}?period=${period}`);
     },
     
     validatePromoCode: async(code: string, sellerId: string, items: CartItem[]): Promise<{discountValue: number, discountType: 'PERCENTAGE' | 'FIXED_AMOUNT'}> => {
-        await new Promise(res => setTimeout(res, 500));
-        const promo = promoCodes.find(p => p.code === code && p.sellerId === sellerId && p.isActive);
-        if(!promo) throw new Error("Промокод не найден или неактивен.");
-        
-        const total = items.reduce((sum, item) => sum + item.priceAtTimeOfAddition * item.quantity, 0);
-
-        if(promo.minPurchaseAmount && total < promo.minPurchaseAmount) {
-            throw new Error(`Минимальная сумма заказа для этого кода: ${promo.minPurchaseAmount} USDT`);
-        }
-        
-        return { discountValue: promo.discountValue, discountType: promo.discountType };
+        return apiFetch('/promocodes/validate', {
+            method: 'POST',
+            body: JSON.stringify({ code, sellerId, items }),
+        });
     },
     
     createPromoCode: async (sellerId: string, data: Partial<PromoCode>): Promise<PromoCode> => {
-        await new Promise(res => setTimeout(res, 400));
-        const newPromo: PromoCode = {
-            id: `promo-${Date.now()}`,
-            sellerId,
-            code: data.code!,
-            discountType: data.discountType!,
-            discountValue: data.discountValue!,
-            isActive: true,
-            uses: 0,
-            scope: data.scope!,
-            ...data
-        };
-        promoCodes.push(newPromo);
-        return newPromo;
+        // Backend gets sellerId from token.
+        return apiFetch('/promocodes', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
     },
 
     deletePromoCode: async (promoId: string, sellerId: string): Promise<void> => {
-        await new Promise(res => setTimeout(res, 300));
-        promoCodes = promoCodes.filter(p => !(p.id === promoId && p.sellerId === sellerId));
+        // Backend checks ownership via token.
+        return apiFetch(`/promocodes/${promoId}`, {
+            method: 'DELETE'
+        });
     },
     
     getPromoCodesBySellerId: async (sellerId: string): Promise<PromoCode[]> => {
-        await new Promise(res => setTimeout(res, 400));
-        return promoCodes.filter(p => p.sellerId === sellerId);
+        return apiFetch(`/promocodes/seller/${sellerId}`);
     },
 
     getSellerDashboardData: async (sellerId: string): Promise<SellerDashboardData> => {
@@ -709,76 +541,38 @@ export const apiService = {
     },
     
     sendPersonalOffer: async(sellerId: string, recipientId: string, productId: string, promoId: string): Promise<void> => {
-        await new Promise(res => setTimeout(res, 600));
-        console.log(`Sending offer from ${sellerId} to ${recipientId} for product ${productId} with promo ${promoId}`);
-        const product = products.find(p => p.id === productId);
-        const promo = promoCodes.find(p => p.id === promoId);
-        
-        notifications.unshift({
-            id: `notif-${Date.now()}`,
-            userId: recipientId,
-            type: 'personal_offer',
-            text: `У вас персональное предложение от ${product?.seller.name}: Скидка ${promo?.discountValue}${promo?.discountType === 'PERCENTAGE' ? '%' : ' USDT'} на товар "${product?.title}"!`,
-            link: `/product/${productId}`,
-            timestamp: Date.now(),
-            read: false,
+        // Backend gets sellerId from token
+        return apiFetch('/notifications/personal-offer', {
+            method: 'POST',
+            body: JSON.stringify({ recipientId, productId, promoId })
         });
     },
     
     getDisputeById: async(orderId: string): Promise<Dispute | null> => {
-        await new Promise(res => setTimeout(res, 400));
-        return disputes.find(d => d.id === orderId) || null;
+        return apiFetch(`/disputes/${orderId}`);
     },
 
     addMessageToDispute: async(orderId: string, message: Omit<DisputeMessage, 'id' | 'timestamp'>): Promise<DisputeMessage> => {
-        await new Promise(res => setTimeout(res, 300));
-        const dispute = disputes.find(d => d.id === orderId);
-        if(!dispute) throw new Error("Dispute not found");
-
-        const newMessage: DisputeMessage = {
-            id: `dm-${Date.now()}`,
-            timestamp: Date.now(),
-            ...message
-        };
-        dispute.messages.push(newMessage);
-        
-        if (dispute.messages.length % 3 === 0) {
-             const arbitratorMessage: DisputeMessage = {
-                id: `dm-${Date.now() + 1}`,
-                timestamp: Date.now() + 1,
-                senderId: 'arbitrator-01',
-                senderName: 'CryptoCraft Support',
-                senderAvatar: 'https://picsum.photos/seed/support/100/100',
-                text: 'Спасибо за предоставленную информацию. Мы изучаем ваше дело и скоро вернемся с решением.',
-            };
-            dispute.messages.push(arbitratorMessage);
-        }
-
-        return newMessage;
+        return apiFetch(`/disputes/${orderId}/messages`, {
+            method: 'POST',
+            body: JSON.stringify(message),
+        });
     },
     
     getLiveStreams: async (): Promise<LiveStream[]> => {
-        await new Promise(res => setTimeout(res, 500));
-        return liveStreams;
+        return apiFetch('/livestreams');
     },
 
     getLiveStreamById: async (id: string): Promise<LiveStream | null> => {
-        await new Promise(res => setTimeout(res, 300));
-        return liveStreams.find(s => s.id === id) || null;
+        return apiFetch(`/livestreams/${id}`);
     },
 
     createLiveStream: async (title: string, seller: User, featuredProductId: string, options: any): Promise<LiveStream> => {
-        await new Promise(res => setTimeout(res, 800));
-        const newStream: LiveStream = {
-            id: `stream-${Date.now()}`,
-            title,
-            seller,
-            featuredProductId,
-            status: options.scheduledStartTime ? 'UPCOMING' : 'LIVE',
-            ...options
-        };
-        liveStreams.unshift(newStream);
-        return newStream;
+        // Backend gets seller from token.
+        return apiFetch('/livestreams', {
+            method: 'POST',
+            body: JSON.stringify({ title, featuredProductId, ...options })
+        });
     },
     
     updateOrder: async (orderId: string, updates: Partial<Order>): Promise<Order> => {
@@ -830,30 +624,19 @@ export const apiService = {
     },
     
     getProposals: async (): Promise<Proposal[]> => {
-        await new Promise(res => setTimeout(res, 500));
-        return [
-            { id: 'prop-1', title: 'Снизить комиссию платформы до 1.5%', description: 'Предлагаю снизить комиссию для всех сделок с 2% до 1.5% для стимуляции активности продавцов.', proposer: users[1], createdAt: Date.now() - 5*86400000, endsAt: Date.now() + 2*86400000, status: 'ACTIVE', votesFor: 125, votesAgainst: 30, voters: {'user-1': 'FOR'} },
-            { id: 'prop-2', title: 'Выделить гранты на продвижение для новых мастеров', description: 'Создать фонд в 10,000 USDT для выдачи грантов по 100 USDT новым талантливым мастерам на продвижение их первых товаров.', proposer: users[0], createdAt: Date.now() - 10*86400000, endsAt: Date.now() - 3*86400000, status: 'PASSED', votesFor: 210, votesAgainst: 15, voters: {} },
-            { id: 'prop-3', title: 'Добавить категорию "Антиквариат"', description: '...', proposer: users[2], createdAt: Date.now() - 12*86400000, endsAt: Date.now() - 5*86400000, status: 'REJECTED', votesFor: 50, votesAgainst: 150, voters: {} },
-        ];
+        return apiFetch('/governance/proposals');
     },
 
     getProposalById: async (id: string): Promise<Proposal | null> => {
-        const proposals = await apiService.getProposals();
-        return proposals.find(p => p.id === id) || null;
+        return apiFetch(`/governance/proposals/${id}`);
     },
     
     castVote: async (proposalId: string, userId: string, choice: VoteChoice): Promise<Proposal> => {
-        await new Promise(res => setTimeout(res, 600));
-        const proposal = (await apiService.getProposals()).find(p => p.id === proposalId);
-        if(!proposal) throw new Error("Proposal not found");
-        
-        if (!proposal.voters[userId]) {
-             proposal.voters[userId] = choice;
-             if (choice === 'FOR') proposal.votesFor++;
-             else proposal.votesAgainst++;
-        }
-        return proposal;
+        // userId from token on backend
+        return apiFetch(`/governance/proposals/${proposalId}/vote`, {
+            method: 'POST',
+            body: JSON.stringify({ choice }),
+        });
     },
     
     getAuthenticationOrders: async (userId: string): Promise<Order[]> => {
