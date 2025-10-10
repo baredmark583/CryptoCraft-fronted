@@ -1,14 +1,15 @@
 import React, { useMemo, useState } from 'react';
 import type { User, Product } from '../types';
 import { Link } from 'react-router-dom';
-import type { ProfileTab } from '../pages/ProfilePage';
+// FIX: Changed 'ProfileTab' to 'PublicProfileTab' to match the exported type.
+import type { PublicProfileTab } from '../pages/ProfilePage';
 import AuthenticationRequestModal from './AuthenticationRequestModal';
 
 interface ElectronicsDashboardTabProps {
     user: User;
     products: Product[];
     onProductUpdate: (updatedProduct: Product) => void;
-    setActiveTab: (tab: ProfileTab) => void;
+    setActiveTab: (tab: PublicProfileTab) => void;
 }
 
 const StatCard: React.FC<{ title: string; value: string; icon: React.ReactElement }> = ({ title, value, icon }) => (

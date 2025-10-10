@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Product } from '../types';
@@ -67,11 +66,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSoldView = false }
                 }`}
                 aria-label="Добавить в избранное"
               >
-                <DynamicIcon name="wishlist-heart" className="w-5 h-5" fallback={
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path d="M9.653 16.915l-.005-.003-.019-.01a20.759 20.759 0 01-1.162-.682 22.045 22.045 0 01-2.582-1.9-22.348 22.348 0 01-2.949-2.582 20.759 20.759 0 01-1.162-.682A9.96 9.96 0 012 10V6.652a2.492 2.492 0 011.666-2.311 2.493 2.493 0 012.134.12l.28.168c.002 0 .003.001.005.002l.004.002c.002 0 .003.001.005.002l.005.002a.002.002 0 00.005 0l.005-.002.004-.002a.002.002 0 00.005-.002l.004-.002.28-.168a2.493 2.493 0 012.134-.12 2.492 2.492 0 011.666 2.311V10c0 1.638-.403 3.228-1.162 4.682-.01.012-.02.023-.03.034l-.005.003z" />
-                  </svg>
-                }/>
+                <DynamicIcon name="wishlist-heart" className="w-5 h-5" />
               </button>
               <button
                 onClick={handleCollectionClick}
@@ -80,11 +75,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSoldView = false }
                 }`}
                 aria-label="Сохранить в коллекцию"
               >
-                 <DynamicIcon name="collection-add" className="w-5 h-5" fallback={
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M5.5 16.5A1.5 1.5 0 014 15V5.5A1.5 1.5 0 015.5 4h9A1.5 1.5 0 0116 5.5V15a1.5 1.5 0 01-1.5 1.5h-9zM10 6a.75.75 0 00-1.5 0v1.5H7a.75.75 0 000 1.5h1.5V10a.75.75 0 001.5 0V9h1.5a.75.75 0 000-1.5H10V6z" />
-                    </svg>
-                 }/>
+                 <DynamicIcon name="collection-add" className="w-5 h-5" />
               </button>
             </div>
           </div>

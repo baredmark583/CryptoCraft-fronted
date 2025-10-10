@@ -8,6 +8,7 @@ interface AuthContextType {
   isLoading: boolean;
   updateUser: (updates: Partial<User>) => void;
   loginWithTelegramWidget: (data: any) => Promise<void>;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -45,6 +46,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error("Telegram web login failed:", error);
       throw error;
     }
+  }, []);
+
+  const logout = useCallback(() => {
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem('authToken');
   }, []);
 
   useEffect(() => {
@@ -117,7 +124,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, updateUser, loginWithTelegramWidget }}>
+    <AuthContext.Provider value={{ user, token, isLoading, updateUser, loginWithTelegramWidget, logout }}>
       {children}
     </AuthContext.Provider>
   );
