@@ -243,7 +243,6 @@ const VariantEditor: React.FC<{
 
 const EditListingPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
-    // FIX: Upgraded react-router-dom to v6. Replaced useHistory with useNavigate.
     const navigate = useNavigate();
     const { user } = useAuth();
     const [product, setProduct] = useState<Product | null>(null);
@@ -272,6 +271,7 @@ const EditListingPage: React.FC = () => {
         return findCategory(categories, formData.category);
     }, [formData?.category, categories]);
 
+    const categoryOptions = useMemo(() => flattenCategoriesForSelect(categories), [categories]);
 
     useEffect(() => {
         if (!id) {
@@ -429,8 +429,6 @@ const EditListingPage: React.FC = () => {
         return null; 
     }
     
-    const categoryOptions = useMemo(() => flattenCategoriesForSelect(categories), [categories]);
-
     return (
         <div className="max-w-4xl mx-auto bg-base-100 p-6 sm:p-8 rounded-lg shadow-xl">
             <h1 className="text-3xl font-bold text-center mb-2 text-white">Редактировать объявление</h1>
