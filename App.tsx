@@ -1,4 +1,5 @@
 
+
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
@@ -34,12 +35,12 @@ import DisputeCenterPage from './pages/DisputeCenterPage';
 import LiveStreamPage from './pages/LiveStreamPage';
 import GovernancePage from './pages/GovernancePage';
 import ProposalDetailPage from './pages/ProposalDetailPage';
+import CreateProposalPage from './pages/CreateProposalPage';
 import CreateLiveStreamPage from './pages/CreateLiveStreamPage';
 import ProductListPage from './pages/ProductListPage';
 // FIX: Changed import to a named import to resolve "no default export" error.
 import { ImportPage } from './pages/ImportPage';
 import ProtectedRoute from './components/ProtectedRoute';
-import VerificationPage from './pages/VerificationPage';
 import DashboardPage from './pages/DashboardPage';
 
 
@@ -94,8 +95,8 @@ const AppContent: React.FC = () => {
           <Route path="/live/create" element={<ProtectedRoute><CreateLiveStreamPage /></ProtectedRoute>} />
           <Route path="/governance" element={<ProtectedRoute><GovernancePage /></ProtectedRoute>} />
           <Route path="/proposal/:id" element={<ProtectedRoute><ProposalDetailPage /></ProtectedRoute>} />
+          <Route path="/governance/create" element={<ProtectedRoute><CreateProposalPage /></ProtectedRoute>} />
           <Route path="/import" element={<ProtectedRoute><ImportPage /></ProtectedRoute>} />
-          <Route path="/verify" element={<ProtectedRoute><VerificationPage /></ProtectedRoute>} />
         </Routes>
       </main>
       {!isChatPage && <Footer />}

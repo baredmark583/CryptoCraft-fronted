@@ -54,7 +54,7 @@ const ProposalDetailPage: React.FC = () => {
     };
     
     const userVote = proposal?.voters[user.id];
-    const canVote = user.verificationLevel === 'PRO' && proposal?.status === 'ACTIVE' && !userVote;
+    const canVote = proposal?.status === 'ACTIVE' && !userVote;
 
     if (isLoading) {
         return <div className="flex justify-center items-center h-96"><Spinner /></div>;

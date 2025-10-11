@@ -11,8 +11,6 @@ export interface User {
   following: string[];
   balance: number;
   commissionOwed: number;
-  // FIX: Add missing verificationLevel property to support PRO user status checks and badges.
-  verificationLevel: 'NONE' | 'PRO';
   affiliateId?: string;
   phoneNumber?: string;
   defaultShippingAddress?: ShippingAddress;
@@ -21,6 +19,8 @@ export interface User {
   };
   tonWalletAddress?: string;
   paymentCard?: string;
+  // FIX: Add verificationLevel to User interface to support Pro status features.
+  verificationLevel?: 'NONE' | 'PRO';
   // FIX: Added 'role' property to User interface for admin panel compatibility.
   role?: 'USER' | 'MODERATOR' | 'SUPER_ADMIN';
   // FIX: Add email property to User interface for admin panel compatibility.

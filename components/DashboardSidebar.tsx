@@ -54,30 +54,25 @@ const DashboardSidebar: React.FC<DashboardSidebarProps> = ({ user, activeTab, se
                             </button>
                         </li>
                     ))}
-                     {/* PRO Features Section */}
-                    {user.verificationLevel === 'PRO' && (
-                        <>
-                            <div className="divider my-2 text-sm text-primary before:bg-base-300 after:bg-base-300">PRO Функции</div>
-                            <li>
-                                <Link
-                                    to="/governance"
-                                    className="w-full flex items-center gap-3 p-3 text-left rounded-md transition-colors text-base-content/80 hover:bg-base-300"
-                                >
-                                    <DynamicIcon name="dao-governance" className="h-5 w-5" />
-                                    <span>Управление DAO</span>
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    to="/live/create"
-                                    className="w-full flex items-center gap-3 p-3 text-left rounded-md transition-colors text-base-content/80 hover:bg-base-300"
-                                >
-                                    <DynamicIcon name="start-livestream" className="h-5 w-5" />
-                                    <span>Прямой эфир</span>
-                                </Link>
-                            </li>
-                        </>
-                    )}
+                    <div className="divider my-2 text-sm text-base-content/70 before:bg-base-300 after:bg-base-300">Платформа</div>
+                    <li>
+                        <Link
+                            to="/governance"
+                            className="w-full flex items-center gap-3 p-3 text-left rounded-md transition-colors text-base-content/80 hover:bg-base-300"
+                        >
+                            <DynamicIcon name="dao-governance" className="h-5 w-5" />
+                            <span>Управление DAO</span>
+                        </Link>
+                    </li>
+                    <li>
+                        <Link
+                            to="/live/create"
+                            className="w-full flex items-center gap-3 p-3 text-left rounded-md transition-colors text-base-content/80 hover:bg-base-300"
+                        >
+                            <DynamicIcon name="start-livestream" className="h-5 w-5" />
+                            <span>Прямой эфир</span>
+                        </Link>
+                    </li>
                 </ul>
             </nav>
             <div className="mt-4 border-t border-base-300 pt-4">

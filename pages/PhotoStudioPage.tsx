@@ -15,8 +15,7 @@ const AI_PROMPT_SUGGESTIONS = [
     { name: 'На природе', prompt: 'place the product in a natural outdoor setting, like on a mossy rock in a forest.' },
 ];
 
-const FREE_EDITS_STANDARD = 5;
-const FREE_EDITS_PRO = 15;
+const FREE_EDITS_LIMIT = 10;
 const EDIT_COST = 0.36;
 
 interface UsageData {
@@ -94,13 +93,9 @@ const PhotoStudioPage: React.FC = () => {
         return () => clearInterval(interval);
     }, [cooldownUntil]);
 
-    const freeEditLimit = useMemo(() => 
-        user.verificationLevel === 'PRO' ? FREE_EDITS_PRO : FREE_EDITS_STANDARD,
-    [user.verificationLevel]);
-
     const freeEditsRemaining = useMemo(() => 
-        Math.max(0, freeEditLimit - editsCount.count),
-    [freeEditLimit, editsCount.count]);
+        Math.max(0, FREE_EDITS_LIMIT - editsCount.count),
+    [FREE_EDITS_LIMIT, editsCount.count]);
 
     const canAffordEdit = useMemo(() => {
         return freeEditsRemaining > 0 || user.balance >= EDIT_COST;
@@ -275,7 +270,7 @@ const PhotoStudioPage: React.FC = () => {
                 <div className="border-t border-brand-border pt-4 space-y-3">
                      <div className="text-center">
                         <p className="text-sm text-brand-text-secondary">
-                            Бесплатных правок сегодня: <span className={`font-bold ${freeEditsRemaining > 0 ? 'text-green-400' : 'text-red-400'}`}>{freeEditsRemaining}</span> / {freeEditLimit}
+                            Бесплатных правок сегодня: <span className={`font-bold ${freeEditsRemaining > 0 ? 'text-green-400' : 'text-red-400'}`}>{freeEditsRemaining}</span> / {FREE_EDITS_LIMIT}
                         </p>
                         {freeEditsRemaining === 0 && (
                              <p className="text-xs text-brand-text-secondary">Стоимость следующей правки: {EDIT_COST.toFixed(2)} USDT</p>

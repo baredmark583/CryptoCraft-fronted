@@ -87,6 +87,13 @@ const GovernancePage: React.FC = () => {
                 <h1 className="text-4xl font-bold text-white">Управление DAO</h1>
                 <p className="text-lg text-base-content/70 mt-2">Принимайте участие в развитии CryptoCraft, голосуя за ключевые предложения.</p>
             </div>
+
+            <div className="text-right mb-6">
+                <Link to="/governance/create" className="btn btn-primary">
+                    + Создать предложение
+                </Link>
+            </div>
+            
             {proposals.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {proposals.map(p => <ProposalCard key={p.id} proposal={p} />)}

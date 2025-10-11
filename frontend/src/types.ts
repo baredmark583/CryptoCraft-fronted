@@ -11,6 +11,7 @@ export interface User {
   following: string[];
   balance: number;
   commissionOwed: number;
+  // FIX: Add missing 'verificationLevel' property to support Pro status features.
   verificationLevel: 'NONE' | 'PRO';
   affiliateId?: string;
   phoneNumber?: string;
