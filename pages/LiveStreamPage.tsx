@@ -8,15 +8,52 @@ import { useCart } from '../hooks/useCart';
 import DynamicIcon from '../components/DynamicIcon';
 import { io, Socket } from 'socket.io-client';
 
+import {
+  LiveKitRoom,
+  ParticipantTile,
+  ControlBar,
+  useParticipants,
+  useTracks,
+  GridLayout,
+} from '@livekit/components-react';
+import '@livekit/components-styles';
+import { Track } from 'livekit-client';
+
+
 const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:3001';
-const PLACEHOLDER_VIDEO_URL = 'https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4';
+const LIVEKIT_URL = (import.meta as any).env.VITE_LIVEKIT_URL;
+
+const LiveVideoDisplay: React.FC<{ isSeller: boolean }> = ({ isSeller }) => {
+    // We get all participants in the room, including the local one.
+    const participants = useParticipants();
+    
+    // If we are the seller, we want to be the main participant on screen.
+    // If we are a viewer, we want the seller (the one publishing video) to be the main participant.
+    const mainParticipant = isSeller 
+        ? participants.find(p => p.isLocal) 
+        : participants.find(p => p.isCameraEnabled);
+
+    if (mainParticipant) {
+        return (
+            <div className="w-full h-full">
+                <ParticipantTile participant={mainParticipant} />
+            </div>
+        )
+    }
+
+    return (
+        <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white">
+            <Spinner />
+            <p className="mt-4">{isSeller ? 'Подключаем вашу камеру...' : 'Ожидание трансляции от продавца...'}</p>
+        </div>
+    );
+};
 
 
 const LiveStreamPage: React.FC = () => {
     const { streamId } = useParams<{ streamId: string }>();
-    const { user, token } = useAuth();
+    const { user, token: authToken } = useAuth();
     const { addToCart } = useCart();
-    const videoRef = useRef<HTMLVideoElement>(null);
 
     const [stream, setStream] = useState<LiveStream | null>(null);
     const [product, setProduct] = useState<Product | null>(null);
@@ -24,12 +61,13 @@ const LiveStreamPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [newMessage, setNewMessage] = useState('');
     const [socket, setSocket] = useState<Socket | null>(null);
+    const [livekitToken, setLivekitToken] = useState<string>('');
     
     const chatEndRef = useRef<HTMLDivElement>(null);
     const isSeller = user && stream && user.id === stream.seller.id;
     const isModerator = user?.role === 'SUPER_ADMIN' || user?.role === 'MODERATOR';
 
-    // Fetch stream data
+    // Fetch stream and product data
     useEffect(() => {
         if (!streamId) return;
         const fetchData = async () => {
@@ -50,31 +88,28 @@ const LiveStreamPage: React.FC = () => {
         fetchData();
     }, [streamId]);
     
-    // Setup seller's camera stream
+    // Fetch LiveKit token
     useEffect(() => {
-        if (isSeller && stream?.status === 'LIVE') {
-            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-                .then(mediaStream => {
-                    if (videoRef.current) {
-                        videoRef.current.srcObject = mediaStream;
-                    }
-                })
-                .catch(err => console.error("Could not get user media", err));
+        if (streamId && user) {
+            apiService.getLiveStreamToken(streamId)
+                .then(data => setLivekitToken(data.token))
+                .catch(err => console.error("Failed to get livestream token", err));
         }
-    }, [isSeller, stream?.status]);
+    }, [streamId, user]);
 
-    // Setup WebSocket connection and listeners
+
+    // Setup WebSocket connection for chat
     useEffect(() => {
         if (!streamId) return;
 
         const newSocket = io(API_BASE_URL, {
-            query: { token },
+            query: { token: authToken },
             transports: ['websocket']
         });
         setSocket(newSocket);
 
         newSocket.on('connect', () => {
-            console.log('Connected to WebSocket for live stream');
+            console.log('Connected to WebSocket for live stream chat');
             newSocket.emit('joinChat', streamId);
         });
 
@@ -94,7 +129,7 @@ const LiveStreamPage: React.FC = () => {
             newSocket.emit('leaveChat', streamId);
             newSocket.close();
         };
-    }, [streamId, token]);
+    }, [streamId, authToken]);
 
     // Scroll chat to bottom
     useEffect(() => {
@@ -106,18 +141,9 @@ const LiveStreamPage: React.FC = () => {
         if (!newMessage.trim() || !socket || !streamId) return;
         
         socket.emit('sendMessage', {
-            chatId: streamId, // Using streamId as the room/chat ID
+            chatId: streamId,
             message: { text: newMessage }
         });
-        
-        // Optimistically add own message
-        const userMessage: Message = {
-            id: `msg-local-${Date.now()}`,
-            sender: { id: user.id, name: user.name, avatarUrl: user.avatarUrl },
-            text: newMessage,
-            timestamp: Date.now(),
-        };
-        setChatMessages(prev => [...prev, userMessage]);
         setNewMessage('');
     };
 
@@ -127,8 +153,8 @@ const LiveStreamPage: React.FC = () => {
     };
 
     const handleEndStream = async () => {
-        if (!streamId || !isModerator) return;
-        if (window.confirm('Вы уверены, что хотите принудительно завершить этот эфир?')) {
+        if (!streamId || (!isModerator && !isSeller)) return;
+        if (window.confirm('Вы уверены, что хотите завершить этот эфир?')) {
             try {
                 const endedStream = await apiService.endLiveStream(streamId);
                 setStream(endedStream);
@@ -156,10 +182,30 @@ const LiveStreamPage: React.FC = () => {
                 </div>
             );
         }
-        if (isSeller) {
-            return <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover transform scale-x-[-1]" />;
+        
+        if (!livekitToken || !LIVEKIT_URL) {
+            return (
+                <div className="w-full h-full flex items-center justify-center bg-black text-white">
+                    <Spinner />
+                    <p className="ml-4">Подключаемся к эфиру...</p>
+                </div>
+            );
         }
-        return <video src={PLACEHOLDER_VIDEO_URL} autoPlay muted loop playsInline className="w-full h-full object-cover" />;
+
+        return (
+            <LiveKitRoom
+              video={isSeller}
+              audio={isSeller}
+              token={livekitToken}
+              serverUrl={LIVEKIT_URL}
+              connect={true}
+              data-lk-theme="default"
+              style={{ height: '100%', width: '100%' }}
+            >
+                <LiveVideoDisplay isSeller={isSeller} />
+                {(isSeller || isModerator) && <ControlBar />}
+            </LiveKitRoom>
+        )
     };
 
 
@@ -170,7 +216,7 @@ const LiveStreamPage: React.FC = () => {
                 <div className="aspect-video bg-base-200 rounded-lg flex items-center justify-center relative overflow-hidden">
                     {renderVideo()}
                     {stream.status === 'LIVE' && <span className="absolute top-4 left-4 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center"><span className="relative flex h-2 w-2 mr-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>LIVE</span>}
-                    {isModerator && stream.status === 'LIVE' && (
+                    {(isSeller || isModerator) && stream.status === 'LIVE' && (
                         <button onClick={handleEndStream} className="btn btn-error btn-sm absolute top-4 right-4">Завершить эфир</button>
                     )}
                 </div>

@@ -566,6 +566,10 @@ export const apiService = {
         return apiFetch(`/livestreams/${id}`);
     },
 
+    getLiveStreamToken: async (streamId: string): Promise<{ token: string }> => {
+        return apiFetch(`/livestreams/${streamId}/token`, { method: 'POST' });
+    },
+
     createLiveStream: async (title: string, featuredProductId: string, options: any): Promise<LiveStream> => {
         // Backend gets seller from token.
         return apiFetch('/livestreams', {
