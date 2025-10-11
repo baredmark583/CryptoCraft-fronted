@@ -566,7 +566,7 @@ export const apiService = {
         return apiFetch(`/livestreams/${id}`);
     },
 
-    createLiveStream: async (title: string, seller: User, featuredProductId: string, options: any): Promise<LiveStream> => {
+    createLiveStream: async (title: string, featuredProductId: string, options: any): Promise<LiveStream> => {
         // Backend gets seller from token.
         return apiFetch('/livestreams', {
             method: 'POST',
@@ -574,6 +574,12 @@ export const apiService = {
         });
     },
     
+    endLiveStream: async (id: string): Promise<LiveStream> => {
+        return apiFetch(`/livestreams/${id}/end`, {
+            method: 'PATCH',
+        });
+    },
+
     updateOrder: async (orderId: string, updates: Partial<Order>): Promise<Order> => {
         await new Promise(res => setTimeout(res, 300));
         const order = orders.find(o => o.id === orderId);
