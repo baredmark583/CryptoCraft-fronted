@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { apiService } from '../services/apiService';
@@ -41,9 +42,14 @@ const LiveVideoDisplay: React.FC<{ isSeller: boolean }> = ({ isSeller }) => {
 
     // FIX: Instead of passing a 'participant' prop which may not exist on this version of ParticipantTile,
     // we use GridLayout with a single track. GridLayout provides the necessary context for ParticipantTile to render.
-    const tracks = useTracks(
-        [{ source: Track.Source.Camera, withPlaceholder: true }],
-        { participant: mainParticipant },
+    // The `participant` option is no longer supported in this version of `useTracks`.
+    // The correct approach is to get all tracks and then filter for the desired participant.
+    const allCameraTracks = useTracks([
+        { source: Track.Source.Camera, withPlaceholder: true },
+    ]);
+
+    const tracks = allCameraTracks.filter(
+        (track) => mainParticipant && track.participant.identity === mainParticipant.identity,
     );
 
     if (tracks.length > 0) {
@@ -76,7 +82,11 @@ const LiveStreamPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [newMessage, setNewMessage] = useState('');
     const [socket, setSocket] = useState<Socket | null>(null);
+
+    // State for LiveKit connection flow
     const [livekitToken, setLivekitToken] = useState<string>('');
+    const [isConnected, setIsConnected] = useState(false);
+    const [isConnecting, setIsConnecting] = useState(false);
     
     const chatEndRef = useRef<HTMLDivElement>(null);
     
@@ -116,16 +126,6 @@ const LiveStreamPage: React.FC = () => {
         };
         fetchData();
     }, [streamId]);
-    
-    // Fetch LiveKit token
-    useEffect(() => {
-        if (streamId && user) {
-            apiService.getLiveStreamToken(streamId)
-                .then(data => setLivekitToken(data.token))
-                .catch(err => console.error("Failed to get livestream token", err));
-        }
-    }, [streamId, user]);
-
 
     // Setup WebSocket connection for chat
     useEffect(() => {
@@ -197,6 +197,24 @@ const LiveStreamPage: React.FC = () => {
         }
     };
 
+    const handleJoin = async () => {
+        if (!streamId || !user) return;
+        setIsConnecting(true);
+        try {
+            const { token } = await apiService.getLiveStreamToken(streamId);
+            if (!token) {
+                throw new Error("Received empty token from server.");
+            }
+            setLivekitToken(token);
+            setIsConnected(true);
+        } catch (err) {
+            console.error("Failed to get livestream token", err);
+            // Optionally, show an error to the user in the UI
+        } finally {
+            setIsConnecting(false);
+        }
+    };
+
 
     if (isLoading) return <div className="flex justify-center items-center h-96"><Spinner /></div>;
     if (!stream) return <div className="text-center text-xl text-base-content/70">Трансляция не найдена.</div>;
@@ -212,6 +230,17 @@ const LiveStreamPage: React.FC = () => {
             );
         }
         
+        if (!isConnected) {
+            return (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white">
+                    <button onClick={handleJoin} disabled={isConnecting} className="btn btn-primary btn-lg">
+                        {isConnecting ? <Spinner /> : 'Присоединиться к эфиру'}
+                    </button>
+                    {isConnecting && <p className="mt-4">Получение токена...</p>}
+                </div>
+            );
+        }
+
         if (!livekitToken || !LIVEKIT_URL || LIVEKIT_URL === 'wss://your-livekit-url.com') {
             return (
                 <div className="w-full h-full flex items-center justify-center bg-black text-white">
