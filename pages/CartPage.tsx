@@ -2,13 +2,15 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../hooks/useCart';
 import { useCurrency } from '../hooks/useCurrency';
-import type { CartItem } from '../types';
+import { useAuth } from '../hooks/useAuth'; // Import useAuth
+import type { CartItem, User } from '../types';
 import { useTelegramBackButton } from '../hooks/useTelegram';
 import DynamicIcon from '../components/DynamicIcon';
 
 const CartPage: React.FC = () => {
   const { cartItems, updateQuantity, removeFromCart, cartTotal } = useCart();
   const { getFormattedPrice } = useCurrency();
+  const { user } = useAuth(); // Get the authenticated user
   const navigate = useNavigate();
 
   useTelegramBackButton(true);
@@ -29,15 +31,18 @@ const CartPage: React.FC = () => {
     return cartItems.reduce((acc, item) => {
       const sellerId = item.product.seller.id;
       if (!acc[sellerId]) {
+        // FIX: If the seller is the current user, use the complete user object from useAuth.
+        // This prevents data inconsistencies that cause React to crash.
+        const sellerData = (user && sellerId === user.id) ? user : item.product.seller;
         acc[sellerId] = {
-          seller: item.product.seller,
+          seller: sellerData,
           items: [],
         };
       }
       acc[sellerId].items.push(item);
       return acc;
-    }, {} as Record<string, { seller: any; items: CartItem[] }>);
-  }, [cartItems]);
+    }, {} as Record<string, { seller: User; items: CartItem[] }>);
+  }, [cartItems, user]); // Add user to dependency array
 
   const getVariantString = (item: CartItem): string | null => {
       if (!item.variant) return null;

@@ -55,8 +55,9 @@ const ChatPage: React.FC = () => {
 
   // Socket connection
   useEffect(() => {
+    // FIX: The `query` option for socket.io-client was moved to `auth` in v3+.
     const newSocket = io(API_BASE_URL, {
-      query: { token },
+      auth: { token },
       transports: ['websocket']
     });
     setSocket(newSocket);
@@ -300,7 +301,7 @@ const ChatPage: React.FC = () => {
                   className="btn btn-ghost btn-square md:hidden mr-2"
                   aria-label="Вернуться к списку чатов"
                 >
-                  <DynamicIcon name="back-arrow" className="h-6 w-6" />
+                  <DynamicIcon name="back-arrow" className="h-6 w-6" fallback={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>} />
                 </button>
                 {selectedChat.participant && selectedChat.participant.id && (
                   <Link to={`/profile/${selectedChat.participant.id}`} className="flex items-center gap-3 flex-1 min-w-0">
@@ -359,7 +360,11 @@ const ChatPage: React.FC = () => {
                     className="btn btn-ghost btn-circle"
                     aria-label="Прикрепить файл"
                   >
-                    <DynamicIcon name="attachment-clip" className="w-6 h-6" />
+                    <DynamicIcon name="attachment-clip" className="w-6 h-6" fallback={
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01.01-.01z"/>
+                      </svg>
+                    }/>
                   </button>
                   <div className="form-control flex-grow">
                      <input
@@ -375,7 +380,11 @@ const ChatPage: React.FC = () => {
                     className="btn btn-primary btn-circle"
                     aria-label="Отправить сообщение"
                   >
-                    <DynamicIcon name="send-arrow" className="w-5 h-5" />
+                    <DynamicIcon name="send-arrow" className="w-5 h-5" fallback={
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M3.105 2.289a.75.75 0 00-.826.95l1.414 4.949a.75.75 0 00.95.54l3.123-.93a.75.75 0 01.928.928l-.93 3.123a.75.75 0 00.54.95l4.95 1.414a.75.75 0 00.95-.826l-2.434-8.518a.75.75 0 00-.702-.556l-8.518-2.434z" />
+                      </svg>
+                    }/>
                   </button>
                 </form>
               </div>

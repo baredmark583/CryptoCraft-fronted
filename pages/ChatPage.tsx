@@ -55,8 +55,9 @@ const ChatPage: React.FC = () => {
 
   // Socket connection
   useEffect(() => {
+    // FIX: The `query` option for socket.io-client was moved to `auth` in v3+.
     const newSocket = io(API_BASE_URL, {
-      query: { token },
+      auth: { token },
       transports: ['websocket']
     });
     setSocket(newSocket);

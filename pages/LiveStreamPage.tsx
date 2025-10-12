@@ -103,6 +103,7 @@ const LiveStreamPage: React.FC = () => {
     const [stream, setStream] = useState<LiveStream | null>(null);
     const [product, setProduct] = useState<Product | null>(null);
     const [chatMessages, setChatMessages] = useState<Message[]>([]);
+    const messageQueueRef = useRef<Message[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [newMessage, setNewMessage] = useState('');
     const [socket, setSocket] = useState<Socket | null>(null);
@@ -134,6 +135,7 @@ const LiveStreamPage: React.FC = () => {
                 
                 setStream(streamData);
                 setLikeCount(streamData.likes || 0);
+                setViewerCount(streamData.viewerCount || 0);
 
                 if (streamData.featuredProduct) {
                     setProduct(streamData.featuredProduct);
@@ -155,28 +157,39 @@ const LiveStreamPage: React.FC = () => {
         fetchData();
     }, [streamId]);
 
+    // Chat batching interval to prevent performance issues
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (messageQueueRef.current.length > 0) {
+                setChatMessages(prev => [...prev.slice(-100), ...messageQueueRef.current]);
+                messageQueueRef.current = [];
+            }
+        }, 250); // Process messages 4 times a second
+        return () => clearInterval(interval);
+    }, []);
+
     // WebSocket connection for chat & interactivity
     useEffect(() => {
         if (!streamId) return;
 
+        // FIX: The `query` option for socket.io-client was moved to `auth` in v3+.
         const newSocket = io(API_BASE_URL, {
-            query: { token: authToken },
+            auth: { token: authToken },
             transports: ['websocket']
         });
         setSocket(newSocket);
 
         newSocket.on('connect', () => {
             newSocket.emit('joinStreamRoom', streamId);
-            newSocket.emit('getStreamStats', streamId);
         });
 
-        newSocket.on('streamUpdate', (data: { likes: number; viewers: number }) => {
+        newSocket.on('streamUpdate', (data: { viewers: number; likes: number }) => {
             setLikeCount(data.likes);
             setViewerCount(data.viewers);
         });
 
         newSocket.on('newMessage', (message: Message) => {
-            setChatMessages(prev => [...prev.slice(-100), message]);
+            messageQueueRef.current.push(message);
         });
 
         newSocket.on('streamEnded', () => {
@@ -195,7 +208,6 @@ const LiveStreamPage: React.FC = () => {
 
     const handleLike = useCallback(() => {
         if (!socket || !streamId) return;
-        setLikeCount(prev => prev + 1);
         socket.emit('likeStream', streamId);
 
         const newHeart = { id: Date.now() };
@@ -243,17 +255,30 @@ const LiveStreamPage: React.FC = () => {
                         <p className="mt-4">Подключение к эфиру...</p>
                     </div>
                  ) : (
-                    <LiveKitRoom
-                      video={isSeller}
-                      audio={isSeller}
-                      token={livekitToken}
-                      serverUrl={LIVEKIT_URL}
-                      connect={true}
-                      data-lk-theme="default"
-                      style={{ height: '100%', width: '100%' }}
-                    >
-                       <StreamPlayer isSeller={isSeller} sellerId={stream.seller.id} isMuted={isMuted} />
-                    </LiveKitRoom>
+                    <>
+                        {isMuted && !isSeller && (
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+                                <button
+                                    onClick={() => setIsMuted(false)}
+                                    className="btn btn-primary btn-lg"
+                                >
+                                    <DynamicIcon name="livestream-sound-on" className="w-8 h-8 mr-2" />
+                                    Включить звук
+                                </button>
+                            </div>
+                        )}
+                        <LiveKitRoom
+                          video={isSeller}
+                          audio={isSeller}
+                          token={livekitToken}
+                          serverUrl={LIVEKIT_URL}
+                          connect={true}
+                          data-lk-theme="default"
+                          style={{ height: '100%', width: '100%' }}
+                        >
+                           <StreamPlayer isSeller={isSeller} sellerId={stream.seller.id} isMuted={isMuted} />
+                        </LiveKitRoom>
+                    </>
                  )}
                 <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/50 to-transparent flex justify-between items-start">
                     <div className="flex items-center gap-4">
@@ -275,9 +300,11 @@ const LiveStreamPage: React.FC = () => {
                     <button onClick={handleLike} className="w-12 h-12 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:text-red-500 hover:bg-white/20 transition-colors">
                         <DynamicIcon name="livestream-heart" className="w-7 h-7" />
                     </button>
-                    <button onClick={() => setIsMuted(!isMuted)} className="w-12 h-12 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors">
-                        {isMuted ? <DynamicIcon name="livestream-sound-off" className="w-7 h-7" /> : <DynamicIcon name="livestream-sound-on" className="w-7 h-7" />}
-                    </button>
+                    {!isSeller && (
+                        <button onClick={() => setIsMuted(!isMuted)} className="w-12 h-12 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+                            {isMuted ? <DynamicIcon name="livestream-sound-off" className="w-7 h-7" /> : <DynamicIcon name="livestream-sound-on" className="w-7 h-7" />}
+                        </button>
+                    )}
                 </div>
                 <div className="absolute bottom-20 right-7">
                     {flyingHearts.map(heart => (
