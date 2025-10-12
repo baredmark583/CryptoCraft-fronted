@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { apiService } from '../services/apiService';
@@ -14,52 +12,37 @@ import {
   LiveKitRoom,
   ParticipantTile,
   ControlBar,
-  useParticipants,
-  // FIX: Import GridLayout and useTracks to properly render the participant tile
-  // in case the installed version of LiveKit components has a ParticipantTile
-  // that doesn't accept a 'participant' prop directly.
-  GridLayout,
   useTracks,
+  GridLayout,
 } from '@livekit/components-react';
 import '@livekit/components-styles';
-// FIX: Import Track from livekit-client to specify track sources.
 import { Track } from 'livekit-client';
 
 
 const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:3001';
-// This value needs to be configured in the environment variables for the live stream to work.
 const LIVEKIT_URL = (import.meta as any).env.VITE_LIVEKIT_URL || 'wss://your-livekit-url.com';
 
 const LiveVideoDisplay: React.FC<{ isSeller: boolean }> = ({ isSeller }) => {
-    // We get all participants in the room, including the local one.
-    const participants = useParticipants();
-    
-    // If we are the seller, we want to be the main participant on screen.
-    // If we are a viewer, we want the seller (the one publishing video) to be the main participant.
-    const mainParticipant = isSeller 
-        ? participants.find(p => p.isLocal) 
-        : participants.find(p => p.isCameraEnabled);
-
-    // FIX: Instead of passing a 'participant' prop which may not exist on this version of ParticipantTile,
-    // we use GridLayout with a single track. GridLayout provides the necessary context for ParticipantTile to render.
-    // The `participant` option is no longer supported in this version of `useTracks`.
-    // The correct approach is to get all tracks and then filter for the desired participant.
-    const allCameraTracks = useTracks([
-        { source: Track.Source.Camera, withPlaceholder: true },
-    ]);
-
-    const tracks = allCameraTracks.filter(
-        (track) => mainParticipant && track.participant.identity === mainParticipant.identity,
+    // Получаем все активные видеодорожки
+    const tracks = useTracks(
+        [{ source: Track.Source.Camera, withPlaceholder: true }],
     );
 
-    if (tracks.length > 0) {
+    // Определяем, какой трек отображать.
+    // Если мы продавец, ищем наш локальный трек.
+    // Если мы зритель, ищем первый удаленный трек (трек продавца).
+    const trackToDisplay = isSeller
+        ? tracks.find(trackRef => trackRef.participant.isLocal)
+        : tracks.find(trackRef => !trackRef.participant.isLocal);
+
+    if (trackToDisplay) {
         return (
             <div className="w-full h-full">
-                <GridLayout tracks={tracks}>
-                  <ParticipantTile />
+                <GridLayout tracks={[trackToDisplay]}>
+                    <ParticipantTile />
                 </GridLayout>
             </div>
-        )
+        );
     }
 
     return (
