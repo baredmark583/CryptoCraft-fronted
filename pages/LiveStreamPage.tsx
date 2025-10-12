@@ -16,14 +16,65 @@ import {
   GridLayout,
   AudioTrack,
   VideoTrack,
-  useParticipants,
-  useRemoteParticipant,
 } from '@livekit/components-react';
 import '@livekit/components-styles';
-import { RemoteParticipant, Track } from 'livekit-client';
+import { Track } from 'livekit-client';
 
 const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:3001';
-const LIVEKIT_URL = (import.meta as any).env.VITE_LIVEKIT_URL || 'wss://babak-mm07ebah.livekit.cloud';
+// In a real app, this should come from environment variables
+const LIVEKIT_URL = 'wss://babak-mm07ebah.livekit.cloud';
+
+interface StreamPlayerProps {
+    isSeller: boolean;
+    sellerId: string;
+    isMuted: boolean;
+}
+
+const StreamPlayer: React.FC<StreamPlayerProps> = ({ isSeller, sellerId, isMuted }) => {
+    // If the current user is the seller, show their own camera feed.
+    if (isSeller) {
+        const tracks = useTracks(
+            [
+                { source: Track.Source.Camera, withPlaceholder: true },
+                { source: Track.Source.Microphone, withPlaceholder: false },
+            ],
+            { onlySubscribed: false },
+        );
+        return (
+            <GridLayout tracks={tracks} style={{ height: '100%' }}>
+                <ParticipantTile />
+            </GridLayout>
+        );
+    }
+
+    // If the current user is a viewer, find and show the seller's stream.
+    // FIX: Removed `withPlaceholder` to ensure `useTracks` returns only `TrackReference[]`,
+    // which simplifies type checks and resolves assignment errors to `VideoTrack` and `AudioTrack` components.
+    const videoTrackRef = useTracks([Track.Source.Camera])
+        .find(ref => ref.participant.identity === sellerId);
+    
+    const audioTrackRef = useTracks([Track.Source.Microphone])
+        .find(ref => ref.participant.identity === sellerId);
+
+    if (videoTrackRef) {
+        return (
+            <>
+                <VideoTrack trackRef={videoTrackRef} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                {audioTrackRef && (
+                    <AudioTrack trackRef={audioTrackRef} muted={isMuted} />
+                )}
+            </>
+        );
+    }
+
+    // Fallback for viewer when the seller's stream is not yet available.
+    return (
+        <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white">
+            <Spinner />
+            <p className="mt-4">Ожидание начала трансляции...</p>
+        </div>
+    );
+};
 
 
 const LiveStreamPage: React.FC = () => {
@@ -44,11 +95,11 @@ const LiveStreamPage: React.FC = () => {
     const [viewerCount, setViewerCount] = useState(0);
     const [likeCount, setLikeCount] = useState(0);
     const [flyingHearts, setFlyingHearts] = useState<{ id: number }[]>([]);
-    const [isMuted, setIsMuted] = useState(true); // Start muted by default
+    const [isMuted, setIsMuted] = useState(true);
 
     const chatEndRef = useRef<HTMLDivElement>(null);
 
-    const isSeller = user && stream && user.id === stream.seller.id;
+    const isSeller = !!user && !!stream && user.id === stream.seller.id;
     const isModerator = user?.role === 'SUPER_ADMIN' || user?.role === 'MODERATOR';
 
     // Fetch initial stream, product data, and LiveKit token for everyone
@@ -61,24 +112,26 @@ const LiveStreamPage: React.FC = () => {
         const fetchData = async () => {
             setIsLoading(true);
             try {
-                // This API call is now public, so everyone can get a token
-                const { token } = await apiService.getLiveStreamToken(streamId);
-                setLivekitToken(token);
-
                 const streamData = await apiService.getLiveStreamById(streamId);
-                if (streamData) {
-                    setStream(streamData);
-                    setLikeCount(streamData.likes || 0);
-                    if (streamData.featuredProductId) {
-                        const productData = await apiService.getProductById(streamData.featuredProductId);
-                        setProduct(productData || null);
-                    }
-                } else {
-                    throw new Error("Stream not found");
+                if (!streamData) throw new Error("Stream not found");
+                
+                setStream(streamData);
+                setLikeCount(streamData.likes || 0);
+
+                if (streamData.featuredProductId) {
+                    const productData = await apiService.getProductById(streamData.featuredProductId);
+                    setProduct(productData || null);
                 }
+                
+                // Fetch token only if stream is LIVE
+                if (streamData.status === 'LIVE') {
+                    const { token } = await apiService.getLiveStreamToken(streamId);
+                    setLivekitToken(token);
+                }
+
             } catch (error) {
                 console.error("Failed to load stream data or token:", error);
-                setLivekitToken(''); // Clear token on error
+                setStream(null); // Clear stream on error
             } finally {
                 setIsLoading(false);
             }
@@ -91,7 +144,7 @@ const LiveStreamPage: React.FC = () => {
         if (!streamId) return;
 
         const newSocket = io(API_BASE_URL, {
-            query: { token: authToken }, // Auth token is optional, guests won't have it
+            query: { token: authToken },
             transports: ['websocket']
         });
         setSocket(newSocket);
@@ -120,14 +173,13 @@ const LiveStreamPage: React.FC = () => {
         };
     }, [streamId, authToken]);
 
-    // Scroll chat to bottom
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [chatMessages]);
 
     const handleLike = useCallback(() => {
         if (!socket || !streamId) return;
-        setLikeCount(prev => prev + 1); // Optimistic update
+        setLikeCount(prev => prev + 1);
         socket.emit('likeStream', streamId);
 
         const newHeart = { id: Date.now() };
@@ -141,7 +193,6 @@ const LiveStreamPage: React.FC = () => {
         e.preventDefault();
         if (!newMessage.trim() || !socket || !streamId || !user) return;
         
-        // Use the generic 'sendMessage' event for both chat and streams
         socket.emit('sendMessage', { chatId: streamId, message: { text: newMessage } });
         setNewMessage('');
     };
@@ -150,95 +201,10 @@ const LiveStreamPage: React.FC = () => {
         if (!streamId || (!isModerator && !isSeller)) return;
         if (window.confirm('Вы уверены, что хотите завершить этот эфир?')) {
             await apiService.endLiveStream(streamId);
-            // Additionally, broadcast this event via websocket to all clients
             if(socket) {
                 socket.emit('streamEndedBroadcast', { roomId: streamId });
             }
         }
-    };
-
-    const VideoRenderer: React.FC = () => {
-        // FIX: The `useParticipants` hook was called with an invalid options object.
-        const remoteParticipants = useParticipants();
-        const sellerParticipant = remoteParticipants.find(p => p.identity === stream?.seller.id);
-
-        // FIX: The `useTracks` hook does not support a `participant` option to filter tracks.
-        // The filtering is now done on the array returned by `useTracks`.
-        const videoTracks = useTracks(
-            [{ source: Track.Source.Camera, withPlaceholder: true }],
-        ).filter(trackRef => trackRef.participant.identity === sellerParticipant?.identity);
-
-        // FIX: The `useTracks` hook does not support a `participant` option to filter tracks.
-        // The filtering is now done on the array returned by `useTracks`.
-        const audioTracks = useTracks(
-            [{ source: Track.Source.Microphone, withPlaceholder: false }],
-        ).filter(trackRef => trackRef.participant.identity === sellerParticipant?.identity);
-
-        if (isSeller) {
-             return (
-                <GridLayout tracks={useTracks(
-                    [{ source: Track.Source.Camera, withPlaceholder: true }],
-                )}>
-                    <ParticipantTile />
-                </GridLayout>
-             )
-        }
-        
-        // FIX: The result of `useTracks` can include placeholders. We must check for a valid `publication` before rendering.
-        const videoTrackRef = videoTracks[0];
-        if (videoTrackRef && videoTrackRef.publication) {
-            return (
-                <>
-                    <VideoTrack trackRef={videoTrackRef} className="w-full h-full object-contain" />
-                    {/* FIX: The result of `useTracks` can include placeholders. We must check for a valid `publication` before rendering. */}
-                    {audioTracks.filter(ref => ref.publication).map(trackRef => (
-                        <AudioTrack key={trackRef.publication.trackSid} trackRef={trackRef} muted={isMuted} />
-                    ))}
-                </>
-            );
-        }
-
-        return (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white">
-                <Spinner />
-                <p className="mt-4">Ожидание начала трансляции...</p>
-            </div>
-        )
-    };
-
-    const renderVideo = () => {
-        if (stream.status !== 'LIVE') {
-            return (
-                <div className="w-full h-full flex items-center justify-center bg-black">
-                    <p className="text-white text-2xl font-bold p-4 text-center">
-                        {stream.status === 'UPCOMING' && stream.scheduledStartTime ? `Начнется в ${new Date(stream.scheduledStartTime).toLocaleTimeString()}` : 'Трансляция завершена'}
-                    </p>
-                </div>
-            );
-        }
-        
-        if (!livekitToken || !LIVEKIT_URL) {
-            return (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white">
-                    <Spinner />
-                    <p className="mt-4">Подключение к эфиру...</p>
-                </div>
-            );
-        }
-
-        return (
-            <LiveKitRoom
-              video={isSeller}
-              audio={isSeller}
-              token={livekitToken}
-              serverUrl={LIVEKIT_URL}
-              connect={true}
-              data-lk-theme="default"
-              style={{ height: '100%', width: '100%' }}
-            >
-               <VideoRenderer />
-            </LiveKitRoom>
-        );
     };
 
     if (isLoading) return <div className="flex justify-center items-center h-screen bg-base-200"><Spinner size="lg" /></div>;
@@ -249,7 +215,30 @@ const LiveStreamPage: React.FC = () => {
         {/* Main Content: Video + Product */}
         <div className="lg:col-span-2 space-y-4">
             <div className="aspect-video bg-base-200 rounded-lg flex items-center justify-center relative overflow-hidden group">
-                {renderVideo()}
+                 {stream.status !== 'LIVE' ? (
+                     <div className="w-full h-full flex items-center justify-center bg-black">
+                        <p className="text-white text-2xl font-bold p-4 text-center">
+                            {stream.status === 'UPCOMING' && stream.scheduledStartTime ? `Начнется в ${new Date(stream.scheduledStartTime).toLocaleTimeString()}` : 'Трансляция завершена'}
+                        </p>
+                    </div>
+                 ) : !livekitToken ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white">
+                        <Spinner />
+                        <p className="mt-4">Подключение к эфиру...</p>
+                    </div>
+                 ) : (
+                    <LiveKitRoom
+                      video={isSeller}
+                      audio={isSeller}
+                      token={livekitToken}
+                      serverUrl={LIVEKIT_URL}
+                      connect={true}
+                      data-lk-theme="default"
+                      style={{ height: '100%', width: '100%' }}
+                    >
+                       <StreamPlayer isSeller={isSeller} sellerId={stream.seller.id} isMuted={isMuted} />
+                    </LiveKitRoom>
+                 )}
                 <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/50 to-transparent flex justify-between items-start">
                     <div className="flex items-center gap-4">
                          {stream.status === 'LIVE' && <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center"><span className="relative flex h-2 w-2 mr-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>LIVE</span>}
@@ -262,7 +251,6 @@ const LiveStreamPage: React.FC = () => {
                         <button onClick={handleEndStream} className="btn btn-error btn-sm">Завершить эфир</button>
                     )}
                 </div>
-                {/* Actions Overlay */}
                  <div className="absolute bottom-4 right-4 flex flex-col gap-3 items-center">
                     <div className="flex items-center gap-1.5 text-white bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full text-sm">
                        <DynamicIcon name="livestream-heart" className="w-5 h-5"/>
@@ -275,7 +263,6 @@ const LiveStreamPage: React.FC = () => {
                         {isMuted ? <DynamicIcon name="livestream-sound-off" className="w-7 h-7" /> : <DynamicIcon name="livestream-sound-on" className="w-7 h-7" />}
                     </button>
                 </div>
-                {/* Flying Hearts Container */}
                 <div className="absolute bottom-20 right-7">
                     {flyingHearts.map(heart => (
                         <div key={heart.id} className="absolute animate-fly-up text-3xl" style={{ right: `${Math.random() * 20 - 10}px` }}>❤️</div>
