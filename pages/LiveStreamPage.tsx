@@ -14,8 +14,15 @@ import {
   ParticipantTile,
   ControlBar,
   useParticipants,
+  // FIX: Import GridLayout and useTracks to properly render the participant tile
+  // in case the installed version of LiveKit components has a ParticipantTile
+  // that doesn't accept a 'participant' prop directly.
+  GridLayout,
+  useTracks,
 } from '@livekit/components-react';
 import '@livekit/components-styles';
+// FIX: Import Track from livekit-client to specify track sources.
+import { Track } from 'livekit-client';
 
 
 const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:3001';
@@ -32,10 +39,19 @@ const LiveVideoDisplay: React.FC<{ isSeller: boolean }> = ({ isSeller }) => {
         ? participants.find(p => p.isLocal) 
         : participants.find(p => p.isCameraEnabled);
 
-    if (mainParticipant) {
+    // FIX: Instead of passing a 'participant' prop which may not exist on this version of ParticipantTile,
+    // we use GridLayout with a single track. GridLayout provides the necessary context for ParticipantTile to render.
+    const tracks = useTracks(
+        [{ source: Track.Source.Camera, withPlaceholder: true }],
+        { participant: mainParticipant },
+    );
+
+    if (tracks.length > 0) {
         return (
             <div className="w-full h-full">
-                <ParticipantTile participant={mainParticipant} />
+                <GridLayout tracks={tracks}>
+                  <ParticipantTile />
+                </GridLayout>
             </div>
         )
     }
