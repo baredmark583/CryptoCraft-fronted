@@ -15,6 +15,9 @@ import {
   useTracks,
   GridLayout,
   AudioTrack,
+  VideoTrack,
+  useParticipants,
+  useRemoteParticipant,
 } from '@livekit/components-react';
 import '@livekit/components-styles';
 import { RemoteParticipant, Track } from 'livekit-client';
@@ -36,28 +39,19 @@ const LiveStreamPage: React.FC = () => {
     const [newMessage, setNewMessage] = useState('');
     const [socket, setSocket] = useState<Socket | null>(null);
     
-    // LiveKit state
     const [livekitToken, setLivekitToken] = useState<string>('');
     
-    // Interactive state
     const [viewerCount, setViewerCount] = useState(0);
     const [likeCount, setLikeCount] = useState(0);
     const [flyingHearts, setFlyingHearts] = useState<{ id: number }[]>([]);
-    const [isMuted, setIsMuted] = useState(false);
+    const [isMuted, setIsMuted] = useState(true); // Start muted by default
 
     const chatEndRef = useRef<HTMLDivElement>(null);
 
     const isSeller = user && stream && user.id === stream.seller.id;
     const isModerator = user?.role === 'SUPER_ADMIN' || user?.role === 'MODERATOR';
 
-    // FIX: Refactored audio handling. This hook now correctly gets all remote audio tracks.
-    const remoteAudioTracks = useTracks(
-        [{ source: Track.Source.Microphone, withPlaceholder: false }],
-        { onlySubscribed: true }
-    );
-    
-
-    // Fetch initial stream and product data
+    // Fetch initial stream, product data, and LiveKit token for everyone
     useEffect(() => {
         if (!streamId) {
             setIsLoading(false);
@@ -67,6 +61,10 @@ const LiveStreamPage: React.FC = () => {
         const fetchData = async () => {
             setIsLoading(true);
             try {
+                // This API call is now public, so everyone can get a token
+                const { token } = await apiService.getLiveStreamToken(streamId);
+                setLivekitToken(token);
+
                 const streamData = await apiService.getLiveStreamById(streamId);
                 if (streamData) {
                     setStream(streamData);
@@ -75,12 +73,12 @@ const LiveStreamPage: React.FC = () => {
                         const productData = await apiService.getProductById(streamData.featuredProductId);
                         setProduct(productData || null);
                     }
-                    // Auto-join logic
-                    const { token } = await apiService.getLiveStreamToken(streamId);
-                    setLivekitToken(token);
+                } else {
+                    throw new Error("Stream not found");
                 }
             } catch (error) {
                 console.error("Failed to load stream data or token:", error);
+                setLivekitToken(''); // Clear token on error
             } finally {
                 setIsLoading(false);
             }
@@ -93,13 +91,12 @@ const LiveStreamPage: React.FC = () => {
         if (!streamId) return;
 
         const newSocket = io(API_BASE_URL, {
-            query: { token: authToken },
+            query: { token: authToken }, // Auth token is optional, guests won't have it
             transports: ['websocket']
         });
         setSocket(newSocket);
 
         newSocket.on('connect', () => {
-            console.log('Connected to WebSocket');
             newSocket.emit('joinStreamRoom', streamId);
             newSocket.emit('getStreamStats', streamId);
         });
@@ -137,14 +134,15 @@ const LiveStreamPage: React.FC = () => {
         setFlyingHearts(prev => [...prev, newHeart]);
         setTimeout(() => {
             setFlyingHearts(prev => prev.filter(h => h.id !== newHeart.id));
-        }, 2000); // Corresponds to animation duration
+        }, 2000);
     }, [socket, streamId]);
 
     const handleSendMessage = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newMessage.trim() || !socket || !streamId || !user) return;
         
-        socket.emit('sendStreamMessage', { streamId, text: newMessage });
+        // Use the generic 'sendMessage' event for both chat and streams
+        socket.emit('sendMessage', { chatId: streamId, message: { text: newMessage } });
         setNewMessage('');
     };
     
@@ -152,11 +150,61 @@ const LiveStreamPage: React.FC = () => {
         if (!streamId || (!isModerator && !isSeller)) return;
         if (window.confirm('Вы уверены, что хотите завершить этот эфир?')) {
             await apiService.endLiveStream(streamId);
+            // Additionally, broadcast this event via websocket to all clients
+            if(socket) {
+                socket.emit('streamEndedBroadcast', { roomId: streamId });
+            }
         }
     };
 
-    if (isLoading) return <div className="flex justify-center items-center h-96"><Spinner /></div>;
-    if (!stream) return <div className="text-center text-xl text-base-content/70">Трансляция не найдена.</div>;
+    const VideoRenderer: React.FC = () => {
+        // FIX: The `useParticipants` hook was called with an invalid options object.
+        const remoteParticipants = useParticipants();
+        const sellerParticipant = remoteParticipants.find(p => p.identity === stream?.seller.id);
+
+        // FIX: The `useTracks` hook does not support a `participant` option to filter tracks.
+        // The filtering is now done on the array returned by `useTracks`.
+        const videoTracks = useTracks(
+            [{ source: Track.Source.Camera, withPlaceholder: true }],
+        ).filter(trackRef => trackRef.participant.identity === sellerParticipant?.identity);
+
+        // FIX: The `useTracks` hook does not support a `participant` option to filter tracks.
+        // The filtering is now done on the array returned by `useTracks`.
+        const audioTracks = useTracks(
+            [{ source: Track.Source.Microphone, withPlaceholder: false }],
+        ).filter(trackRef => trackRef.participant.identity === sellerParticipant?.identity);
+
+        if (isSeller) {
+             return (
+                <GridLayout tracks={useTracks(
+                    [{ source: Track.Source.Camera, withPlaceholder: true }],
+                )}>
+                    <ParticipantTile />
+                </GridLayout>
+             )
+        }
+        
+        // FIX: The result of `useTracks` can include placeholders. We must check for a valid `publication` before rendering.
+        const videoTrackRef = videoTracks[0];
+        if (videoTrackRef && videoTrackRef.publication) {
+            return (
+                <>
+                    <VideoTrack trackRef={videoTrackRef} className="w-full h-full object-contain" />
+                    {/* FIX: The result of `useTracks` can include placeholders. We must check for a valid `publication` before rendering. */}
+                    {audioTracks.filter(ref => ref.publication).map(trackRef => (
+                        <AudioTrack key={trackRef.publication.trackSid} trackRef={trackRef} muted={isMuted} />
+                    ))}
+                </>
+            );
+        }
+
+        return (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white">
+                <Spinner />
+                <p className="mt-4">Ожидание начала трансляции...</p>
+            </div>
+        )
+    };
 
     const renderVideo = () => {
         if (stream.status !== 'LIVE') {
@@ -188,29 +236,23 @@ const LiveStreamPage: React.FC = () => {
               data-lk-theme="default"
               style={{ height: '100%', width: '100%' }}
             >
-                <GridLayout tracks={useTracks(
-                    [{ source: Track.Source.Camera, withPlaceholder: true }],
-                )}>
-                    <ParticipantTile />
-                </GridLayout>
-                 {/* FIX: The problematic AudioTrack line was removed. Remote audio is now handled by the mapping below. */}
+               <VideoRenderer />
             </LiveKitRoom>
         );
     };
+
+    if (isLoading) return <div className="flex justify-center items-center h-screen bg-base-200"><Spinner size="lg" /></div>;
+    if (!stream) return <div className="text-center text-xl text-base-content/70 mt-10">Трансляция не найдена.</div>;
 
     return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 max-w-7xl mx-auto p-4">
         {/* Main Content: Video + Product */}
         <div className="lg:col-span-2 space-y-4">
             <div className="aspect-video bg-base-200 rounded-lg flex items-center justify-center relative overflow-hidden group">
-                {/* FIX: Render an AudioTrack component for each remote participant. This correctly handles multiple audio sources and respects the mute button. */}
-                {remoteAudioTracks.map((trackRef) => (
-                  <AudioTrack key={trackRef.publication.trackSid} trackRef={trackRef} muted={isMuted} />
-                ))}
                 {renderVideo()}
                 <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/50 to-transparent flex justify-between items-start">
                     <div className="flex items-center gap-4">
-                         <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center"><span className="relative flex h-2 w-2 mr-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>LIVE</span>
+                         {stream.status === 'LIVE' && <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center"><span className="relative flex h-2 w-2 mr-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>LIVE</span>}
                          <div className="flex items-center gap-1.5 text-white bg-black/40 backdrop-blur-sm px-2 py-1 rounded-full text-sm">
                             <DynamicIcon name="livestream-viewers" className="w-5 h-5"/>
                             <span>{viewerCount}</span>
@@ -227,7 +269,7 @@ const LiveStreamPage: React.FC = () => {
                        <span>{likeCount}</span>
                     </div>
                     <button onClick={handleLike} className="w-12 h-12 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:text-red-500 hover:bg-white/20 transition-colors">
-                        <DynamicIcon name="livestream-heart" className="w-7 h-7" fallback={<span>❤️</span>} />
+                        <DynamicIcon name="livestream-heart" className="w-7 h-7" />
                     </button>
                     <button onClick={() => setIsMuted(!isMuted)} className="w-12 h-12 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors">
                         {isMuted ? <DynamicIcon name="livestream-sound-off" className="w-7 h-7" /> : <DynamicIcon name="livestream-sound-on" className="w-7 h-7" />}
