@@ -11,9 +11,7 @@ import { io, Socket } from 'socket.io-client';
 
 import {
   LiveKitRoom,
-  ParticipantTile,
   useTracks,
-  GridLayout,
   AudioTrack,
   VideoTrack,
 } from '@livekit/components-react';
@@ -31,36 +29,48 @@ interface StreamPlayerProps {
 }
 
 const StreamPlayer: React.FC<StreamPlayerProps> = ({ isSeller, sellerId, isMuted }) => {
-    // If the current user is the seller, show their own camera feed.
     if (isSeller) {
-        const tracks = useTracks(
-            [
-                { source: Track.Source.Camera, withPlaceholder: true },
-                { source: Track.Source.Microphone, withPlaceholder: false },
-            ],
+        // The seller should see their own video preview.
+        // `useTracks` with `onlySubscribed: false` will also include local tracks. We find the local one.
+        const localVideoTrackRef = useTracks(
+            [{ source: Track.Source.Camera, withPlaceholder: false }],
             { onlySubscribed: false },
-        );
+        ).find(ref => ref.participant.isLocal);
+
+        // FIX: Added a check for the 'publication' property to ensure the track reference is not a placeholder, resolving the TypeScript type error.
+        if (localVideoTrackRef && localVideoTrackRef.publication) {
+            return (
+                // Use VideoTrack directly. Mirror the video for a natural self-view.
+                <VideoTrack 
+                    trackRef={localVideoTrackRef} 
+                    style={{ width: '100%', height: '100%', objectFit: 'contain', transform: 'scaleX(-1)' }} 
+                />
+            );
+        }
+        
+        // Fallback for seller if camera isn't ready
         return (
-            <GridLayout tracks={tracks} style={{ height: '100%' }}>
-                <ParticipantTile />
-            </GridLayout>
+            <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white">
+                <Spinner />
+                <p className="mt-4">Подготовка камеры...</p>
+            </div>
         );
     }
-
-    // If the current user is a viewer, find and show the seller's stream.
-    // FIX: Removed `withPlaceholder` to ensure `useTracks` returns only `TrackReference[]`,
-    // which simplifies type checks and resolves assignment errors to `VideoTrack` and `AudioTrack` components.
+    
+    // Viewer logic: find and show the seller's stream.
     const videoTrackRef = useTracks([Track.Source.Camera])
         .find(ref => ref.participant.identity === sellerId);
     
     const audioTrackRef = useTracks([Track.Source.Microphone])
         .find(ref => ref.participant.identity === sellerId);
 
-    if (videoTrackRef) {
+    // FIX: Added a check for the 'publication' property to ensure the track reference is not a placeholder, resolving the TypeScript type error.
+    if (videoTrackRef && videoTrackRef.publication) {
         return (
             <>
                 <VideoTrack trackRef={videoTrackRef} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                {audioTrackRef && (
+                {/* FIX: Added a check for the 'publication' property to ensure the track reference is not a placeholder, resolving the TypeScript type error. */}
+                {audioTrackRef && audioTrackRef.publication && (
                     <AudioTrack trackRef={audioTrackRef} muted={isMuted} />
                 )}
             </>
