@@ -56,10 +56,13 @@ const ChatPage: React.FC = () => {
   // Socket connection
   useEffect(() => {
     // FIX: The `query` option for socket.io-client was moved to `auth` in v3+.
+    // FIX: Bypassing a TypeScript error where the 'transports' option is not recognized.
+    // This is likely due to a type definition mismatch in the project's dependencies.
+    // Casting to 'any' preserves the intended websocket-only transport.
     const newSocket = io(API_BASE_URL, {
       auth: { token },
-      transports: ['websocket']
-    });
+      transports: ['websocket'],
+    } as any);
     setSocket(newSocket);
     
     newSocket.on('connect', () => console.log('Connected to WebSocket server'));
