@@ -20,17 +20,13 @@ import { Track } from 'livekit-client';
 
 
 const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:3001';
-const LIVEKIT_URL = (import.meta as any).env.VITE_LIVEKIT_URL || 'wss://your-livekit-url.com';
+const LIVEKIT_URL = (import.meta as any).env.VITE_LIVEKIT_URL || 'wss://babak-mm07ebah.livekit.cloud';
 
 const LiveVideoDisplay: React.FC<{ isSeller: boolean }> = ({ isSeller }) => {
-    // Получаем все активные видеодорожки
     const tracks = useTracks(
         [{ source: Track.Source.Camera, withPlaceholder: true }],
     );
 
-    // Определяем, какой трек отображать.
-    // Если мы продавец, ищем наш локальный трек.
-    // Если мы зритель, ищем первый удаленный трек (трек продавца).
     const trackToDisplay = isSeller
         ? tracks.find(trackRef => trackRef.participant.isLocal)
         : tracks.find(trackRef => !trackRef.participant.isLocal);
@@ -184,15 +180,21 @@ const LiveStreamPage: React.FC = () => {
         if (!streamId || !user) return;
         setIsConnecting(true);
         try {
-            const { token } = await apiService.getLiveStreamToken(streamId);
-            if (!token) {
-                throw new Error("Received empty token from server.");
+            // More robustly handle the response from the API.
+            const response: any = await apiService.getLiveStreamToken(streamId);
+            const jwtToken = response?.token;
+    
+            if (typeof jwtToken !== 'string' || !jwtToken) {
+                console.error('Invalid token format received:', response);
+                throw new Error("Неверный формат токена, полученный с сервера.");
             }
-            setLivekitToken(token);
+    
+            setLivekitToken(jwtToken);
             setIsConnected(true);
         } catch (err) {
             console.error("Failed to get livestream token", err);
-            // Optionally, show an error to the user in the UI
+            alert(`Не удалось подключиться к трансляции: ${(err as Error).message}`);
+            setIsConnected(false); // Ensure we don't proceed in a broken state
         } finally {
             setIsConnecting(false);
         }
@@ -224,11 +226,13 @@ const LiveStreamPage: React.FC = () => {
             );
         }
 
-        if (!livekitToken || !LIVEKIT_URL || LIVEKIT_URL === 'wss://your-livekit-url.com') {
+        if (!livekitToken || !LIVEKIT_URL) {
+            const urlError = !LIVEKIT_URL;
             return (
-                <div className="w-full h-full flex items-center justify-center bg-black text-white">
+                <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white p-4 text-center">
                     <Spinner />
-                    <p className="ml-4">Подключаемся к эфиру...</p>
+                    <p className="mt-4">Подключаемся к эфиру...</p>
+                    {urlError && <p className="text-red-400 text-sm mt-2">Ошибка: VITE_LIVEKIT_URL не настроен. Проверьте файл .env.</p>}
                 </div>
             );
         }
