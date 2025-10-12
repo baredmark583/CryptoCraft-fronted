@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { apiService } from '../services/apiService';
@@ -18,7 +19,8 @@ import '@livekit/components-styles';
 
 
 const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:3001';
-const LIVEKIT_URL = (import.meta as any).env.VITE_LIVEKIT_URL;
+// This value needs to be configured in the environment variables for the live stream to work.
+const LIVEKIT_URL = (import.meta as any).env.VITE_LIVEKIT_URL || 'wss://your-livekit-url.com';
 
 const LiveVideoDisplay: React.FC<{ isSeller: boolean }> = ({ isSeller }) => {
     // We get all participants in the room, including the local one.
@@ -67,7 +69,10 @@ const LiveStreamPage: React.FC = () => {
 
     // Fetch stream and product data
     useEffect(() => {
-        if (!streamId) return;
+        if (!streamId) {
+            setIsLoading(false);
+            return;
+        }
         
         const fetchData = async () => {
             setIsLoading(true);
@@ -75,14 +80,20 @@ const LiveStreamPage: React.FC = () => {
                 const streamData = await apiService.getLiveStreamById(streamId);
                 if (streamData) {
                     setStream(streamData);
-                    const productData = await apiService.getProductById(streamData.featuredProductId);
-                    setProduct(productData || null);
+                    if (streamData.featuredProductId) {
+                        const productData = await apiService.getProductById(streamData.featuredProductId);
+                        setProduct(productData || null);
+                    } else {
+                        setProduct(null);
+                    }
                 } else {
                     setStream(null);
                     setProduct(null);
                 }
             } catch (error) {
                 console.error("Failed to load stream data:", error);
+                setStream(null);
+                setProduct(null);
             } finally {
                 setIsLoading(false);
             }
@@ -179,13 +190,13 @@ const LiveStreamPage: React.FC = () => {
             return (
                 <div className="w-full h-full flex items-center justify-center bg-black">
                     <p className="text-white text-2xl font-bold">
-                        {stream.status === 'UPCOMING' ? `Начнется в ${new Date(stream.scheduledStartTime || 0).toLocaleTimeString()}` : 'Трансляция завершена'}
+                        {stream.status === 'UPCOMING' && stream.scheduledStartTime ? `Начнется в ${new Date(stream.scheduledStartTime).toLocaleTimeString()}` : 'Трансляция завершена'}
                     </p>
                 </div>
             );
         }
         
-        if (!livekitToken || !LIVEKIT_URL) {
+        if (!livekitToken || !LIVEKIT_URL || LIVEKIT_URL === 'wss://your-livekit-url.com') {
             return (
                 <div className="w-full h-full flex items-center justify-center bg-black text-white">
                     <Spinner />
@@ -204,8 +215,8 @@ const LiveStreamPage: React.FC = () => {
               data-lk-theme="default"
               style={{ height: '100%', width: '100%' }}
             >
-                <LiveVideoDisplay isSeller={isSeller} />
-                {(isSeller || isModerator) && <ControlBar />}
+                <LiveVideoDisplay isSeller={!!isSeller} />
+                {isSeller && <ControlBar />}
             </LiveKitRoom>
         )
     };
@@ -249,7 +260,7 @@ const LiveStreamPage: React.FC = () => {
                     {chatMessages.map(msg => (
                         <div key={msg.id} className="group flex gap-2 items-start">
                              <div className="flex-1">
-                                <span className={`font-bold text-sm ${msg.sender?.id === user.id ? 'text-primary' : 'text-base-content'}`}>{msg.sender?.name || 'Гость'}:</span>
+                                <span className={`font-bold text-sm ${msg.sender?.id === user?.id ? 'text-primary' : 'text-base-content'}`}>{msg.sender?.name || 'Гость'}:</span>
                                 <span className="text-sm text-base-content/90 ml-2">{msg.text}</span>
                             </div>
                              {isModerator && msg.sender?.id !== 'system' && (
