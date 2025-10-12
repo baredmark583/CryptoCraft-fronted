@@ -59,9 +59,9 @@ const ChatPage: React.FC = () => {
     // FIX: Bypassing a TypeScript error where the 'transports' option is not recognized.
     // This is likely due to a type definition mismatch in the project's dependencies.
     // Using `@ts-ignore` to bypass this type check for the options object.
-    // @ts-ignore
     const newSocket = io(API_BASE_URL, {
       auth: { token },
+      // @ts-ignore
       transports: ['websocket'],
     });
     setSocket(newSocket);

@@ -176,9 +176,9 @@ const LiveStreamPage: React.FC = () => {
         // FIX: The `transports` option is valid for socket.io-client v3+ but the
         // project's type definitions seem to be out of sync, causing a TypeScript error.
         // Using `@ts-ignore` to bypass this type check for the options object.
-        // @ts-ignore
         const newSocket = io(API_BASE_URL, {
             auth: { token: authToken },
+            // @ts-ignore
             transports: ['websocket'],
         });
         setSocket(newSocket);

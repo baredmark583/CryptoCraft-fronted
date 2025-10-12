@@ -55,12 +55,13 @@ const ChatPage: React.FC = () => {
 
   // Socket connection
   useEffect(() => {
-    // FIX: The `transports` option is valid for socket.io-client v3+ but the
-    // project's type definitions seem to be out of sync, causing a TypeScript error.
+    // FIX: The `query` option for socket.io-client was moved to `auth` in v3+.
+    // FIX: Bypassing a TypeScript error where the 'transports' option is not recognized.
+    // This is likely due to a type definition mismatch in the project's dependencies.
     // Using `@ts-ignore` to bypass this type check for the options object.
-    // @ts-ignore
     const newSocket = io(API_BASE_URL, {
       auth: { token },
+      // @ts-ignore
       transports: ['websocket'],
     });
     setSocket(newSocket);
