@@ -16,7 +16,8 @@ import {
   VideoTrack,
 } from '@livekit/components-react';
 import '@livekit/components-styles';
-import { Track } from 'livekit-client';
+// FIX: The type `TrackReference` is required for proper type guarding.
+import { Track, type TrackReference } from 'livekit-client';
 
 const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:3001';
 // In a real app, this should come from environment variables
@@ -32,13 +33,15 @@ const StreamPlayer: React.FC<StreamPlayerProps> = ({ isSeller, sellerId, isMuted
     if (isSeller) {
         // The seller should see their own video preview.
         // `useTracks` with `onlySubscribed: false` will also include local tracks. We find the local one.
+        // FIX: Filter out placeholder tracks before passing them to components.
         const localVideoTrackRef = useTracks(
-            [{ source: Track.Source.Camera, withPlaceholder: false }],
+            [{ source: Track.Source.Camera, withPlaceholder: true }],
             { onlySubscribed: false },
-        ).find(ref => ref.participant.isLocal);
+        )
+        .filter((trackRef): trackRef is TrackReference => !!trackRef.publication)
+        .find(ref => ref.participant.isLocal);
 
-        // FIX: Added a check for the 'publication' property to ensure the track reference is not a placeholder, resolving the TypeScript type error.
-        if (localVideoTrackRef && localVideoTrackRef.publication) {
+        if (localVideoTrackRef) {
             return (
                 // Use VideoTrack directly. Mirror the video for a natural self-view.
                 <VideoTrack 
@@ -58,19 +61,22 @@ const StreamPlayer: React.FC<StreamPlayerProps> = ({ isSeller, sellerId, isMuted
     }
     
     // Viewer logic: find and show the seller's stream.
-    const videoTrackRef = useTracks([Track.Source.Camera])
-        .find(ref => ref.participant.identity === sellerId);
+    // FIX: Filter out placeholder tracks before passing them to components.
+    // The `useTracks` hook can return `TrackReferencePlaceholder` objects which are not assignable to the `trackRef` prop of `VideoTrack` or `AudioTrack`. This type guard ensures only valid `TrackReference` objects are used.
+    const tracks = useTracks([Track.Source.Camera, Track.Source.Microphone])
+        .filter((ref): ref is TrackReference => !!ref.publication);
     
-    const audioTrackRef = useTracks([Track.Source.Microphone])
-        .find(ref => ref.participant.identity === sellerId);
+    const videoTrackRef = tracks
+        .find(ref => ref.source === Track.Source.Camera && ref.participant.identity === sellerId);
+    
+    const audioTrackRef = tracks
+        .find(ref => ref.source === Track.Source.Microphone && ref.participant.identity === sellerId);
 
-    // FIX: Added a check for the 'publication' property to ensure the track reference is not a placeholder, resolving the TypeScript type error.
-    if (videoTrackRef && videoTrackRef.publication) {
+    if (videoTrackRef) {
         return (
             <>
                 <VideoTrack trackRef={videoTrackRef} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                {/* FIX: Added a check for the 'publication' property to ensure the track reference is not a placeholder, resolving the TypeScript type error. */}
-                {audioTrackRef && audioTrackRef.publication && (
+                {audioTrackRef && (
                     <AudioTrack trackRef={audioTrackRef} muted={isMuted} />
                 )}
             </>
@@ -201,7 +207,7 @@ const LiveStreamPage: React.FC = () => {
 
     const handleSendMessage = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !socket || !streamId || !user) return;
+        if (!newMessage.trim() || !socket || !streamId) return;
         
         socket.emit('sendMessage', { chatId: streamId, message: { text: newMessage } });
         setNewMessage('');
@@ -315,7 +321,7 @@ const LiveStreamPage: React.FC = () => {
             {stream.status === 'LIVE' && (
                 <div className="p-4 border-t border-base-300">
                     <form onSubmit={handleSendMessage}>
-                        <fieldset disabled={!user} className="flex gap-2">
+                        <fieldset className="flex gap-2">
                             <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder={user ? "Ваше сообщение..." : "Войдите, чтобы писать в чат"} className="flex-1 input input-bordered input-sm w-full" />
                             <button type="submit" className="btn btn-primary btn-sm btn-square">
                                 <DynamicIcon name="send-arrow" className="w-5 h-5" />
