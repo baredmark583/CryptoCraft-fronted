@@ -132,10 +132,13 @@ export interface Chat {
 }
 
 export interface ShippingAddress {
-  city: string;
-  postOffice: string; // "Відділення №1" or "12345"
   recipientName: string;
   phoneNumber: string;
+  city: string;
+  postOffice: string;
+  // For Nova Poshta integration
+  cityRef?: string;
+  warehouseRef?: string;
 }
 
 export interface OrderItem {
@@ -419,4 +422,14 @@ export interface Icon {
     svgContent: string;
     width?: number;
     height?: number;
+}
+
+// --- Nova Poshta Types ---
+export interface NovaPoshtaCity {
+    Description: string;
+    Ref: string;
+}
+export interface NovaPoshtaWarehouse {
+    Description: string;
+    Ref: string;
 }

@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../hooks/useAuth';
 import { useCurrency } from '../hooks/useCurrency';
 import { apiService } from '../services/apiService';
-import type { ShippingAddress, User, CartItem } from '../types';
+import type { ShippingAddress, User, CartItem, NovaPoshtaCity, NovaPoshtaWarehouse } from '../types';
 import Spinner from '../components/Spinner';
 import { useTelegramBackButton } from '../hooks/useTelegram';
 import PaymentModal from '../components/PaymentModal';
@@ -15,11 +15,26 @@ type CheckoutStep = 'shipping' | 'payment' | 'summary';
 
 const AUTHENTICATION_FEE = 15; // in USDT
 
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+  return debouncedValue;
+}
+
 const CheckoutPage: React.FC = () => {
     const { user } = useAuth();
     const { cartItems, clearCart, removeItemsIfSoldOut } = useCart();
     const { getFormattedPrice } = useCurrency();
     const navigate = useNavigate();
+    const cityInputRef = useRef<HTMLInputElement>(null);
+    const warehouseInputRef = useRef<HTMLInputElement>(null);
 
     useTelegramBackButton(true);
 
@@ -38,10 +53,23 @@ const CheckoutPage: React.FC = () => {
         city: '',
         postOffice: '',
         recipientName: user.name,
-        phoneNumber: '',
+        phoneNumber: user.phoneNumber || '',
     });
     const [shippingCosts, setShippingCosts] = useState<Record<string, number>>({});
     const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
+
+    // Nova Poshta state
+    const [citySearch, setCitySearch] = useState(shippingAddress.city);
+    const [warehouseSearch, setWarehouseSearch] = useState(shippingAddress.postOffice);
+    const [citySuggestions, setCitySuggestions] = useState<NovaPoshtaCity[]>([]);
+    const [warehouseSuggestions, setWarehouseSuggestions] = useState<NovaPoshtaWarehouse[]>([]);
+    const [isCityLoading, setIsCityLoading] = useState(false);
+    const [isWarehouseLoading, setIsWarehouseLoading] = useState(false);
+    const [isCityDropdownOpen, setIsCityDropdownOpen] = useState(false);
+    const [isWarehouseDropdownOpen, setIsWarehouseDropdownOpen] = useState(false);
+
+    const debouncedCitySearch = useDebounce(citySearch, 300);
+    const debouncedWarehouseSearch = useDebounce(warehouseSearch, 300);
 
 
     const [paymentMethod, setPaymentMethod] = useState<'ESCROW' | 'DIRECT'>('ESCROW');
@@ -58,6 +86,37 @@ const CheckoutPage: React.FC = () => {
       recipientAddress: '',
       onSuccess: () => {},
     });
+
+    // Fetch city suggestions
+    useEffect(() => {
+        if (debouncedCitySearch.length > 1 && debouncedCitySearch !== shippingAddress.city) {
+            setIsCityLoading(true);
+            setShippingAddress(prev => ({ ...prev, cityRef: undefined, warehouseRef: undefined, postOffice: '' }));
+            setWarehouseSearch('');
+            apiService.novaPoshtaGetCities(debouncedCitySearch).then(data => {
+                setCitySuggestions(data);
+                setIsCityLoading(false);
+                setIsCityDropdownOpen(true);
+            });
+        } else {
+            setCitySuggestions([]);
+        }
+    }, [debouncedCitySearch]);
+
+    // Fetch warehouse suggestions
+    useEffect(() => {
+        if (shippingAddress.cityRef) {
+            setIsWarehouseLoading(true);
+            apiService.novaPoshtaGetWarehouses(shippingAddress.cityRef, debouncedWarehouseSearch).then(data => {
+                setWarehouseSuggestions(data);
+                setIsWarehouseLoading(false);
+                setIsWarehouseDropdownOpen(true);
+            });
+        } else {
+            setWarehouseSuggestions([]);
+        }
+    }, [shippingAddress.cityRef, debouncedWarehouseSearch]);
+
 
     const isAuthenticationAvailable = useMemo(() => {
         return cartItems.some(item => item.product.isAuthenticationAvailable);
@@ -124,18 +183,51 @@ const CheckoutPage: React.FC = () => {
         setShippingAddress({ ...shippingAddress, [e.target.name]: e.target.value });
     };
 
+    const handleCitySelect = (city: NovaPoshtaCity) => {
+        setCitySearch(city.Description);
+        setShippingAddress(prev => ({
+            ...prev,
+            city: city.Description,
+            cityRef: city.Ref,
+            // Clear warehouse info when city changes
+            postOffice: '', 
+            warehouseRef: undefined 
+        }));
+        setCitySuggestions([]);
+        setIsCityDropdownOpen(false);
+        setWarehouseSearch('');
+        warehouseInputRef.current?.focus();
+    };
+
+    const handleWarehouseSelect = (warehouse: NovaPoshtaWarehouse) => {
+        setWarehouseSearch(warehouse.Description);
+        setShippingAddress(prev => ({
+            ...prev,
+            postOffice: warehouse.Description,
+            warehouseRef: warehouse.Ref
+        }));
+        setWarehouseSuggestions([]);
+        setIsWarehouseDropdownOpen(false);
+    };
+
+
     const handleFormSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
+        
+        const isNpValid = shippingMethod === 'NOVA_POSHTA' ? (!!shippingAddress.cityRef && !!shippingAddress.warehouseRef) : true;
+        
         if (
-            !shippingAddress.city?.trim() || 
-            !shippingAddress.postOffice?.trim() || 
             !shippingAddress.recipientName?.trim() || 
-            !shippingAddress.phoneNumber?.trim()
+            !shippingAddress.phoneNumber?.trim() ||
+            !shippingAddress.city?.trim() ||
+            !shippingAddress.postOffice?.trim() ||
+            !isNpValid
         ) {
-            setError('Пожалуйста, заполните все поля адреса.');
+            setError('Пожалуйста, заполните все поля адреса, выбрав город и отделение из списка.');
             return;
         }
-        setError('');
+        
         if (step === 'shipping') {
             setIsCalculatingShipping(true);
             const costs: Record<string, number> = {};
@@ -221,7 +313,20 @@ const CheckoutPage: React.FC = () => {
                 return (
                     <form onSubmit={handleFormSubmit}>
                         <h2 className="text-2xl font-bold mb-4">1. Доставка</h2>
-                        <div className="mb-6">
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-brand-text-secondary">ФИО получателя</label>
+                                    <input type="text" name="recipientName" value={shippingAddress.recipientName} onChange={handleAddressChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md p-2" required />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-brand-text-secondary">Телефон</label>
+                                    <input type="tel" name="phoneNumber" value={shippingAddress.phoneNumber} onChange={handleAddressChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md p-2" required />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="my-6">
                             <label className="block text-sm font-medium text-brand-text-secondary mb-2">Способ доставки</label>
                             <div className="flex gap-2 p-1 bg-brand-background rounded-lg">
                                 <label className={`flex-1 text-center cursor-pointer p-3 rounded-md transition-colors ${shippingMethod === 'NOVA_POSHTA' ? 'bg-brand-primary text-white' : 'hover:bg-brand-surface'}`}>
@@ -234,26 +339,43 @@ const CheckoutPage: React.FC = () => {
                                 </label>
                             </div>
                         </div>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-brand-text-secondary">Город</label>
-                                <input type="text" name="city" value={shippingAddress.city} onChange={handleAddressChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md p-2" required />
+
+                        {shippingMethod === 'NOVA_POSHTA' ? (
+                            <div className="space-y-4">
+                                <div className="relative">
+                                    <label className="block text-sm font-medium text-brand-text-secondary">Город</label>
+                                    <input ref={cityInputRef} type="text" value={citySearch} onChange={(e) => setCitySearch(e.target.value)} onFocus={() => setIsCityDropdownOpen(true)} onBlur={() => setTimeout(() => setIsCityDropdownOpen(false), 150)} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md p-2" required autoComplete="off" />
+                                    {isCityLoading && <div className="absolute right-3 top-9"><Spinner size="sm" /></div>}
+                                    {isCityDropdownOpen && citySuggestions.length > 0 && (
+                                        <ul className="absolute z-10 w-full bg-brand-surface border border-brand-border rounded-md mt-1 max-h-60 overflow-y-auto shadow-lg">
+                                            {citySuggestions.map(city => <li key={city.Ref} onMouseDown={() => handleCitySelect(city)} className="px-4 py-2 cursor-pointer hover:bg-brand-primary/20">{city.Description}</li>)}
+                                        </ul>
+                                    )}
+                                </div>
+                                <div className="relative">
+                                    <label className="block text-sm font-medium text-brand-text-secondary">Отделение / Почтомат</label>
+                                    <input ref={warehouseInputRef} type="text" value={warehouseSearch} onChange={(e) => setWarehouseSearch(e.target.value)} onFocus={() => setIsWarehouseDropdownOpen(true)} onBlur={() => setTimeout(() => setIsWarehouseDropdownOpen(false), 150)} disabled={!shippingAddress.cityRef} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md p-2 disabled:bg-brand-background/50 disabled:cursor-not-allowed" required autoComplete="off"/>
+                                    {isWarehouseLoading && <div className="absolute right-3 top-9"><Spinner size="sm" /></div>}
+                                    {isWarehouseDropdownOpen && warehouseSuggestions.length > 0 && (
+                                        <ul className="absolute z-10 w-full bg-brand-surface border border-brand-border rounded-md mt-1 max-h-60 overflow-y-auto shadow-lg">
+                                            {warehouseSuggestions.map(wh => <li key={wh.Ref} onMouseDown={() => handleWarehouseSelect(wh)} className="px-4 py-2 cursor-pointer hover:bg-brand-primary/20">{wh.Description}</li>)}
+                                        </ul>
+                                    )}
+                                </div>
                             </div>
-                             <div>
-                                <label className="block text-sm font-medium text-brand-text-secondary">Отделение / Почтомат / Индекс</label>
-                                <input type="text" name="postOffice" value={shippingAddress.postOffice} onChange={handleAddressChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md p-2" required />
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
+                        ) : (
+                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-brand-text-secondary">ФИО получателя</label>
-                                    <input type="text" name="recipientName" value={shippingAddress.recipientName} onChange={handleAddressChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md p-2" required />
+                                    <label className="block text-sm font-medium text-brand-text-secondary">Город</label>
+                                    <input type="text" name="city" value={shippingAddress.city} onChange={handleAddressChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md p-2" required />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-brand-text-secondary">Телефон</label>
-                                    <input type="tel" name="phoneNumber" value={shippingAddress.phoneNumber} onChange={handleAddressChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md p-2" required />
+                                    <label className="block text-sm font-medium text-brand-text-secondary">Отделение / Индекс</label>
+                                    <input type="text" name="postOffice" value={shippingAddress.postOffice} onChange={handleAddressChange} className="mt-1 block w-full bg-brand-background border border-brand-border rounded-md p-2" required />
                                 </div>
                             </div>
-                        </div>
+                        )}
+                        
                         {error && <p className="text-red-500 text-sm mt-4 text-center">{error}</p>}
                         <button type="submit" disabled={isCalculatingShipping} className="w-full mt-6 bg-brand-primary hover:bg-brand-primary-hover text-white font-bold py-3 rounded-lg flex items-center justify-center disabled:bg-gray-500">
                             {isCalculatingShipping ? <Spinner size="sm" /> : 'Далее'}

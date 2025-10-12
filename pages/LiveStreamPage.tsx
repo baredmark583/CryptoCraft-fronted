@@ -173,13 +173,14 @@ const LiveStreamPage: React.FC = () => {
         if (!streamId) return;
 
         // FIX: The `query` option for socket.io-client was moved to `auth` in v3+.
-        // FIX: Bypassing a TypeScript error where the 'transports' option is not recognized.
-        // This is likely due to a type definition mismatch in the project's dependencies.
-        // Casting to 'any' preserves the intended websocket-only transport.
+        // FIX: The `transports` option is valid for socket.io-client v3+ but the
+        // project's type definitions seem to be out of sync, causing a TypeScript error.
+        // Using `@ts-ignore` to bypass this type check for the options object.
+        // @ts-ignore
         const newSocket = io(API_BASE_URL, {
             auth: { token: authToken },
             transports: ['websocket'],
-        } as any);
+        });
         setSocket(newSocket);
 
         newSocket.on('connect', () => {

@@ -4,7 +4,7 @@ import type {
   User, Product, Review, Chat, Message, Order, Notification, Collection,
   WorkshopPost, WorkshopComment, ForumThread, ForumPost, SellerAnalytics, FeedItem,
   PromoCode, SellerDashboardData, CartItem, ShippingAddress, MessageContent, Dispute, DisputeMessage, LiveStream, OrderItem, TrackingEvent, Proposal, VoteChoice,
-  GeneratedListing, VerificationAnalysis, AiInsight, AiFocus, ImportedListingData, Icon
+  GeneratedListing, VerificationAnalysis, AiInsight, AiFocus, ImportedListingData, Icon, NovaPoshtaCity, NovaPoshtaWarehouse
 } from '../types';
 import type { CategorySchema } from '../constants';
 
@@ -115,6 +115,21 @@ let orders: Order[] = [
 
 export const apiService = {
   // --- REAL API METHODS ---
+  novaPoshtaGetCities: async (search: string): Promise<NovaPoshtaCity[]> => {
+    if (search.length < 2) return [];
+    // The backend will proxy this, so no API key is exposed.
+    const response = await apiFetch(`/nova-poshta/cities?search=${encodeURIComponent(search)}`);
+    // Assuming the backend nests the data under a 'data' key.
+    return response.data || [];
+  },
+
+  novaPoshtaGetWarehouses: async (cityRef: string, search: string = ''): Promise<NovaPoshtaWarehouse[]> => {
+    if (!cityRef) return [];
+    // The backend will proxy this.
+    const response = await apiFetch(`/nova-poshta/warehouses?cityRef=${cityRef}&search=${encodeURIComponent(search)}`);
+    return response.data || [];
+  },
+  
   getPublicIcons: async (): Promise<Icon[]> => {
     return apiFetch('/icons/public');
   },
