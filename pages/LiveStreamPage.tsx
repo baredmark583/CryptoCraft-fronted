@@ -23,28 +23,48 @@ const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://local
 const LIVEKIT_URL = (import.meta as any).env.VITE_LIVEKIT_URL || 'wss://babak-mm07ebah.livekit.cloud';
 
 const LiveVideoDisplay: React.FC<{ isSeller: boolean }> = ({ isSeller }) => {
-    const tracks = useTracks(
+    const cameraTracks = useTracks(
         [{ source: Track.Source.Camera, withPlaceholder: true }],
     );
 
-    const trackToDisplay = isSeller
-        ? tracks.find(trackRef => trackRef.participant.isLocal)
-        : tracks.find(trackRef => !trackRef.participant.isLocal);
+    // For the seller, we show their own video.
+    const localParticipantTrack = cameraTracks.find(trackRef => trackRef.participant.isLocal);
+    
+    // For anyone (seller or buyer), we show all other participants.
+    const remoteTracks = cameraTracks.filter(trackRef => !trackRef.participant.isLocal);
 
-    if (trackToDisplay) {
-        return (
-            <div className="w-full h-full">
-                <GridLayout tracks={[trackToDisplay]}>
+    if (isSeller) {
+        // Seller view: show self. The layout will also include any other publishers (e.g., moderators).
+        const tracksToShow = [localParticipantTrack, ...remoteTracks].filter(Boolean);
+        if (tracksToShow.length > 0) {
+            return (
+                <GridLayout tracks={tracksToShow}>
                     <ParticipantTile />
                 </GridLayout>
+            );
+        }
+        return (
+             <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white">
+                <Spinner />
+                <p className="mt-4">Подключаем вашу камеру...</p>
             </div>
+        )
+    }
+
+    // Buyer view: show all remote participants (should just be the seller).
+    if (remoteTracks.length > 0) {
+        return (
+            <GridLayout tracks={remoteTracks}>
+                <ParticipantTile />
+            </GridLayout>
         );
     }
 
+    // Default view for buyer waiting for seller to connect/publish.
     return (
         <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white">
             <Spinner />
-            <p className="mt-4">{isSeller ? 'Подключаем вашу камеру...' : 'Ожидание трансляции от продавца...'}</p>
+            <p className="mt-4">Ожидание трансляции от продавца...</p>
         </div>
     );
 };
