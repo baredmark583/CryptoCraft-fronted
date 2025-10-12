@@ -14,10 +14,11 @@ import {
   useTracks,
   AudioTrack,
   VideoTrack,
+  type TrackReference,
 } from '@livekit/components-react';
 import '@livekit/components-styles';
-// FIX: The type `TrackReference` is required for proper type guarding.
-import { Track, type TrackReference } from 'livekit-client';
+// FIX: Moved `TrackReference` type import from 'livekit-client' to '@livekit/components-react' to resolve the error. The type is required for proper type guarding.
+import { Track } from 'livekit-client';
 
 const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:3001';
 // In a real app, this should come from environment variables
@@ -134,9 +135,8 @@ const LiveStreamPage: React.FC = () => {
                 setStream(streamData);
                 setLikeCount(streamData.likes || 0);
 
-                if (streamData.featuredProductId) {
-                    const productData = await apiService.getProductById(streamData.featuredProductId);
-                    setProduct(productData || null);
+                if (streamData.featuredProduct) {
+                    setProduct(streamData.featuredProduct);
                 }
                 
                 // Fetch token only if stream is LIVE
@@ -209,7 +209,7 @@ const LiveStreamPage: React.FC = () => {
         e.preventDefault();
         if (!newMessage.trim() || !socket || !streamId) return;
         
-        socket.emit('sendMessage', { chatId: streamId, message: { text: newMessage } });
+        socket.emit('sendStreamMessage', { streamId: streamId, message: { text: newMessage } });
         setNewMessage('');
     };
     
@@ -310,6 +310,9 @@ const LiveStreamPage: React.FC = () => {
                 {stream.welcomeMessage && <div className="p-2 bg-base-300/50 rounded-md text-sm text-center text-amber-300 italic">{stream.welcomeMessage}</div>}
                 {chatMessages.map(msg => (
                     <div key={msg.id} className="group flex gap-2 items-start">
+                         <div className="flex-shrink-0">
+                            <img src={msg.sender?.avatarUrl || 'https://picsum.photos/seed/guest/100'} alt={msg.sender?.name} className="w-8 h-8 rounded-full"/>
+                         </div>
                          <div className="flex-1">
                             <span className={`font-bold text-sm ${msg.sender?.id === user?.id ? 'text-primary' : 'text-base-content'}`}>{msg.sender?.name || 'Гость'}:</span>
                             <span className="text-sm text-base-content/90 ml-2">{msg.text}</span>
@@ -322,7 +325,7 @@ const LiveStreamPage: React.FC = () => {
                 <div className="p-4 border-t border-base-300">
                     <form onSubmit={handleSendMessage}>
                         <fieldset className="flex gap-2">
-                            <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder={user ? "Ваше сообщение..." : "Войдите, чтобы писать в чат"} className="flex-1 input input-bordered input-sm w-full" />
+                            <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Ваше сообщение..." className="flex-1 input input-bordered input-sm w-full" />
                             <button type="submit" className="btn btn-primary btn-sm btn-square">
                                 <DynamicIcon name="send-arrow" className="w-5 h-5" />
                             </button>

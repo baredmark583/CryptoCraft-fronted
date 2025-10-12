@@ -333,7 +333,7 @@ export interface LiveStream {
     title: string;
     seller: User;
     status: 'UPCOMING' | 'LIVE' | 'ENDED';
-    featuredProductId: string;
+    featuredProduct: Product;
     scheduledStartTime?: number;
     moderatorId?: string;
     isAiModeratorEnabled?: boolean;
