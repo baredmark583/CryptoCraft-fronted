@@ -1,79 +1,33 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import type { LiveStream, Product, Message, User } from '../types';
 import Spinner from '../components/Spinner';
 import { useAuth } from '../hooks/useAuth';
 import { useCart } from '../hooks/useCart';
+import { useCurrency } from '../hooks/useCurrency';
 import DynamicIcon from '../components/DynamicIcon';
 import { io, Socket } from 'socket.io-client';
 
 import {
   LiveKitRoom,
   ParticipantTile,
-  ControlBar,
   useTracks,
   GridLayout,
+  AudioTrack,
 } from '@livekit/components-react';
 import '@livekit/components-styles';
-import { Track } from 'livekit-client';
-
+import { RemoteParticipant, Track } from 'livekit-client';
 
 const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:3001';
 const LIVEKIT_URL = (import.meta as any).env.VITE_LIVEKIT_URL || 'wss://babak-mm07ebah.livekit.cloud';
-
-const LiveVideoDisplay: React.FC<{ isSeller: boolean }> = ({ isSeller }) => {
-    const cameraTracks = useTracks(
-        [{ source: Track.Source.Camera, withPlaceholder: true }],
-    );
-
-    // For the seller, we show their own video.
-    const localParticipantTrack = cameraTracks.find(trackRef => trackRef.participant.isLocal);
-    
-    // For anyone (seller or buyer), we show all other participants.
-    const remoteTracks = cameraTracks.filter(trackRef => !trackRef.participant.isLocal);
-
-    if (isSeller) {
-        // Seller view: show self. The layout will also include any other publishers (e.g., moderators).
-        const tracksToShow = [localParticipantTrack, ...remoteTracks].filter(Boolean);
-        if (tracksToShow.length > 0) {
-            return (
-                <GridLayout tracks={tracksToShow}>
-                    <ParticipantTile />
-                </GridLayout>
-            );
-        }
-        return (
-             <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white">
-                <Spinner />
-                <p className="mt-4">Подключаем вашу камеру...</p>
-            </div>
-        )
-    }
-
-    // Buyer view: show all remote participants (should just be the seller).
-    if (remoteTracks.length > 0) {
-        return (
-            <GridLayout tracks={remoteTracks}>
-                <ParticipantTile />
-            </GridLayout>
-        );
-    }
-
-    // Default view for buyer waiting for seller to connect/publish.
-    return (
-        <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white">
-            <Spinner />
-            <p className="mt-4">Ожидание трансляции от продавца...</p>
-        </div>
-    );
-};
 
 
 const LiveStreamPage: React.FC = () => {
     const { streamId } = useParams<{ streamId: string }>();
     const { user, token: authToken } = useAuth();
     const { addToCart } = useCart();
+    const { getFormattedPrice } = useCurrency();
 
     const [stream, setStream] = useState<LiveStream | null>(null);
     const [product, setProduct] = useState<Product | null>(null);
@@ -81,18 +35,29 @@ const LiveStreamPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [newMessage, setNewMessage] = useState('');
     const [socket, setSocket] = useState<Socket | null>(null);
-
-    // State for LiveKit connection flow
+    
+    // LiveKit state
     const [livekitToken, setLivekitToken] = useState<string>('');
-    const [isConnected, setIsConnected] = useState(false);
-    const [isConnecting, setIsConnecting] = useState(false);
     
+    // Interactive state
+    const [viewerCount, setViewerCount] = useState(0);
+    const [likeCount, setLikeCount] = useState(0);
+    const [flyingHearts, setFlyingHearts] = useState<{ id: number }[]>([]);
+    const [isMuted, setIsMuted] = useState(false);
+
     const chatEndRef = useRef<HTMLDivElement>(null);
-    
+
     const isSeller = user && stream && user.id === stream.seller.id;
     const isModerator = user?.role === 'SUPER_ADMIN' || user?.role === 'MODERATOR';
 
-    // Fetch stream and product data
+    // FIX: Refactored audio handling. This hook now correctly gets all remote audio tracks.
+    const remoteAudioTracks = useTracks(
+        [{ source: Track.Source.Microphone, withPlaceholder: false }],
+        { onlySubscribed: true }
+    );
+    
+
+    // Fetch initial stream and product data
     useEffect(() => {
         if (!streamId) {
             setIsLoading(false);
@@ -105,20 +70,17 @@ const LiveStreamPage: React.FC = () => {
                 const streamData = await apiService.getLiveStreamById(streamId);
                 if (streamData) {
                     setStream(streamData);
+                    setLikeCount(streamData.likes || 0);
                     if (streamData.featuredProductId) {
                         const productData = await apiService.getProductById(streamData.featuredProductId);
                         setProduct(productData || null);
-                    } else {
-                        setProduct(null);
                     }
-                } else {
-                    setStream(null);
-                    setProduct(null);
+                    // Auto-join logic
+                    const { token } = await apiService.getLiveStreamToken(streamId);
+                    setLivekitToken(token);
                 }
             } catch (error) {
-                console.error("Failed to load stream data:", error);
-                setStream(null);
-                setProduct(null);
+                console.error("Failed to load stream data or token:", error);
             } finally {
                 setIsLoading(false);
             }
@@ -126,7 +88,7 @@ const LiveStreamPage: React.FC = () => {
         fetchData();
     }, [streamId]);
 
-    // Setup WebSocket connection for chat
+    // WebSocket connection for chat & interactivity
     useEffect(() => {
         if (!streamId) return;
 
@@ -137,16 +99,18 @@ const LiveStreamPage: React.FC = () => {
         setSocket(newSocket);
 
         newSocket.on('connect', () => {
-            console.log('Connected to WebSocket for live stream chat');
-            newSocket.emit('joinChat', streamId);
+            console.log('Connected to WebSocket');
+            newSocket.emit('joinStreamRoom', streamId);
+            newSocket.emit('getStreamStats', streamId);
+        });
+
+        newSocket.on('streamUpdate', (data: { likes: number; viewers: number }) => {
+            setLikeCount(data.likes);
+            setViewerCount(data.viewers);
         });
 
         newSocket.on('newMessage', (message: Message) => {
-            setChatMessages(prev => [...prev, message]);
-        });
-        
-        newSocket.on('messageDeleted', ({ messageId }: { messageId: string }) => {
-            setChatMessages(prev => prev.filter(m => m.id !== messageId));
+            setChatMessages(prev => [...prev.slice(-100), message]);
         });
 
         newSocket.on('streamEnded', () => {
@@ -154,7 +118,7 @@ const LiveStreamPage: React.FC = () => {
         });
 
         return () => {
-            newSocket.emit('leaveChat', streamId);
+            newSocket.emit('leaveStreamRoom', streamId);
             newSocket.close();
         };
     }, [streamId, authToken]);
@@ -164,62 +128,32 @@ const LiveStreamPage: React.FC = () => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [chatMessages]);
 
+    const handleLike = useCallback(() => {
+        if (!socket || !streamId) return;
+        setLikeCount(prev => prev + 1); // Optimistic update
+        socket.emit('likeStream', streamId);
+
+        const newHeart = { id: Date.now() };
+        setFlyingHearts(prev => [...prev, newHeart]);
+        setTimeout(() => {
+            setFlyingHearts(prev => prev.filter(h => h.id !== newHeart.id));
+        }, 2000); // Corresponds to animation duration
+    }, [socket, streamId]);
+
     const handleSendMessage = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newMessage.trim() || !socket || !streamId) return;
+        if (!newMessage.trim() || !socket || !streamId || !user) return;
         
-        socket.emit('sendMessage', {
-            chatId: streamId,
-            message: { text: newMessage }
-        });
+        socket.emit('sendStreamMessage', { streamId, text: newMessage });
         setNewMessage('');
     };
-
-    const handleDeleteMessage = (messageId: string) => {
-        if (!socket || !streamId || !isModerator) return;
-        socket.emit('deleteMessage', { roomId: streamId, messageId });
-    };
-
+    
     const handleEndStream = async () => {
         if (!streamId || (!isModerator && !isSeller)) return;
         if (window.confirm('Вы уверены, что хотите завершить этот эфир?')) {
-            try {
-                const endedStream = await apiService.endLiveStream(streamId);
-                setStream(endedStream);
-                if (socket) {
-                    socket.emit('streamEndedBroadcast', { roomId: streamId });
-                }
-            } catch (error) {
-                console.error('Failed to end stream', error);
-                alert('Не удалось завершить трансляцию.');
-            }
+            await apiService.endLiveStream(streamId);
         }
     };
-
-    const handleJoin = async () => {
-        if (!streamId || !user) return;
-        setIsConnecting(true);
-        try {
-            // More robustly handle the response from the API.
-            const response: any = await apiService.getLiveStreamToken(streamId);
-            const jwtToken = response?.token;
-    
-            if (typeof jwtToken !== 'string' || !jwtToken) {
-                console.error('Invalid token format received:', response);
-                throw new Error("Неверный формат токена, полученный с сервера.");
-            }
-    
-            setLivekitToken(jwtToken);
-            setIsConnected(true);
-        } catch (err) {
-            console.error("Failed to get livestream token", err);
-            alert(`Не удалось подключиться к трансляции: ${(err as Error).message}`);
-            setIsConnected(false); // Ensure we don't proceed in a broken state
-        } finally {
-            setIsConnecting(false);
-        }
-    };
-
 
     if (isLoading) return <div className="flex justify-center items-center h-96"><Spinner /></div>;
     if (!stream) return <div className="text-center text-xl text-base-content/70">Трансляция не найдена.</div>;
@@ -228,31 +162,18 @@ const LiveStreamPage: React.FC = () => {
         if (stream.status !== 'LIVE') {
             return (
                 <div className="w-full h-full flex items-center justify-center bg-black">
-                    <p className="text-white text-2xl font-bold">
+                    <p className="text-white text-2xl font-bold p-4 text-center">
                         {stream.status === 'UPCOMING' && stream.scheduledStartTime ? `Начнется в ${new Date(stream.scheduledStartTime).toLocaleTimeString()}` : 'Трансляция завершена'}
                     </p>
                 </div>
             );
         }
         
-        if (!isConnected) {
+        if (!livekitToken || !LIVEKIT_URL) {
             return (
                 <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white">
-                    <button onClick={handleJoin} disabled={isConnecting} className="btn btn-primary btn-lg">
-                        {isConnecting ? <Spinner /> : 'Присоединиться к эфиру'}
-                    </button>
-                    {isConnecting && <p className="mt-4">Получение токена...</p>}
-                </div>
-            );
-        }
-
-        if (!livekitToken || !LIVEKIT_URL) {
-            const urlError = !LIVEKIT_URL;
-            return (
-                <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white p-4 text-center">
                     <Spinner />
-                    <p className="mt-4">Подключаемся к эфиру...</p>
-                    {urlError && <p className="text-red-400 text-sm mt-2">Ошибка: VITE_LIVEKIT_URL не настроен. Проверьте файл .env.</p>}
+                    <p className="mt-4">Подключение к эфиру...</p>
                 </div>
             );
         }
@@ -267,73 +188,105 @@ const LiveStreamPage: React.FC = () => {
               data-lk-theme="default"
               style={{ height: '100%', width: '100%' }}
             >
-                <LiveVideoDisplay isSeller={!!isSeller} />
-                {isSeller && <ControlBar />}
+                <GridLayout tracks={useTracks(
+                    [{ source: Track.Source.Camera, withPlaceholder: true }],
+                )}>
+                    <ParticipantTile />
+                </GridLayout>
+                 {/* FIX: The problematic AudioTrack line was removed. Remote audio is now handled by the mapping below. */}
             </LiveKitRoom>
-        )
+        );
     };
 
-
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-            {/* Video Player & Product */}
-            <div className="lg:col-span-2 space-y-6">
-                <div className="aspect-video bg-base-200 rounded-lg flex items-center justify-center relative overflow-hidden">
-                    {renderVideo()}
-                    {stream.status === 'LIVE' && <span className="absolute top-4 left-4 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center"><span className="relative flex h-2 w-2 mr-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>LIVE</span>}
-                    {(isSeller || isModerator) && stream.status === 'LIVE' && (
-                        <button onClick={handleEndStream} className="btn btn-error btn-sm absolute top-4 right-4">Завершить эфир</button>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 max-w-7xl mx-auto p-4">
+        {/* Main Content: Video + Product */}
+        <div className="lg:col-span-2 space-y-4">
+            <div className="aspect-video bg-base-200 rounded-lg flex items-center justify-center relative overflow-hidden group">
+                {/* FIX: Render an AudioTrack component for each remote participant. This correctly handles multiple audio sources and respects the mute button. */}
+                {remoteAudioTracks.map((trackRef) => (
+                  <AudioTrack key={trackRef.publication.trackSid} trackRef={trackRef} muted={isMuted} />
+                ))}
+                {renderVideo()}
+                <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/50 to-transparent flex justify-between items-start">
+                    <div className="flex items-center gap-4">
+                         <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center"><span className="relative flex h-2 w-2 mr-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>LIVE</span>
+                         <div className="flex items-center gap-1.5 text-white bg-black/40 backdrop-blur-sm px-2 py-1 rounded-full text-sm">
+                            <DynamicIcon name="livestream-viewers" className="w-5 h-5"/>
+                            <span>{viewerCount}</span>
+                         </div>
+                    </div>
+                     {(isSeller || isModerator) && stream.status === 'LIVE' && (
+                        <button onClick={handleEndStream} className="btn btn-error btn-sm">Завершить эфир</button>
                     )}
                 </div>
-                {product && (
-                    <div className="bg-base-100 p-4 rounded-lg">
-                        <h3 className="text-lg font-bold text-white mb-2">Товар в эфире</h3>
-                        <div className="flex flex-col sm:flex-row items-start gap-4">
-                            <img src={product.imageUrls[0]} alt={product.title} className="w-24 h-24 object-cover rounded-md"/>
-                            <div className="flex-1">
-                                <Link to={`/product/${product.id}`} className="font-semibold text-white hover:text-primary text-xl">{product.title}</Link>
-                                <p className="text-2xl font-bold text-primary mt-2">{product.price?.toFixed(2)} USDT</p>
-                            </div>
-                            <button onClick={() => addToCart(product, 1, undefined, product.price || 0, 'RETAIL')} className="bg-primary hover:bg-primary-focus text-primary-content font-bold py-2 px-4 rounded-lg w-full sm:w-auto">
-                                В корзину
-                            </button>
+                {/* Actions Overlay */}
+                 <div className="absolute bottom-4 right-4 flex flex-col gap-3 items-center">
+                    <div className="flex items-center gap-1.5 text-white bg-black/40 backdrop-blur-sm px-3 py-1 rounded-full text-sm">
+                       <DynamicIcon name="livestream-heart" className="w-5 h-5"/>
+                       <span>{likeCount}</span>
+                    </div>
+                    <button onClick={handleLike} className="w-12 h-12 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:text-red-500 hover:bg-white/20 transition-colors">
+                        <DynamicIcon name="livestream-heart" className="w-7 h-7" fallback={<span>❤️</span>} />
+                    </button>
+                    <button onClick={() => setIsMuted(!isMuted)} className="w-12 h-12 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+                        {isMuted ? <DynamicIcon name="livestream-sound-off" className="w-7 h-7" /> : <DynamicIcon name="livestream-sound-on" className="w-7 h-7" />}
+                    </button>
+                </div>
+                {/* Flying Hearts Container */}
+                <div className="absolute bottom-20 right-7">
+                    {flyingHearts.map(heart => (
+                        <div key={heart.id} className="absolute animate-fly-up text-3xl" style={{ right: `${Math.random() * 20 - 10}px` }}>❤️</div>
+                    ))}
+                </div>
+            </div>
+            {product && (
+                <div className="bg-base-100 p-4 rounded-lg">
+                    <div className="flex flex-col sm:flex-row items-start gap-4">
+                        <img src={product.imageUrls[0]} alt={product.title} className="w-24 h-24 object-cover rounded-md"/>
+                        <div className="flex-1">
+                            <Link to={`/product/${product.id}`} className="font-semibold text-white hover:text-primary text-xl">{product.title}</Link>
+                            <p className="text-2xl font-bold text-primary mt-2">{getFormattedPrice(product.price || 0)}</p>
+                        </div>
+                        <button onClick={() => addToCart(product, 1, undefined, product.price || 0, 'RETAIL')} className="btn btn-primary w-full sm:w-auto">
+                            В корзину
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+
+        {/* Chat */}
+        <div className="lg:col-span-1 bg-base-100 rounded-lg flex flex-col h-[calc(100vh-5rem)] lg:h-auto lg:max-h-[calc(100vh-2rem)]">
+            <div className="p-4 border-b border-base-300">
+                <h3 className="font-bold text-white">Live-чат</h3>
+            </div>
+            <div className="flex-grow p-4 overflow-y-auto space-y-3">
+                {stream.welcomeMessage && <div className="p-2 bg-base-300/50 rounded-md text-sm text-center text-amber-300 italic">{stream.welcomeMessage}</div>}
+                {chatMessages.map(msg => (
+                    <div key={msg.id} className="group flex gap-2 items-start">
+                         <div className="flex-1">
+                            <span className={`font-bold text-sm ${msg.sender?.id === user?.id ? 'text-primary' : 'text-base-content'}`}>{msg.sender?.name || 'Гость'}:</span>
+                            <span className="text-sm text-base-content/90 ml-2">{msg.text}</span>
                         </div>
                     </div>
-                )}
+                ))}
+                <div ref={chatEndRef} />
             </div>
-
-            {/* Chat */}
-            <div className="lg:col-span-1 bg-base-100 rounded-lg flex flex-col h-[calc(100vh-12rem)]">
-                <div className="p-4 border-b border-base-300">
-                    <h3 className="font-bold text-white">Live-чат</h3>
-                </div>
-                <div className="flex-grow p-4 overflow-y-auto space-y-3">
-                    {stream.welcomeMessage && <div className="p-2 bg-base-300/50 rounded-md text-sm text-center text-amber-300 italic">{stream.welcomeMessage}</div>}
-                    {chatMessages.map(msg => (
-                        <div key={msg.id} className="group flex gap-2 items-start">
-                             <div className="flex-1">
-                                <span className={`font-bold text-sm ${msg.sender?.id === user?.id ? 'text-primary' : 'text-base-content'}`}>{msg.sender?.name || 'Гость'}:</span>
-                                <span className="text-sm text-base-content/90 ml-2">{msg.text}</span>
-                            </div>
-                             {isModerator && msg.sender?.id !== 'system' && (
-                                <button onClick={() => handleDeleteMessage(msg.id)} className="opacity-0 group-hover:opacity-100 text-red-500 text-xs">&times;</button>
-                             )}
-                        </div>
-                    ))}
-                    <div ref={chatEndRef} />
-                </div>
-                {stream.status === 'LIVE' && (
-                    <div className="p-4 border-t border-base-300">
-                        <form onSubmit={handleSendMessage} className="flex gap-2">
-                            <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder="Ваше сообщение..." className="flex-1 bg-base-200 border border-base-300 rounded-full py-2 px-4 text-sm" />
-                            <button type="submit" className="p-2 bg-primary rounded-full text-white">
+            {stream.status === 'LIVE' && (
+                <div className="p-4 border-t border-base-300">
+                    <form onSubmit={handleSendMessage}>
+                        <fieldset disabled={!user} className="flex gap-2">
+                            <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)} placeholder={user ? "Ваше сообщение..." : "Войдите, чтобы писать в чат"} className="flex-1 input input-bordered input-sm w-full" />
+                            <button type="submit" className="btn btn-primary btn-sm btn-square">
                                 <DynamicIcon name="send-arrow" className="w-5 h-5" />
                             </button>
-                        </form>
-                    </div>
-                )}
-            </div>
+                        </fieldset>
+                    </form>
+                </div>
+            )}
         </div>
+    </div>
     );
 };
 

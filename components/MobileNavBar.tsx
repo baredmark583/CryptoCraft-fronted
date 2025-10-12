@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import DynamicIcon from './DynamicIcon';
 
 interface NavItemProps {
@@ -22,20 +22,15 @@ const NavItem: React.FC<NavItemProps> = ({ to, children, exact = false }) => (
 
 
 const MobileNavBar: React.FC = () => {
-    const navigate = useNavigate();
-
     return (
         <nav className="block md:hidden fixed bottom-0 left-0 right-0 h-16 bg-base-200/90 backdrop-blur-lg border-t border-base-300 z-40 flex items-center">
-            <button 
-                onClick={() => navigate(-1)} 
-                className="flex flex-col items-center justify-center flex-1 text-xs transition-colors h-full text-base-content/70 hover:text-base-content"
-            >
-                <DynamicIcon name="back-arrow" className="h-6 w-6 mb-1" />
-                <span>Назад</span>
-            </button>
             <NavItem to="/" exact={true}>
                 <DynamicIcon name="mobile-nav-home" className="h-6 w-6 mb-1" />
                 <span>Главная</span>
+            </NavItem>
+            <NavItem to="/community">
+                <DynamicIcon name="community" className="h-6 w-6 mb-1" />
+                <span>Сообщество</span>
             </NavItem>
              <NavLink to="/create" className="flex-1 h-full flex flex-col items-center justify-center" aria-label="Создать объявление">
                 <div className="flex items-center justify-center h-12 w-16 bg-primary rounded-2xl text-primary-content animate-pulse-primary shadow-lg shadow-primary/30">

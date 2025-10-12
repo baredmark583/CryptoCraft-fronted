@@ -8,6 +8,7 @@ import type { ForumThread, LiveStream } from '../types';
 import Spinner from '../components/Spinner';
 import CreateThreadModal from '../components/CreateThreadModal';
 import { useAuth } from '../hooks/useAuth';
+import DynamicIcon from '../components/DynamicIcon';
 
 const LiveStreamsSection: React.FC = () => {
   const [streams, setStreams] = useState<LiveStream[]>([]);
@@ -43,7 +44,7 @@ const LiveStreamsSection: React.FC = () => {
             <div className="relative aspect-video bg-base-200">
                 <img src={stream.seller.headerImageUrl || 'https://picsum.photos/seed/livebg/600/400'} alt="Live Stream Background" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent p-4 flex flex-col justify-between">
-                  <div>
+                  <div className="flex justify-between items-start">
                     {stream.status === 'LIVE' && (
                        <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center w-fit">
                           <span className="relative flex h-2 w-2 mr-2">
@@ -56,6 +57,16 @@ const LiveStreamsSection: React.FC = () => {
                      {stream.status === 'UPCOMING' && (
                        <span className="bg-sky-600 text-white text-xs font-bold px-3 py-1 rounded-full">СКОРО</span>
                     )}
+                    <div className="flex gap-3 text-white bg-black/40 backdrop-blur-sm p-1.5 rounded-full">
+                       <div className="flex items-center gap-1 text-xs">
+                           <DynamicIcon name="livestream-viewers" className="w-4 h-4" />
+                           <span>{stream.viewerCount || 0}</span>
+                       </div>
+                       <div className="flex items-center gap-1 text-xs">
+                          <DynamicIcon name="livestream-heart" className="w-4 h-4" />
+                           <span>{stream.likes || 0}</span>
+                       </div>
+                    </div>
                   </div>
                    <div className="flex items-center gap-3">
                       <img src={stream.seller.avatarUrl} alt={stream.seller.name} className="w-10 h-10 rounded-full border-2 border-primary"/>

@@ -338,6 +338,9 @@ export interface LiveStream {
     moderatorId?: string;
     isAiModeratorEnabled?: boolean;
     welcomeMessage?: string;
+    likes?: number;
+    viewerCount?: number;
+    isPromoted?: boolean;
 }
 
 export interface TrackingEvent {
