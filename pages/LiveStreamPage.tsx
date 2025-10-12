@@ -13,11 +13,8 @@ import {
   ParticipantTile,
   ControlBar,
   useParticipants,
-  useTracks,
-  GridLayout,
 } from '@livekit/components-react';
 import '@livekit/components-styles';
-import { Track } from 'livekit-client';
 
 
 const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:3001';
@@ -64,20 +61,25 @@ const LiveStreamPage: React.FC = () => {
     const [livekitToken, setLivekitToken] = useState<string>('');
     
     const chatEndRef = useRef<HTMLDivElement>(null);
+    
     const isSeller = user && stream && user.id === stream.seller.id;
     const isModerator = user?.role === 'SUPER_ADMIN' || user?.role === 'MODERATOR';
 
     // Fetch stream and product data
     useEffect(() => {
         if (!streamId) return;
+        
         const fetchData = async () => {
             setIsLoading(true);
             try {
                 const streamData = await apiService.getLiveStreamById(streamId);
-                setStream(streamData);
                 if (streamData) {
+                    setStream(streamData);
                     const productData = await apiService.getProductById(streamData.featuredProductId);
                     setProduct(productData || null);
+                } else {
+                    setStream(null);
+                    setProduct(null);
                 }
             } catch (error) {
                 console.error("Failed to load stream data:", error);
