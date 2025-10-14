@@ -6,7 +6,6 @@ import { useAuth } from '../hooks/useAuth';
 import type { Chat, Message, MessageContent } from '../types';
 import Spinner from '../components/Spinner';
 import ChatMessage from '../components/ChatMessage';
-import VerifiedBadge from '../components/VerifiedBadge';
 import DynamicIcon from '../components/DynamicIcon';
 import { io, Socket } from 'socket.io-client';
 import { useTelegram } from '../hooks/useTelegram';
@@ -318,7 +317,6 @@ const ChatPage: React.FC = () => {
                       <span className="text-lg font-semibold hover:underline truncate">
                         {selectedChat.participant.name || 'Удаленный пользователь'}
                       </span>
-                      <VerifiedBadge level={selectedChat.participant.verificationLevel} />
                     </div>
                   </Link>
                 )}

@@ -8,7 +8,6 @@ import { useCurrency } from '../hooks/useCurrency';
 import { useCart } from '../hooks/useCart';
 import { useWishlist } from '../hooks/useWishlist';
 import StarRating from '../components/StarRating';
-import VerifiedBadge from '../components/VerifiedBadge';
 import { useCountdown } from '../hooks/useCountdown';
 import BidModal from '../components/BidModal';
 import { useTelegramBackButton } from '../hooks/useTelegram';
@@ -116,10 +115,11 @@ const ProductDetailPage: React.FC = () => {
     }, []);
 
     const handleAddToCart = useCallback(() => {
-        if (!product || !user) return;
+        if (!product) return;
+        // Guest users can add to cart
         const price = selectedVariant?.salePrice || selectedVariant?.price || product.salePrice || product.price || 0;
         addToCart(product, 1, selectedVariant || undefined, price, 'RETAIL');
-    }, [product, user, addToCart, selectedVariant]);
+    }, [product, addToCart, selectedVariant]);
 
     const handlePlaceBid = useCallback(async (amount: number) => {
         if (!product || !user) return;
@@ -136,6 +136,7 @@ const ProductDetailPage: React.FC = () => {
 
     const handleWishlistClick = () => {
         if (!product) return;
+        // Wishlist works for guests via localStorage
         if (isWishlisted(product.id)) {
             removeFromWishlist(product.id);
         } else {
@@ -169,11 +170,11 @@ const ProductDetailPage: React.FC = () => {
         return <div className="flex justify-center items-center h-96"><Spinner /></div>;
     }
 
-    if (!product || !user) {
+    if (!product) {
         return <div className="text-center text-xl text-base-content/70">Товар не найден.</div>;
     }
 
-    const isOwner = product.seller.id === user.id;
+    const isOwner = user ? product.seller.id === user.id : false;
     const isFavorited = isWishlisted(product.id);
     const stock = hasVariants ? (selectedVariant?.stock ?? 0) : 1; // Assume 1 for non-variant products
     const isStockAvailable = stock > 0;
@@ -275,7 +276,7 @@ const ProductDetailPage: React.FC = () => {
                     </div>
                 </div>
                 
-                {!isOwner && (
+                {!isOwner && user && (
                 <div className="mt-8 border-t border-base-300/50 pt-6">
                     <div className="flex items-center gap-4">
                         <div className="avatar">
@@ -289,7 +290,6 @@ const ProductDetailPage: React.FC = () => {
                             <p className="text-sm text-base-content/70">Продавец</p>
                             <div className="flex items-center gap-2">
                                  <Link to={`/profile/${product.seller.id}`} className="font-bold text-lg text-base-content hover:underline">{product.seller.name}</Link>
-                                 <VerifiedBadge level={product.seller.verificationLevel} />
                             </div>
                              <Link to={`/profile/${product.seller.id}`} className="text-sm text-primary hover:underline">Все товары продавца &rarr;</Link>
                         </div>
