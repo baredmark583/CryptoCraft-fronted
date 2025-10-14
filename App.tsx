@@ -1,5 +1,3 @@
-
-
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
@@ -58,12 +56,12 @@ const AppContent: React.FC = () => {
   }, [tg]);
 
   const appContainerClass = isChatPage
-    ? "bg-base-100 h-screen flex flex-col overflow-hidden font-sans text-base-content"
-    : "bg-base-100 min-h-screen flex flex-col overflow-x-hidden font-sans text-base-content";
+    ? "bg-base-200 h-screen flex flex-col overflow-hidden font-sans text-base-content"
+    : "min-h-screen flex flex-col overflow-x-hidden font-sans text-base-content";
 
   const mainClass = isChatPage
     ? "flex-grow overflow-hidden"
-    : "flex-grow container mx-auto px-4 py-8 pb-24 md:pb-8";
+    : "flex-grow";
 
   return (
     <div className={appContainerClass}>

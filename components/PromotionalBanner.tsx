@@ -3,25 +3,17 @@ import { Link } from 'react-router-dom';
 
 const PromotionalBanner: React.FC = () => {
     return (
-        <section className="relative bg-base-200 rounded-lg overflow-hidden text-base-content p-8 md:p-12 flex items-center min-h-[300px]">
-            <div 
-                className="absolute inset-0 bg-cover bg-center opacity-10" 
-                style={{backgroundImage: "url('https://picsum.photos/seed/banner/1200/400')"}}
-            ></div>
-            <div className="absolute inset-0 bg-gradient-to-r from-base-100 via-base-100/70 to-transparent"></div>
-            
-            <div className="relative z-10 max-w-xl">
-                <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-4">
-                    Откройте мир <span className="text-primary">уникальных</span> вещей
-                </h1>
-                <p className="text-lg text-base-content/70 mb-6">
-                    Маркетплейс для творцов и ценителей, работающий на криптовалюте.
-                </p>
-                <Link 
-                    to="/products"
-                    className="bg-primary hover:bg-primary-focus text-primary-content font-bold text-lg h-auto py-3 px-8 rounded-lg"
-                >
-                    Смотреть все товары
+        <section className="w-full bg-amber-50 border-b border-amber-200/80">
+            <div className="mx-auto max-w-7xl px-6 py-4">
+                <Link to="/products" className="block">
+                    <div className="relative w-full overflow-hidden rounded-2xl border border-amber-200 bg-white">
+                        <img loading="lazy" decoding="async" alt="Рекламный баннер" src="https://app.grapesjs.com/api/assets/random-image?query=%22warm%20sand%20ad%20banner%20minimal%22&w=1200&h=160" className="w-full h-32 object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-amber-800/10 to-transparent"></div>
+                        <div className="absolute inset-0 flex items-center justify-between px-6">
+                            <p className="text-amber-900/90 font-semibold tracking-tight text-lg">Теплые предложения недели — скидки до 30%</p>
+                            <span className="btn btn-primary btn-sm hidden sm:inline-flex">Подробнее</span>
+                        </div>
+                    </div>
                 </Link>
             </div>
         </section>

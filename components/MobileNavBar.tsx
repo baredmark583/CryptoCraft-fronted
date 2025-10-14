@@ -23,7 +23,7 @@ const NavItem: React.FC<NavItemProps> = ({ to, children, exact = false }) => (
 
 const MobileNavBar: React.FC = () => {
     return (
-        <nav className="block md:hidden fixed bottom-0 left-0 right-0 h-16 bg-base-200/90 backdrop-blur-lg border-t border-base-300 z-40 flex items-center">
+        <nav className="block md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/90 backdrop-blur-lg border-t border-amber-200/80 z-40 flex items-center">
             <NavItem to="/" exact={true}>
                 <DynamicIcon name="mobile-nav-home" className="h-6 w-6 mb-1" />
                 <span>Главная</span>
@@ -33,7 +33,7 @@ const MobileNavBar: React.FC = () => {
                 <span>Сообщество</span>
             </NavItem>
              <NavLink to="/create" className="flex-1 h-full flex flex-col items-center justify-center" aria-label="Создать объявление">
-                <div className="flex items-center justify-center h-12 w-16 bg-primary rounded-2xl text-primary-content animate-pulse-primary shadow-lg shadow-primary/30">
+                <div className="flex items-center justify-center h-12 w-16 bg-primary rounded-2xl text-primary-content shadow-lg shadow-primary/30">
                      <DynamicIcon name="add-item-plus" className="h-7 w-7" />
                 </div>
             </NavLink>

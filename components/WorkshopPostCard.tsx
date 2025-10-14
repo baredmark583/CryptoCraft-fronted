@@ -13,161 +13,77 @@ interface WorkshopPostCardProps {
 
 const WorkshopPostCard: React.FC<WorkshopPostCardProps> = ({ post, seller }) => {
   const { user } = useAuth();
-  const [isLiked, setIsLiked] = useState(post.likedBy.includes(user.id));
+  const [isLiked, setIsLiked] = useState(user && post.likedBy.includes(user.id));
   const [likeCount, setLikeCount] = useState(post.likedBy.length);
-  const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState<WorkshopComment[]>(post.comments);
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    setIsLiked(post.likedBy.includes(user.id));
+    if (user) {
+        setIsLiked(post.likedBy.includes(user.id));
+    }
     setLikeCount(post.likedBy.length);
     setComments(post.comments);
-  }, [post, user.id]);
-
-  useEffect(() => {
-      let timeoutId: number;
-      if (copied) {
-          timeoutId = window.setTimeout(() => {
-              setCopied(false);
-          }, 2000);
-      }
-      return () => {
-          window.clearTimeout(timeoutId);
-      };
-  }, [copied]);
+  }, [post, user]);
 
   const handleLikeToggle = async () => {
-    // Optimistic update
+    if (!user) return;
     setIsLiked(!isLiked);
     setLikeCount(prev => isLiked ? prev - 1 : prev + 1);
-    
     try {
       await apiService.likeWorkshopPost(post.id, user.id);
     } catch (error) {
       console.error("Failed to update like status", error);
-      // Revert on error
       setIsLiked(isLiked);
       setLikeCount(likeCount);
     }
   };
-  
-  const handleCommentSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newComment.trim()) return;
 
-    setIsSubmitting(true);
-    try {
-        const addedComment = await apiService.addCommentToWorkshopPost(post.id, user.id, newComment);
-        setComments(prev => [...prev, addedComment]);
-        setNewComment('');
-    } catch (error) {
-        console.error("Failed to add comment", error);
-        // Optionally show an error to the user
-    } finally {
-        setIsSubmitting(false);
-    }
-  };
-
-  const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/#/profile/${seller.id}`;
-    const shareText = `Зацените пост от ${seller.name} на CryptoCraft!`;
-
-    if (navigator.share) {
-        try {
-            await navigator.share({
-                title: 'Пост в Мастерской CryptoCraft',
-                text: shareText,
-                url: shareUrl,
-            });
-        } catch (error) {
-            console.log('Ошибка при попытке поделиться:', error);
-        }
-    } else {
-        // Fallback: copy to clipboard
-        navigator.clipboard.writeText(shareUrl).then(() => {
-            setCopied(true);
-        });
-    }
+  const handleShare = () => {
+      const shareUrl = `${window.location.origin}/#/profile/${seller.id}`;
+      navigator.clipboard.writeText(shareUrl).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+      });
   };
 
   return (
-    <div className="bg-base-100 rounded-lg overflow-hidden shadow-lg flex flex-col">
-      <div className="p-4">
-        <div className="flex items-center mb-4">
+    <article className="rounded-2xl border border-amber-200/80 bg-white p-4 flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
           <Link to={`/profile/${seller.id}`}>
-            <img src={seller.avatarUrl} alt={seller.name} className="w-12 h-12 rounded-full mr-4" />
+            <img loading="lazy" decoding="async" alt={seller.name} src={seller.avatarUrl} className="w-10 h-10 rounded-full object-cover" />
           </Link>
           <div>
-            <Link to={`/profile/${seller.id}`} className="font-bold text-white hover:text-primary">{seller.name}</Link>
-            <p className="text-xs text-base-content/70">{new Date(post.timestamp).toLocaleString()}</p>
+            <Link to={`/profile/${seller.id}`} className="text-sm font-semibold text-amber-900">{seller.name}</Link>
+            <small className="block text-xs text-amber-900/70">{new Date(post.timestamp).toLocaleString()}</small>
           </div>
         </div>
-        <p className="text-base-content mb-4 whitespace-pre-wrap">{post.text}</p>
+        <span className="px-2 py-1 text-xs rounded-full bg-amber-50 text-amber-900/80 border border-amber-200">
+            Готовлю к продаже
+        </span>
       </div>
-
-      {post.imageUrl && (
-        <div className="bg-base-200 flex-grow flex items-center justify-center">
-          <img src={post.imageUrl} alt="Workshop post" className="w-full h-auto max-h-96 object-contain" />
-        </div>
-      )}
-
-      <div className="p-4 flex justify-between text-base-content/70 text-sm border-b border-base-300/50">
-        <div className="flex space-x-6">
-            <button onClick={handleLikeToggle} className={`flex items-center space-x-2 transition-colors ${isLiked ? 'text-red-500' : 'hover:text-red-500'}`}>
-                <DynamicIcon name="wishlist-heart" className="w-5 h-5" />
-                <span>{likeCount}</span>
-            </button>
-            <button onClick={() => setShowComments(!showComments)} className="flex items-center space-x-2 hover:text-primary">
-                <DynamicIcon name="comment-bubble" className="w-5 h-5" />
-                <span>{comments.length}</span>
-            </button>
-        </div>
-        <div className="relative w-20 text-center">
-            {copied ? (
-                <span className="text-green-400 text-xs font-bold animate-pulse">Скопировано!</span>
-            ) : (
-                <button onClick={handleShare} className="hover:text-primary" title="Поделиться">
-                    <DynamicIcon name="share" className="w-5 h-5" />
-                </button>
-            )}
+      <p className="text-base-content/90 text-sm">{post.text}</p>
+      {post.imageUrl && <img loading="lazy" decoding="async" alt="Предмет поста" src={post.imageUrl} className="w-full h-56 object-cover rounded-xl" />}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button type="button" onClick={handleLikeToggle} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-100/70 transition-colors hover:bg-amber-200/70">
+            <img loading="lazy" decoding="async" alt="Лайк" src="https://api.iconify.design/lucide-heart.svg" className={`w-4 h-4 transition-colors ${isLiked ? 'text-red-500 fill-current' : 'text-inherit'}`} />
+            <span className="text-sm">{likeCount}</span>
+          </button>
+          <a href="#comments" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-200/80 bg-white transition-colors hover:bg-amber-100/70">
+            <img loading="lazy" decoding="async" alt="Комментарий" src="https://api.iconify.design/lucide-message-circle.svg" className="w-4 h-4" />
+            <span className="text-sm text-amber-900/90">Комментарий</span>
+          </a>
+          <button type="button" onClick={handleShare} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-200/80 bg-white transition-colors hover:bg-amber-100/70">
+            <img loading="lazy" decoding="async" alt="Поделиться" src="https://api.iconify.design/lucide-share-2.svg" className="w-4 h-4" />
+            <span className="text-sm text-amber-900/90">{copied ? 'Скопировано' : 'Поделиться'}</span>
+          </button>
         </div>
       </div>
-
-      {showComments && (
-        <div className="p-4 bg-base-200/50 animate-fade-in-down">
-            <div className="space-y-3 max-h-60 overflow-y-auto pr-2 mb-4">
-                {comments.map(comment => (
-                    <div key={comment.id} className="flex items-start">
-                        <img src={comment.author.avatarUrl} alt={comment.author.name} className="w-8 h-8 rounded-full mr-3 flex-shrink-0"/>
-                        <div className="bg-base-100 p-2 rounded-lg">
-                            <Link to={`/profile/${comment.author.id}`} className="font-bold text-white text-sm hover:underline">{comment.author.name}</Link>
-                            <p className="text-sm text-base-content">{comment.text}</p>
-                        </div>
-                    </div>
-                ))}
-            </div>
-            <form onSubmit={handleCommentSubmit} className="flex items-center gap-2">
-                <img src={user.avatarUrl} alt={user.name} className="w-8 h-8 rounded-full"/>
-                <input
-                    type="text"
-                    value={newComment}
-                    onChange={e => setNewComment(e.target.value)}
-                    placeholder="Написать комментарий..."
-                    className="flex-grow bg-base-100 border border-base-300 rounded-full py-2 px-4 text-sm"
-                    disabled={isSubmitting}
-                />
-                <button type="submit" disabled={isSubmitting} className="p-2 text-primary disabled:text-gray-500">
-                    {isSubmitting ? <Spinner size="sm" /> : 
-                        <DynamicIcon name="send-arrow" className="w-6 h-6" />
-                    }
-                </button>
-            </form>
-        </div>
-      )}
-    </div>
+    </article>
   );
 };
 
