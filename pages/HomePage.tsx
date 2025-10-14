@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import type { Product, FeedItem } from '../types';
+import type { CategorySchema } from '../constants';
 import Spinner from '../components/Spinner';
 import { useAuth } from '../hooks/useAuth';
 import WorkshopPostCard from '../components/WorkshopPostCard';
@@ -27,39 +28,44 @@ const NarrowAdBanner: React.FC = () => (
     </section>
 );
 
-const categoryIcons: Record<string, string> = {
-    'Недвижимость': 'lucide-home',
-    'Авто': 'lucide-car',
-    'Электроника': 'lucide-monitor',
-    'Дом и сад': 'lucide-sofa',
-    'Услуги': 'lucide-wrench',
-    'Работа': 'lucide-briefcase',
-    'Хобби': 'lucide-shapes',
-    'Животные': 'lucide-paw-print',
-    'Детям': 'lucide-baby',
-    'Мода': 'lucide-shirt',
-    'Спорт': 'lucide-dumbbell',
-    'Запчасти': 'lucide-cog',
-};
+const CategoriesSection: React.FC = () => {
+    const [categories, setCategories] = useState<CategorySchema[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-const CategoriesSection: React.FC = () => (
-    <section className="w-full">
-        <div className="mx-auto max-w-7xl px-6 py-8">
-            <div className="flex items-end justify-between mb-5">
-                <h2 className="text-3xl font-manrope font-bold">Категории</h2>
-                <Link to="/products" className="text-sm font-medium hover:underline">Смотреть все</Link>
+    useEffect(() => {
+        apiService.getCategories()
+            .then(data => {
+                if (data) {
+                    setCategories(data);
+                }
+            })
+            .catch(err => console.error("Failed to fetch categories:", err))
+            .finally(() => setIsLoading(false));
+    }, []);
+
+    return (
+        <section className="w-full">
+            <div className="mx-auto max-w-7xl px-6 py-8">
+                <div className="flex items-end justify-between mb-5">
+                    <h2 className="text-3xl font-manrope font-bold">Категории</h2>
+                    <Link to="/products" className="text-sm font-medium hover:underline">Смотреть все</Link>
+                </div>
+                 {isLoading ? (
+                    <div className="flex justify-center items-center h-24"><Spinner /></div>
+                ) : (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-4">
+                        {categories.map((category) => (
+                            <Link key={category.id || category.name} to={`/products?category=${encodeURIComponent(category.name)}`} className="col-span-1 rounded-xl border border-amber-200/80 bg-white p-4 flex flex-col items-center justify-center gap-3 transition-colors hover:border-amber-300 aspect-square">
+                                <img loading="lazy" decoding="async" alt={category.name} src={category.iconUrl || `https://api.iconify.design/lucide-tag.svg`} className="w-7 h-7 opacity-80" />
+                                <span className="text-sm text-amber-900/90 text-center">{category.name}</span>
+                            </Link>
+                        ))}
+                    </div>
+                )}
             </div>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-4">
-                {Object.entries(categoryIcons).map(([name, icon]) => (
-                    <Link key={name} to={`/products?category=${encodeURIComponent(name)}`} className="col-span-1 rounded-xl border border-amber-200/80 bg-white p-4 flex flex-col items-center gap-3 transition-colors hover:border-amber-300">
-                        <img loading="lazy" decoding="async" alt={name} src={`https://api.iconify.design/${icon}.svg`} className="w-7 h-7 opacity-80" />
-                        <span className="text-sm text-amber-900/90 text-center">{name}</span>
-                    </Link>
-                ))}
-            </div>
-        </div>
-    </section>
-);
+        </section>
+    );
+};
 
 const VipProductCard: React.FC<{ product: Product }> = ({ product }) => {
     const { getFormattedPrice } = useCurrency();
