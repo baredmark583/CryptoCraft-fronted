@@ -53,7 +53,7 @@ const CategoriesSection: React.FC = () => {
                  {isLoading ? (
                     <div className="flex justify-center items-center h-24"><Spinner /></div>
                 ) : (
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 lg:grid-cols-8 gap-4">
                         {categories.map((category) => (
                             <Link key={category.id || category.name} to={`/products?category=${encodeURIComponent(category.name)}`} className="col-span-1 rounded-xl border border-amber-200/80 bg-white p-4 flex flex-col items-center justify-center gap-3 transition-colors hover:border-amber-300 aspect-square">
                                 <img loading="lazy" decoding="async" alt={category.name} src={category.iconUrl || `https://api.iconify.design/lucide-tag.svg`} className="w-7 h-7 opacity-80" />

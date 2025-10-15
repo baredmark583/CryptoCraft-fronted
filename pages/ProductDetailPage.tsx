@@ -8,6 +8,7 @@ import { useCurrency } from '../hooks/useCurrency';
 import { useCart } from '../hooks/useCart';
 import { useWishlist } from '../hooks/useWishlist';
 import StarRating from '../components/StarRating';
+import VerifiedBadge from '../components/VerifiedBadge';
 import { useCountdown } from '../hooks/useCountdown';
 import BidModal from '../components/BidModal';
 import { useTelegramBackButton } from '../hooks/useTelegram';
@@ -16,43 +17,8 @@ import NFTCertificateModal from '../components/NFTCertificateModal';
 import DynamicIcon from '../components/DynamicIcon';
 import ReviewCard from '../components/ReviewCard';
 import ImageModal from '../components/ImageModal';
+import ProductCard from '../components/ProductCard';
 
-const Countdown: React.FC<{ targetDate: number }> = ({ targetDate }) => {
-    const { days, hours, minutes, seconds, isFinished } = useCountdown(targetDate);
-    
-    if (isFinished) {
-        return <span className="text-red-500 font-bold">Аукцион завершен</span>;
-    }
-    
-    return (
-        <div className="grid grid-flow-col gap-5 text-center auto-cols-max">
-            <div className="flex flex-col p-2 bg-neutral rounded-box text-neutral-content">
-                <span className="countdown font-mono text-3xl">
-                    <span style={{"--value": days} as React.CSSProperties}></span>
-                </span>
-                дней
-            </div>
-            <div className="flex flex-col p-2 bg-neutral rounded-box text-neutral-content">
-                <span className="countdown font-mono text-3xl">
-                    <span style={{"--value": hours} as React.CSSProperties}></span>
-                </span>
-                часов
-            </div>
-            <div className="flex flex-col p-2 bg-neutral rounded-box text-neutral-content">
-                <span className="countdown font-mono text-3xl">
-                    <span style={{"--value": minutes} as React.CSSProperties}></span>
-                </span>
-                минут
-            </div>
-             <div className="flex flex-col p-2 bg-neutral rounded-box text-neutral-content">
-                <span className="countdown font-mono text-3xl">
-                    <span style={{"--value": seconds} as React.CSSProperties}></span>
-                </span>
-                секунд
-            </div>
-        </div>
-    )
-}
 
 const ProductDetailPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -62,13 +28,19 @@ const ProductDetailPage: React.FC = () => {
 
     const [product, setProduct] = useState<Product | null>(null);
     const [reviews, setReviews] = useState<Review[]>([]);
+    const [similarProducts, setSimilarProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    
+    // State for new layout
+    const [selectedMedia, setSelectedMedia] = useState<{ type: 'image' | 'video', src: string }>({ type: 'image', src: '' });
+    const [isMessageFormVisible, setIsMessageFormVisible] = useState(false);
+    const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+    
+    // Existing state
     const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
     const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
     const [isBidModalOpen, setIsBidModalOpen] = useState(false);
     const [isNftModalOpen, setIsNftModalOpen] = useState(false);
-    const [viewingImage, setViewingImage] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
     
     const { getFormattedPrice } = useCurrency();
@@ -78,65 +50,51 @@ const ProductDetailPage: React.FC = () => {
     useEffect(() => {
         if (!id) return;
         setIsLoading(true);
-        apiService.getProductById(id)
-            .then(data => {
-                if (data) {
-                    setProduct(data);
-                    if (data.variantAttributes && data.variantAttributes.length > 0) {
-                        const initialAttrs: Record<string, string> = {};
-                        data.variantAttributes.forEach(attr => {
-                            if(attr.options.length > 0) {
-                                initialAttrs[attr.name] = attr.options[0];
-                            }
-                        });
-                        setSelectedAttributes(initialAttrs);
-                    }
-                    return apiService.getReviewsByUserId(data.seller.id);
-                }
-                return Promise.resolve([]);
-            })
-            .then(reviewData => {
-                setReviews(reviewData.filter(r => r.productId === id));
-            })
-            .finally(() => setIsLoading(false));
-    }, [id]);
+        window.scrollTo(0, 0);
 
-    useEffect(() => {
-        if (product?.variants && Object.keys(selectedAttributes).length > 0) {
-            const foundVariant = product.variants.find(variant => 
-                Object.entries(selectedAttributes).every(([key, value]) => variant.attributes[key] === value)
-            );
-            setSelectedVariant(foundVariant || null);
-        }
-    }, [selectedAttributes, product]);
-    
-    const handleAttributeSelect = useCallback((attributeName: string, option: string) => {
-        setSelectedAttributes(prev => ({ ...prev, [attributeName]: option }));
-    }, []);
+        Promise.all([
+            apiService.getProductById(id),
+            // Assuming getReviewsByProductId exists
+            // apiService.getReviewsByProductId(id) 
+        ]).then(async ([productData]) => {
+            if (!productData) {
+                // To-Do: show a "not found" page
+                navigate('/');
+                return;
+            }
+            setProduct(productData);
+            
+            // Set initial selected media
+            if (productData.imageUrls.length > 0) {
+                setSelectedMedia({ type: 'image', src: productData.imageUrls[0] });
+            }
 
-    const handleAddToCart = useCallback(() => {
-        if (!product) return;
-        // Guest users can add to cart
-        const price = selectedVariant?.salePrice || selectedVariant?.price || product.salePrice || product.price || 0;
-        addToCart(product, 1, selectedVariant || undefined, price, 'RETAIL');
-    }, [product, addToCart, selectedVariant]);
+            // Fetch reviews for the seller
+            const sellerReviews = await apiService.getReviewsByUserId(productData.seller.id);
+            setReviews(sellerReviews.filter(r => r.productId === productData.id));
 
-    const handlePlaceBid = useCallback(async (amount: number) => {
-        if (!product || !user) return;
-        const updatedProduct = await apiService.placeBid(product.id, amount, user.id);
-        setProduct(updatedProduct);
-        setIsBidModalOpen(false);
-    }, [product, user]);
+            // Fetch similar products
+            const allProducts = await apiService.getProducts({ category: productData.category });
+            setSimilarProducts(allProducts.filter(p => p.id !== productData.id).slice(0, 4));
+
+        }).catch(err => {
+            console.error("Failed to load product page data:", err);
+        }).finally(() => {
+            setIsLoading(false);
+        });
+    }, [id, navigate]);
     
     const handleContactSeller = useCallback(async () => {
-        if (!product || !user) return;
+        if (!product || !user) {
+            // Or prompt login
+            return;
+        };
         const chat = await apiService.findOrCreateChat(user.id, product.seller.id);
         navigate(`/chat/${chat.id}?productId=${product.id}`);
     }, [product, user, navigate]);
 
     const handleWishlistClick = () => {
         if (!product) return;
-        // Wishlist works for guests via localStorage
         if (isWishlisted(product.id)) {
             removeFromWishlist(product.id);
         } else {
@@ -144,201 +102,182 @@ const ProductDetailPage: React.FC = () => {
         }
     };
     
-     const handleShare = () => {
+    const handleShare = () => {
         if (!product) return;
-        let urlToCopy = window.location.href;
-        // Если текущий пользователь является продавцом этого товара, добавляем его реферальный ID
-        if (user && user.id === product.seller.id && user.affiliateId) {
-            const url = new URL(urlToCopy);
-            url.searchParams.set('ref', user.affiliateId);
-            urlToCopy = url.toString();
-        }
+        const urlToCopy = window.location.href;
         navigator.clipboard.writeText(urlToCopy).then(() => {
             setCopied(true);
-            setTimeout(() => setCopied(false), 2000); // Сбросить состояние через 2 секунды
+            setTimeout(() => setCopied(false), 2000);
         });
     };
     
-    const displayedImage = useMemo(() => {
-        if (selectedVariant?.imageUrl) return selectedVariant.imageUrl;
-        return product?.imageUrls[selectedImageIndex] || '';
-    }, [selectedVariant, product, selectedImageIndex]);
-
-    const hasVariants = useMemo(() => product?.variantAttributes && product.variantAttributes.length > 0, [product]);
+     const handleAddToCart = useCallback(() => {
+        if (!product) return;
+        // Guest users can add to cart
+        const price = selectedVariant?.salePrice || selectedVariant?.price || product.salePrice || product.price || 0;
+        addToCart(product, 1, selectedVariant || undefined, price, 'RETAIL');
+    }, [product, addToCart, selectedVariant]);
+    
 
     if (isLoading) {
-        return <div className="flex justify-center items-center h-96"><Spinner /></div>;
+        return <div className="flex justify-center items-center h-[calc(100vh-10rem)]"><Spinner size="lg"/></div>;
     }
 
     if (!product) {
-        return <div className="text-center text-xl text-base-content/70">Товар не найден.</div>;
+        return <div className="text-center py-20">Товар не найден.</div>;
     }
-
+    
     const isOwner = user ? product.seller.id === user.id : false;
     const isFavorited = isWishlisted(product.id);
-    const stock = hasVariants ? (selectedVariant?.stock ?? 0) : 1; // Assume 1 for non-variant products
-    const isStockAvailable = stock > 0;
-
-    const displayPrice = hasVariants ? (selectedVariant?.price ?? 0) : (product.price ?? 0);
-    const displaySalePrice = hasVariants ? selectedVariant?.salePrice : product.salePrice;
-    const hasDiscount = displaySalePrice && displaySalePrice < displayPrice;
-    const finalPrice = hasDiscount ? displaySalePrice : displayPrice;
 
     return (
     <>
-        <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-x-8">
-            {/* Image gallery */}
-            <div className="flex flex-col-reverse">
-                {/* Image selector */}
-                <div className="mx-auto mt-6 hidden w-full max-w-2xl sm:block lg:max-w-none">
-                    <div className="tabs tabs-boxed">
-                        {product.imageUrls.map((url, index) => (
-                            <a key={index} role="tab" className={`tab h-24 w-24 ${selectedImageIndex === index ? 'tab-active' : ''}`} onClick={() => setSelectedImageIndex(index)}>
-                                <img src={url} alt="" className="h-full w-full object-cover object-center rounded-lg" />
-                            </a>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="w-full aspect-square">
-                    <img src={displayedImage} alt={product.title} className="h-full w-full object-cover object-center sm:rounded-lg" />
-                </div>
-            </div>
-
-            {/* Product info */}
-            <div className="mt-10 px-4 sm:mt-16 sm:px-0 lg:mt-0">
-                <h1 className="text-3xl font-bold tracking-tight text-base-content">{product.title}</h1>
-                <div className="mt-3">
-                    <h2 className="sr-only">Информация о товаре</h2>
-                    <div className="flex items-baseline">
-                        <p className="text-3xl tracking-tight text-primary">{getFormattedPrice(finalPrice)}</p>
-                        {hasDiscount && <p className="text-xl text-base-content/50 line-through ml-2">{getFormattedPrice(displayPrice)}</p>}
-                    </div>
-                </div>
-
-                <div className="mt-3">
-                    <h3 className="sr-only">Отзывы</h3>
-                    <div className="flex items-center">
-                        <StarRating rating={product.seller.rating} />
-                        <p className="sr-only">{product.seller.rating} из 5 звезд</p>
-                        <a href="#reviews" className="ml-3 text-sm font-medium text-primary hover:text-primary-focus">{reviews.length} отзывов</a>
-                    </div>
-                </div>
-
-                <div className="mt-6">
-                    <div className="collapse collapse-plus bg-base-100">
-                        <input type="radio" name="my-accordion-3" defaultChecked /> 
-                        <div className="collapse-title text-xl font-medium">
-                            Описание товара
-                        </div>
-                        <div className="collapse-content"> 
-                            <p className="text-base text-base-content/80 leading-relaxed">{product.description}</p>
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+            <article className="rounded-2xl border border-amber-200/80 bg-white overflow-hidden shadow-sm">
+                <div className="p-4 sm:p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1.1fr,1fr] gap-5 lg:gap-8">
+                    {/* Media Gallery */}
+                    <div className="flex flex-col gap-3">
+                         <div className="relative w-full rounded-xl overflow-hidden border border-amber-200/80">
+                            <img 
+                                src={selectedMedia.src} 
+                                alt={`Фото товара: ${product.title}`} 
+                                className="w-full h-72 sm:h-96 object-cover"
+                            />
+                            {product.videoUrl && (
+                                <button type="button" onClick={() => setIsVideoModalOpen(true)} className="absolute top-3 left-3 inline-flex items-center gap-2 px-2.5 py-1.5 text-sm rounded-full bg-amber-900/90 text-white transition-transform hover:scale-105">
+                                    <img src="https://api.iconify.design/lucide-play.svg" alt="Воспроизвести" width="16" height="16"/>
+                                    Видеообзор
+                                </button>
+                            )}
+                         </div>
+                         <div className="w-full overflow-x-auto scrollbar-hide">
+                            <div className="flex gap-3 pb-1">
+                                {product.imageUrls.map((url, index) => (
+                                     <button 
+                                        key={index} 
+                                        type="button"
+                                        onClick={() => setSelectedMedia({type: 'image', src: url})}
+                                        className={`w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-colors ${selectedMedia.type === 'image' && selectedMedia.src === url ? 'border-primary' : 'border-amber-200/80 hover:border-amber-300'}`}
+                                    >
+                                        <img src={url} alt={`Миниатюра ${index + 1}`} className="w-full h-full object-cover"/>
+                                     </button>
+                                ))}
+                                {product.videoUrl && (
+                                    <button 
+                                        type="button"
+                                        onClick={() => setIsVideoModalOpen(true)}
+                                        className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 rounded-lg overflow-hidden border-2 border-amber-200/80 hover:border-amber-300"
+                                    >
+                                        <img src={product.imageUrls[0]} alt="Обложка видео" className="w-full h-full object-cover filter brightness-50" />
+                                        <span className="absolute inset-0 flex items-center justify-center">
+                                            <img src="https://api.iconify.design/lucide-play.svg" alt="Видео" className="w-6 h-6 text-white" />
+                                        </span>
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <div className="mt-6">
-                    {hasVariants && (
-                        <div className="space-y-4">
-                            {product.variantAttributes?.map(attr => (
-                                <div key={attr.name}>
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-sm font-medium text-base-content">{attr.name}</h3>
+                    {/* Details */}
+                    <div className="flex flex-col gap-3">
+                         <h1 className="text-2xl lg:text-3xl font-bold font-manrope text-base-content">{product.title}</h1>
+                         <div className="flex items-center justify-between gap-3 flex-wrap">
+                            <span className="text-2xl font-bold text-base-content">{getFormattedPrice(product.price || 0)}</span>
+                            <span className="text-sm text-base-content/70">В наличии • {product.seller.defaultShippingAddress?.city || 'Украина'}</span>
+                         </div>
+                         <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-4">
+                            <button onClick={handleAddToCart} disabled={isOwner} className="btn btn-primary btn-block sm:btn-wide">
+                                <DynamicIcon name="cart" className="w-5 h-5"/>
+                                {isOwner ? 'Это ваш товар' : 'В корзину'}
+                            </button>
+                             <div className="flex items-center justify-center gap-2">
+                                <button onClick={handleContactSeller} disabled={isOwner} className="btn btn-outline btn-secondary flex-1">
+                                    <DynamicIcon name="chat" className="w-5 h-5"/>
+                                    Написать
+                                </button>
+                                <button onClick={handleWishlistClick} aria-pressed={isFavorited} className={`btn btn-square btn-outline ${isFavorited ? 'btn-active text-red-500' : ''}`}>
+                                    <DynamicIcon name="wishlist-heart" className="w-5 h-5"/>
+                                </button>
+                                <button onClick={handleShare} className="btn btn-square btn-outline">
+                                    <DynamicIcon name="share" className="w-5 h-5"/>
+                                    {copied && <span className="absolute -top-8 text-xs bg-base-300 text-white px-2 py-1 rounded">Скопировано!</span>}
+                                </button>
+                             </div>
+                         </div>
+                         <aside className="mt-4 border-t border-amber-200/80 pt-4">
+                            <h3 className="font-bold text-base-content mb-3">Характеристики</h3>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                                {Object.entries(product.dynamicAttributes).slice(0, 6).map(([key, value]) => (
+                                     <div key={key} className="flex justify-between border-b border-dashed border-amber-200/60 py-1">
+                                        <span className="text-base-content/70">{key}</span>
+                                        <span className="font-semibold text-base-content text-right">{value}</span>
+                                     </div>
+                                ))}
+                            </div>
+                         </aside>
+                         {!isOwner && (
+                            <div className="mt-4 border-t border-amber-200/80 pt-4">
+                                <div className="flex items-center gap-4">
+                                    <div className="avatar">
+                                        <div className="w-12 h-12 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+                                            <Link to={`/profile/${product.seller.id}`}><img src={product.seller.avatarUrl} alt={product.seller.name} /></Link>
+                                        </div>
                                     </div>
-                                    <div className="flex flex-wrap gap-2 mt-2">
-                                        {attr.options.map(option => (
-                                            <button type="button" key={option} onClick={() => handleAttributeSelect(attr.name, option)} className={`btn btn-sm ${selectedAttributes[attr.name] === option ? 'btn-primary' : 'btn-outline'}`}>
-                                                {option}
-                                            </button>
-                                        ))}
+                                    <div>
+                                        <Link to={`/profile/${product.seller.id}`} className="font-bold text-base-content hover:underline">{product.seller.name}</Link>
+                                        <div className="flex items-center gap-2">
+                                            <StarRating rating={product.seller.rating} />
+                                            <VerifiedBadge level={product.seller.verificationLevel} />
+                                        </div>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                    )}
-
-                    <div className="mt-10 flex gap-2">
-                        <button type="button" onClick={handleAddToCart} disabled={isOwner || !isStockAvailable} className="btn btn-primary flex-1">
-                            {isOwner ? "Это ваш товар" : (isStockAvailable ? "В корзину" : "Нет в наличии")}
-                        </button>
-                        <button type="button" onClick={handleWishlistClick} className={`btn btn-ghost btn-square ${isFavorited ? 'text-red-500' : ''}`}>
-                            <DynamicIcon name="wishlist-heart" className="h-6 w-6" fallback={
-                                <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
-                            }/>
-                        </button>
-                         <div className="tooltip" data-tip={copied ? "Скопировано!" : "Поделиться"}>
-                           <button type="button" onClick={handleShare} className="btn btn-ghost btn-square">
-                                <DynamicIcon name="share" className="h-6 w-6" fallback={
-                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M13 4.5a2.5 2.5 0 11.702 4.289l-3.41 1.95a2.5 2.5 0 110-1.478l3.41-1.95A2.5 2.5 0 0113 4.5zM4.5 8a2.5 2.5 0 100 5 2.5 2.5 0 000-5zm8.5 3.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z" /></svg>
-                                }/>
-                            </button>
-                         </div>
-                    </div>
-                </div>
-                
-                {!isOwner && user && (
-                <div className="mt-8 border-t border-base-300/50 pt-6">
-                    <div className="flex items-center gap-4">
-                        <div className="avatar">
-                           <div className="w-16 rounded-full">
-                                <Link to={`/profile/${product.seller.id}`}>
-                                  <img src={product.seller.avatarUrl} alt={product.seller.name} />
-                                </Link>
-                           </div>
-                        </div>
-                        <div className="flex-1">
-                            <p className="text-sm text-base-content/70">Продавец</p>
-                            <div className="flex items-center gap-2">
-                                 <Link to={`/profile/${product.seller.id}`} className="font-bold text-lg text-base-content hover:underline">{product.seller.name}</Link>
                             </div>
-                             <Link to={`/profile/${product.seller.id}`} className="text-sm text-primary hover:underline">Все товары продавца &rarr;</Link>
-                        </div>
-                        <button onClick={handleContactSeller} className="btn btn-secondary">
-                            Написать
-                        </button>
+                         )}
                     </div>
                 </div>
-                )}
-                
-                <section className="mt-12 space-y-2">
-                    <div className="collapse collapse-arrow bg-base-100">
-                        <input type="radio" name="my-accordion-2" defaultChecked/> 
-                        <div className="collapse-title text-lg font-medium">Характеристики</div>
-                        <div className="collapse-content"> 
-                           <ul className="list-disc list-inside text-base-content/80">
-                                {Object.entries(product.dynamicAttributes).map(([key, value]) => (
-                                    <li key={key}><span className="font-semibold">{key}:</span> {value}</li>
-                                ))}
-                            </ul>
-                        </div>
-                    </div>
-                    <div id="reviews" className="collapse collapse-arrow bg-base-100">
-                        <input type="radio" name="my-accordion-2" /> 
-                        <div className="collapse-title text-lg font-medium">Отзывы ({reviews.length})</div>
-                        <div className="collapse-content space-y-4"> 
-                            {reviews.length > 0 ? (
-                                reviews.map(review => (
-                                    <ReviewCard key={review.id} review={review} onImageClick={setViewingImage} />
-                                ))
-                            ) : (
-                                <p className="text-base-content/70">Отзывов пока нет.</p>
-                            )}
-                        </div>
-                    </div>
-                    <div className="collapse collapse-arrow bg-base-100">
-                        <input type="radio" name="my-accordion-2" /> 
-                        <div className="collapse-title text-lg font-medium">Доставка и Возврат</div>
-                        <div className="collapse-content"> 
-                            <p className="text-base-content/80">Мы предлагаем быструю доставку через Нова Пошта и Укрпошта. Возврат возможен в течение 14 дней, если товар не был в использовании и сохранил товарный вид.</p>
-                        </div>
-                    </div>
-                </section>
+            </article>
+
+             {/* Description Section */}
+            <div className="mt-8 bg-white p-6 rounded-2xl border border-amber-200/80">
+                <h2 className="text-2xl font-bold font-manrope text-base-content mb-4">Описание товара</h2>
+                <p className="text-base-content/90 whitespace-pre-wrap">{product.description}</p>
             </div>
+            
+             {/* Reviews Section */}
+            <div id="reviews" className="mt-8 bg-white p-6 rounded-2xl border border-amber-200/80">
+                <h2 className="text-2xl font-bold font-manrope text-base-content mb-4">Отзывы ({reviews.length})</h2>
+                <div className="space-y-4">
+                    {reviews.length > 0 ? (
+                        reviews.map(review => (
+                            <ReviewCard key={review.id} review={review} onImageClick={() => {}} />
+                        ))
+                    ) : (
+                        <p className="text-base-content/70 text-center py-8">Отзывов на этот товар пока нет.</p>
+                    )}
+                </div>
+            </div>
+
+            {/* Similar Products Section */}
+            {similarProducts.length > 0 && (
+                <div className="mt-8">
+                    <h2 className="text-2xl font-bold font-manrope text-base-content mb-4">Похожие товары</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {similarProducts.map(p => <ProductCard key={p.id} product={p} />)}
+                    </div>
+                </div>
+            )}
         </div>
+
+        {isVideoModalOpen && product.videoUrl && (
+             <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setIsVideoModalOpen(false)}>
+                <div className="relative w-full max-w-4xl" onClick={e => e.stopPropagation()}>
+                    <video controls autoPlay src={product.videoUrl} className="w-full rounded-lg" />
+                     <button onClick={() => setIsVideoModalOpen(false)} className="absolute -top-2 -right-2 bg-white rounded-full p-1 text-black">&times;</button>
+                </div>
+             </div>
+        )}
         
-        {product.isAuction && <BidModal isOpen={isBidModalOpen} onClose={() => setIsBidModalOpen(false)} onSubmit={handlePlaceBid} product={product} />}
+        {isBidModalOpen && <BidModal isOpen={isBidModalOpen} onClose={() => setIsBidModalOpen(false)} onSubmit={async () => {}} product={product} />}
         {isNftModalOpen && <NFTCertificateModal product={product} onClose={() => setIsNftModalOpen(false)} />}
-        {viewingImage && <ImageModal imageUrl={viewingImage} onClose={() => setViewingImage(null)} />}
     </>
     );
 };
