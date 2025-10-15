@@ -11,8 +11,7 @@ export interface User {
   following: string[];
   balance: number;
   commissionOwed: number;
-  // FIX: Add missing 'verificationLevel' property to support Pro status features.
-  verificationLevel: 'NONE' | 'PRO';
+  verificationLevel?: 'NONE' | 'PRO';
   affiliateId?: string;
   phoneNumber?: string;
   defaultShippingAddress?: ShippingAddress;
@@ -21,9 +20,7 @@ export interface User {
   };
   tonWalletAddress?: string;
   paymentCard?: string;
-  // FIX: Added 'role' property to User interface for admin panel compatibility.
   role?: 'USER' | 'MODERATOR' | 'SUPER_ADMIN';
-  // FIX: Add email property to User interface for admin panel compatibility.
   email?: string;
 }
 
@@ -94,7 +91,6 @@ export interface Product {
   nftContractAddress?: string;
   
   // Admin-related fields
-  // FIX: Add status, rejectionReason, and createdAt to Product interface for admin panel compatibility.
   status?: 'Pending Moderation' | 'Active' | 'Rejected';
   rejectionReason?: string;
   createdAt?: string;
@@ -119,7 +115,6 @@ export interface MessageContent {
 
 export interface Message extends MessageContent {
   id: string;
-  // FIX: Replaced senderId, senderName, senderAvatar with a single 'sender' object to match backend payload and fix type errors in components.
   sender: Partial<User>;
   timestamp: number;
   chat?: { id: string };
@@ -133,10 +128,13 @@ export interface Chat {
 }
 
 export interface ShippingAddress {
-  city: string;
-  postOffice: string; // "Відділення №1" or "12345"
   recipientName: string;
   phoneNumber: string;
+  city: string;
+  postOffice: string;
+  // For Nova Poshta integration
+  cityRef?: string;
+  warehouseRef?: string;
 }
 
 export interface OrderItem {
@@ -325,7 +323,6 @@ export interface Dispute {
     order: Order;
     messages: DisputeMessage[];
     status: 'OPEN' | 'UNDER_REVIEW' | 'RESOLVED_BUYER' | 'RESOLVED_SELLER';
-    // FIX: Add createdAt to match backend entity for admin panel compatibility.
     createdAt?: number;
 }
 
@@ -334,11 +331,14 @@ export interface LiveStream {
     title: string;
     seller: User;
     status: 'UPCOMING' | 'LIVE' | 'ENDED';
-    featuredProductId: string;
+    featuredProduct: Product;
     scheduledStartTime?: number;
     moderatorId?: string;
     isAiModeratorEnabled?: boolean;
     welcomeMessage?: string;
+    likes?: number;
+    viewerCount?: number;
+    isPromoted?: boolean;
 }
 
 export interface TrackingEvent {
@@ -389,7 +389,6 @@ export interface AiFocus {
     ctaLink: 'sales' | 'chat' | 'analytics' | 'settings';
 }
 
-// FIX: Add VerificationAnalysis type definition for use in AI services.
 export interface VerificationAnalysis {
     isDocument: boolean;
     fullName?: string;
@@ -417,4 +416,14 @@ export interface Icon {
     svgContent: string;
     width?: number;
     height?: number;
+}
+
+// --- Nova Poshta Types ---
+export interface NovaPoshtaCity {
+    Description: string;
+    Ref: string;
+}
+export interface NovaPoshtaWarehouse {
+    Description: string;
+    Ref: string;
 }
