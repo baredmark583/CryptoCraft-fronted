@@ -197,10 +197,11 @@ const SettingsTab: React.FC<{ user: User }> = ({ user }) => {
 
                     <div className="border-t border-base-300 pt-6">
                          <h3 className="text-xl font-bold text-white">Адрес доставки по умолчанию</h3>
+                         <p className="text-sm text-base-content/70 mt-1 mb-4">Этот город будет отображаться на ваших товарах как место отправки.</p>
                          <div className="space-y-4 mt-4">
                             <div>
                                 <label className="block text-sm font-medium text-base-content/70">Город</label>
-                                <input type="text" name="city" value={formData.city} onChange={handleChange} className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md p-2" />
+                                <input type="text" name="city" value={formData.city} onChange={handleChange} className="mt-1 block w-full bg-base-200 border border-base-300 rounded-md p-2" required />
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-base-content/70">Отделение / Почтомат</label>

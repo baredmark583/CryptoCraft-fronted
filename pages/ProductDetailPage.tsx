@@ -182,7 +182,7 @@ const ProductDetailPage: React.FC = () => {
                          <h1 className="text-2xl lg:text-3xl font-bold font-manrope text-base-content">{product.title}</h1>
                          <div className="flex items-center justify-between gap-3 flex-wrap">
                             <span className="text-2xl font-bold text-base-content">{getFormattedPrice(product.price || 0)}</span>
-                            <span className="text-sm text-base-content/70">В наличии • {product.seller.defaultShippingAddress?.city || 'Украина'}</span>
+                            <span className="text-sm text-base-content/70">В наличии • {product.seller.defaultShippingAddress?.city}</span>
                          </div>
                          <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-4">
                             <button onClick={handleAddToCart} disabled={isOwner} className="btn btn-primary btn-block sm:btn-wide">
