@@ -3,6 +3,9 @@
 // The central wallet address for the platform, used for "Safe Deal" / Escrow transactions.
 export const TREASURY_WALLET_ADDRESS = "UQARnCdfRw0VcT86ApqHJEdMGzQU3T_MnPbNs71A6nOXcF91";
 
+// FIX: Added missing AUTHENTICATION_FEE constant.
+export const AUTHENTICATION_FEE = 15;
+
 // --- CATEGORY DEFINITIONS ---
 
 export interface CategoryField {

@@ -8,12 +8,13 @@ import type { ShippingAddress, User, CartItem, NovaPoshtaCity, NovaPoshtaWarehou
 import Spinner from '../components/Spinner';
 import { useTelegramBackButton } from '../hooks/useTelegram';
 import PaymentModal from '../components/PaymentModal';
-import { TREASURY_WALLET_ADDRESS } from '../constants';
+// FIX: Import AUTHENTICATION_FEE constant to resolve reference error.
+import { TREASURY_WALLET_ADDRESS, AUTHENTICATION_FEE } from '../constants';
 import DynamicIcon from '../components/DynamicIcon';
 
 type CheckoutStep = 'shipping' | 'payment' | 'summary';
 
-const AUTHENTICATION_FEE = 15; // in USDT
+type PaymentMethod = 'ESCROW' | 'DIRECT_TON' | 'INFO_CARD';
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -72,7 +73,7 @@ const CheckoutPage: React.FC = () => {
     const debouncedWarehouseSearch = useDebounce(warehouseSearch, 300);
 
 
-    const [paymentMethod, setPaymentMethod] = useState<'ESCROW' | 'DIRECT'>('ESCROW');
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('ESCROW');
     const [requestAuthentication, setRequestAuthentication] = useState(false);
     
     const [paymentModalState, setPaymentModalState] = useState<{
@@ -140,17 +141,26 @@ const CheckoutPage: React.FC = () => {
         }, {} as Record<string, { seller: User; items: CartItem[], subtotal: number }>);
     }, [cartItems, user]);
     
-    const isDirectPaymentPossible = useMemo(() => {
-      const sellerIds = Object.keys(groupedBySeller);
-      return sellerIds.length === 1 && !!groupedBySeller[sellerIds[0]].seller.tonWalletAddress;
+    const { isDirectTonPossible, isDirectCardPossible } = useMemo(() => {
+        const sellerIds = Object.keys(groupedBySeller);
+        if (sellerIds.length !== 1) {
+            return { isDirectTonPossible: false, isDirectCardPossible: false };
+        }
+        const seller = groupedBySeller[sellerIds[0]].seller;
+        return {
+            isDirectTonPossible: !!seller.tonWalletAddress,
+            isDirectCardPossible: !!seller.paymentCard,
+        };
     }, [groupedBySeller]);
 
-    // Reset to ESCROW if direct payment becomes impossible (e.g., user adds item from another seller)
-    React.useEffect(() => {
-        if (paymentMethod === 'DIRECT' && !isDirectPaymentPossible) {
+    useEffect(() => {
+        if (paymentMethod === 'DIRECT_TON' && !isDirectTonPossible) {
             setPaymentMethod('ESCROW');
         }
-    }, [isDirectPaymentPossible, paymentMethod]);
+        if (paymentMethod === 'INFO_CARD' && !isDirectCardPossible) {
+            setPaymentMethod('ESCROW');
+        }
+    }, [isDirectTonPossible, isDirectCardPossible, paymentMethod]);
 
     const totalShippingCost = useMemo(() => {
         return Object.values(shippingCosts).reduce((sum, cost) => sum + cost, 0);
@@ -269,19 +279,17 @@ const CheckoutPage: React.FC = () => {
         }
     };
     
-    const handlePaymentSuccess = async (txHash: string) => {
+    const handlePaymentSuccess = async (txHash: string, apiPaymentMethod: 'ESCROW' | 'DIRECT') => {
         setPaymentModalState(prev => ({...prev, isOpen: false}));
         setIsProcessing(true);
         setError('');
-        // Create orders in the backend *after* successful payment
-         try {
-            await apiService.createOrdersFromCart(cartItems, user, paymentMethod, shippingMethod, shippingAddress, requestAuthentication, appliedPromos, shippingCosts, txHash);
+        try {
+            await apiService.createOrdersFromCart(cartItems, user, apiPaymentMethod, shippingMethod, shippingAddress, requestAuthentication, appliedPromos, shippingCosts, txHash);
             alert("Заказ успешно оформлен!");
             clearCart();
             navigate('/profile?tab=purchases');
         } catch (err: any) {
             setError(err.message || 'Платеж прошел, но не удалось сохранить заказ. Обратитесь в поддержку.');
-            // Don't set isProcessing to false, as the payment is already made. Show a permanent error.
         }
     };
 
@@ -289,21 +297,29 @@ const CheckoutPage: React.FC = () => {
         setIsProcessing(true);
         setError('');
 
-        // The product reservation check is now handled by the backend within the order creation process.
-        // We can proceed directly to payment.
-
         let recipientAddress = TREASURY_WALLET_ADDRESS;
-        if (paymentMethod === 'DIRECT') {
+        let apiPaymentMethod: 'ESCROW' | 'DIRECT' = 'ESCROW';
+
+        if (paymentMethod === 'DIRECT_TON') {
             const sellerId = Object.keys(groupedBySeller)[0];
             recipientAddress = groupedBySeller[sellerId].seller.tonWalletAddress!;
+            apiPaymentMethod = 'DIRECT';
+        } else if (paymentMethod === 'ESCROW') {
+            recipientAddress = TREASURY_WALLET_ADDRESS;
+            apiPaymentMethod = 'ESCROW';
+        } else {
+            // INFO_CARD is an informational option and its button is disabled.
+            setError("Этот способ оплаты является информационным и не поддерживает автоматические платежи.");
+            setIsProcessing(false);
+            return;
         }
 
-        setIsProcessing(false); // Stop main processing, modal will handle its own state
+        setIsProcessing(false); 
         setPaymentModalState({
             isOpen: true,
             amount: grandTotal,
             recipientAddress,
-            onSuccess: handlePaymentSuccess
+            onSuccess: (txHash) => handlePaymentSuccess(txHash, apiPaymentMethod)
         });
     }
 
@@ -395,6 +411,7 @@ const CheckoutPage: React.FC = () => {
                                 </div>
                                 <p className="text-sm text-brand-text-secondary mt-1 pl-10">Ваши средства отправляются на кошелек платформы и хранятся там до подтверждения получения товара. Максимальная безопасность.</p>
                             </label>
+
                             {isAuthenticationAvailable && (
                                 <div className="pl-4 border-l-4 border-brand-secondary/50">
                                     <label className={`block p-4 rounded-lg border-2 cursor-pointer ${requestAuthentication ? 'border-brand-secondary bg-brand-secondary/10' : 'border-brand-border bg-brand-background/50'}`}>
@@ -408,22 +425,37 @@ const CheckoutPage: React.FC = () => {
                                     </label>
                                 </div>
                             )}
-                            <label className={`block p-4 rounded-lg border-2 cursor-pointer relative ${paymentMethod === 'DIRECT' ? 'border-brand-primary bg-brand-primary/10' : 'border-brand-border bg-brand-background'} ${!isDirectPaymentPossible ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                                <input type="radio" name="paymentMethod" value="DIRECT" checked={paymentMethod === 'DIRECT'} onChange={() => setPaymentMethod('DIRECT')} className="hidden" disabled={!isDirectPaymentPossible}/>
-                                <span className="font-bold text-white">Напрямую продавцу</span>
-                                <p className="text-sm text-brand-text-secondary mt-1">Средства сразу отправляются на личный кошелек продавца.</p>
-                                {!isDirectPaymentPossible && (
-                                    <div className="absolute inset-0 flex items-center justify-center" title="Доступно только при покупке у одного продавца, указавшего свой кошелек">
-                                        <span className="bg-black/70 text-white text-xs font-bold px-3 py-1 rounded-full">НЕДОСТУПНО</span>
-                                    </div>
-                                )}
-                            </label>
+
+                            {isDirectTonPossible && (
+                                <label className={`block p-4 rounded-lg border-2 cursor-pointer ${paymentMethod === 'DIRECT_TON' ? 'border-brand-primary bg-brand-primary/10' : 'border-brand-border bg-brand-background'}`}>
+                                    <input type="radio" name="paymentMethod" value="DIRECT_TON" checked={paymentMethod === 'DIRECT_TON'} onChange={() => setPaymentMethod('DIRECT_TON')} className="hidden"/>
+                                    <span className="font-bold text-white">Напрямую на TON кошелек</span>
+                                    <p className="text-sm text-brand-text-secondary mt-1">Средства сразу отправляются на личный кошелек продавца.</p>
+                                </label>
+                            )}
+
+                            {isDirectCardPossible && (
+                                <label className={`block p-4 rounded-lg border-2 cursor-pointer ${paymentMethod === 'INFO_CARD' ? 'border-brand-primary bg-brand-primary/10' : 'border-brand-border bg-brand-background'}`}>
+                                    <input type="radio" name="paymentMethod" value="INFO_CARD" checked={paymentMethod === 'INFO_CARD'} onChange={() => setPaymentMethod('INFO_CARD')} className="hidden"/>
+                                    <span className="font-bold text-white">На карту продавца (вручную)</span>
+                                    <p className="text-sm text-brand-text-secondary mt-1">Оплата по договоренности напрямую с продавцом.</p>
+                                </label>
+                            )}
+
                         </div>
-                        {paymentMethod === 'DIRECT' && isDirectPaymentPossible && (
+                        {paymentMethod === 'DIRECT_TON' && (
                             <div className="mt-4 p-4 bg-orange-500/10 border-2 border-orange-500/30 rounded-lg text-orange-300 text-sm flex items-start gap-3">
                                 <DynamicIcon name="checkout-warning" className="h-6 w-6 flex-shrink-0" fallback={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>} />
                                 <div>
                                     <strong>Внимание!</strong> Этот способ оплаты не защищен платформой. Вы переводите средства напрямую продавцу на свой страх и риск. CryptoCraft не сможет помочь в разрешении споров по таким сделкам.
+                                </div>
+                            </div>
+                        )}
+                        {paymentMethod === 'INFO_CARD' && (
+                             <div className="mt-4 p-4 bg-sky-500/10 border-2 border-sky-500/30 rounded-lg text-sky-300 text-sm flex items-start gap-3">
+                                <DynamicIcon name="checkout-info" className="h-6 w-6 flex-shrink-0" fallback={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>} />
+                                <div>
+                                    <strong>Информационная опция:</strong> Оплата на карту производится по договоренности с продавцом. Свяжитесь с ним в чате для уточнения деталей. Эта опция не предполагает автоматическую оплату через платформу.
                                 </div>
                             </div>
                         )}
@@ -445,7 +477,11 @@ const CheckoutPage: React.FC = () => {
                             </div>
                              <div>
                                 <h3 className="font-semibold text-white">Способ оплаты:</h3>
-                                <p className="text-brand-text-secondary">{paymentMethod === 'ESCROW' ? 'Безопасная сделка (Эскроу)' : 'Напрямую продавцу'}</p>
+                                <p className="text-brand-text-secondary">
+                                  {paymentMethod === 'ESCROW' && 'Безопасная сделка (Эскроу)'}
+                                  {paymentMethod === 'DIRECT_TON' && 'Напрямую на TON кошелек'}
+                                  {paymentMethod === 'INFO_CARD' && 'На карту продавца (вручную)'}
+                                </p>
                                  {requestAuthentication && (
                                     <p className="text-sm text-brand-secondary font-semibold mt-1">✅ Включая проверку подлинности экспертом</p>
                                 )}
@@ -454,7 +490,7 @@ const CheckoutPage: React.FC = () => {
                         {error && <p className="text-red-500 text-sm mt-4 text-center">{error}</p>}
                         <div className="flex gap-4 mt-6">
                             <button onClick={() => setStep('payment')} className="w-full bg-brand-border hover:bg-brand-border/80 text-white font-bold py-3 rounded-lg">Назад</button>
-                            <button onClick={handleConfirmOrder} disabled={isProcessing} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg flex justify-center items-center">
+                            <button onClick={handleConfirmOrder} disabled={isProcessing || paymentMethod === 'INFO_CARD'} className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg flex justify-center items-center disabled:bg-gray-500 disabled:cursor-not-allowed">
                                 {isProcessing ? <Spinner size="sm" /> : 'Перейти к оплате'}
                             </button>
                         </div>
