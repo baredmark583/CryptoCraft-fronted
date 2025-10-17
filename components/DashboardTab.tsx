@@ -1,89 +1,32 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
-import { VectorMap } from "@react-jvectormap/core";
-import { worldMill } from "@react-jvectormap/world";
-
 import { useAuth } from '../hooks/useAuth';
 import { apiService } from '../services/apiService';
 import type { Order } from '../types';
-import Spinner from '../components/Spinner';
-import DynamicIcon from '../components/DynamicIcon';
+import Spinner from './Spinner';
+import DynamicIcon from './DynamicIcon';
 
-// --- Local Components ---
-
-const StatCard: React.FC<{ title: string; value: string | number; icon: React.ReactNode; change?: number; }> = ({ title, value, icon, change }) => (
-    <div className="card bg-base-100 border border-base-300 shadow-lg">
-        <div className="card-body">
-            <div className="flex items-center justify-center w-12 h-12 bg-base-200 rounded-xl mb-4">
-                {icon}
-            </div>
-            <span className="text-sm text-base-content/70">{title}</span>
-            <h4 className="text-2xl font-bold text-base-content">{value}</h4>
-            {change !== undefined && (
-                <div className={`badge ${change >= 0 ? 'badge-success' : 'badge-error'} gap-1`}>
-                    {change >= 0 ? '▲' : '▼'}
-                    {change.toFixed(2)}%
-                </div>
-            )}
+const KpiCard: React.FC<{ title: string, value: string | number, trend: 'up' | 'down', trendValue: string, iconUrl: string }> = ({ title, value, trend, trendValue, iconUrl }) => (
+    <article className="kpi-card">
+        <div className="kpi-meta">
+            <span className="kpi-label">{title}</span>
+            <span className="kpi-value">{value}</span>
         </div>
-    </div>
+        <span className={`kpi-trend ${trend}`}>
+            <img src={trend === 'up' ? "https://api.iconify.design/lucide-trending-up.svg" : "https://api.iconify.design/lucide-trending-down.svg"} alt={trend === 'up' ? "Рост" : "Снижение"} />
+            {trendValue}
+        </span>
+    </article>
 );
-
-const RecentOrdersTable: React.FC<{ sales: Order[] }> = ({ sales }) => {
-    if (sales.length === 0) {
-        return <p className="text-base-content/70 text-center py-8">Недавних продаж нет.</p>;
-    }
-
-    return (
-        <div className="overflow-x-auto">
-            <table className="table">
-                <thead>
-                    <tr>
-                        <th>Товар</th>
-                        <th>Покупатель</th>
-                        <th>Сумма</th>
-                        <th>Статус</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {sales.slice(0, 5).map(order => {
-                        const product = order.items[0].product;
-                        return (
-                            <tr key={order.id} className="hover">
-                                <td>
-                                    <div className="flex items-center gap-3">
-                                        <div className="avatar">
-                                            <div className="mask mask-squircle w-12 h-12">
-                                                <img src={product.imageUrls[0]} alt={product.title} />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <div className="font-bold">{product.title}</div>
-                                            <div className="text-sm opacity-50">{product.category}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>{order.buyer.name}</td>
-                                <td>{order.total.toFixed(2)} USDT</td>
-                                <td><span className="badge badge-ghost badge-sm">{order.status}</span></td>
-                            </tr>
-                        )
-                    })}
-                </tbody>
-            </table>
-        </div>
-    );
-};
 
 
 const DashboardTab: React.FC = () => {
     const { user } = useAuth();
-    const [sales, setSales] = useState<Order[]>([]);
-    const [purchases, setPurchases] = useState<Order[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [sales, setSales] = React.useState<Order[]>([]);
+    const [purchases, setPurchases] = React.useState<Order[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
 
-    useEffect(() => {
+    React.useEffect(() => {
         const fetchData = async () => {
             if (!user) return;
             setIsLoading(true);
@@ -108,12 +51,12 @@ const DashboardTab: React.FC = () => {
         const monthlyRevenue: Record<string, number> = {};
 
         sales.forEach(order => {
-            const month = new Date(order.orderDate).toLocaleString('en-US', { month: 'short' });
+            const month = new Date(order.orderDate).toLocaleString('ru-RU', { month: 'short' });
             monthlySales[month] = (monthlySales[month] || 0) + 1;
             monthlyRevenue[month] = (monthlyRevenue[month] || 0) + order.total;
         });
 
-        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const monthNames = ["янв", "фев", "мар", "апр", "май", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
         
         const finalSalesData = monthNames.map(month => ({
             name: month,
@@ -139,54 +82,71 @@ const DashboardTab: React.FC = () => {
     }
 
     return (
-        <div className="space-y-6">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6">
-                <StatCard title="Всего покупок" value={totalPurchases} icon={<DynamicIcon name="cart" className="h-6 w-6" />} change={-9.05} />
-                <StatCard title="Всего продаж" value={totalSales} icon={<DynamicIcon name="sales" className="h-6 w-6" />} change={11.01} />
+        <div className="space-y-2">
+            <div className="summary-grid">
+                <KpiCard title="Всего покупок" value={totalPurchases} trend="down" trendValue="-9.05%" iconUrl="https://api.iconify.design/lucide-shopping-bag.svg" />
+                <KpiCard title="Всего продаж" value={totalSales} trend="up" trendValue="+11.01%" iconUrl="https://api.iconify.design/lucide-receipt-russian-ruble.svg" />
             </div>
-            <div className="card bg-base-100 border border-base-300 shadow-lg p-4 sm:p-6">
-                <h3 className="card-title text-lg mb-4">Продажи за месяц</h3>
-                <div className="h-48">
-                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={salesChartData}>
-                            <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={12} />
-                            <Tooltip cursor={{fill: 'rgba(255,255,255,0.1)'}} contentStyle={{backgroundColor: '#3d4451', border: 'none', borderRadius: '0.5rem'}} />
-                            <Bar dataKey="Sales" radius={[5, 5, 0, 0]}>
-                                <Cell fill="oklch(80% 0.114 19.571)" />
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
+            <div className="charts-grid">
+                <article className="chart-card">
+                    <div className="card-head">
+                        <strong className="card-title">Продажи за месяц</strong>
+                    </div>
+                    <div className="h-56">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={salesChartData} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={12} />
+                                <YAxis axisLine={false} tickLine={false} fontSize={12} />
+                                <Tooltip cursor={{fill: 'rgba(255,251,235,0.8)'}} contentStyle={{backgroundColor: '#fff', border: '1px solid #fef3c7', borderRadius: '0.75rem'}} />
+                                <Bar dataKey="Sales" radius={[5, 5, 0, 0]}>
+                                    <Cell fill="oklch(var(--p))" />
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </div>
+                </article>
+                <article className="chart-card">
+                    <div className="card-head">
+                        <strong className="card-title">Статистика</strong>
+                    </div>
+                     <div className="h-56">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={revenueChartData} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
+                                <defs>
+                                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="oklch(var(--p))" stopOpacity={0.8}/>
+                                        <stop offset="95%" stopColor="oklch(var(--p))" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={12} />
+                                <YAxis axisLine={false} tickLine={false} fontSize={12} />
+                                <Tooltip contentStyle={{backgroundColor: '#fff', border: '1px solid #fef3c7', borderRadius: '0.75rem'}} />
+                                <Area type="monotone" dataKey="Revenue" stroke="oklch(var(--p))" fillOpacity={1} fill="url(#colorRevenue)" />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </article>
+            </div>
+            <article className="list-card">
+                <div className="card-head">
+                    <strong className="card-title">Последние заказы</strong>
+                    <span className="muted">{sales.length}</span>
                 </div>
-            </div>
-             <div className="card bg-base-100 border border-base-300 shadow-lg p-4 sm:p-6">
-                <h3 className="card-title text-lg mb-4">Статистика</h3>
-                <div className="h-80">
-                     <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={revenueChartData}>
-                            <defs>
-                                <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="oklch(80% 0.114 19.571)" stopOpacity={0.8}/>
-                                    <stop offset="95%" stopColor="oklch(80% 0.114 19.571)" stopOpacity={0}/>
-                                </linearGradient>
-                                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="oklch(92% 0.084 155.995)" stopOpacity={0.8}/>
-                                    <stop offset="95%" stopColor="oklch(92% 0.084 155.995)" stopOpacity={0}/>
-                                </linearGradient>
-                            </defs>
-                            <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={12} />
-                            <YAxis axisLine={false} tickLine={false} fontSize={12} />
-                            <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2}/>
-                            <Tooltip contentStyle={{backgroundColor: '#3d4451', border: 'none', borderRadius: '0.5rem'}} />
-                            <Area type="monotone" dataKey="Sales" stroke="oklch(80% 0.114 19.571)" fillOpacity={1} fill="url(#colorSales)" />
-                            <Area type="monotone" dataKey="Revenue" stroke="oklch(92% 0.084 155.995)" fillOpacity={1} fill="url(#colorRevenue)" />
-                        </AreaChart>
-                    </ResponsiveContainer>
-                </div>
-            </div>
-            <div className="card bg-base-100 border border-base-300 shadow-lg p-4 sm:p-6">
-                 <h3 className="card-title text-lg mb-4">Последние заказы</h3>
-                 <RecentOrdersTable sales={sales} />
-            </div>
+                {sales.length === 0 ? (
+                    <div className="empty">
+                        <div>
+                            <img src="https://api.iconify.design/lucide-inbox.svg" alt="Пусто" />
+                            <strong>Недавних продаж нет.</strong>
+                            <span className="muted">Как только появятся новые заказы, они отобразятся здесь.</span>
+                        </div>
+                    </div>
+                ): (
+                    <div className="overflow-x-auto">
+                        {/* A simplified table can be rendered here if needed */}
+                         <p className="text-sm text-center text-base-content/70">Подробная информация о продажах доступна на вкладке "Мои продажи".</p>
+                    </div>
+                )}
+            </article>
         </div>
     );
 };

@@ -45,9 +45,10 @@ import DashboardPage from './pages/DashboardPage';
 // This component contains the main application layout and routes for authenticated users.
 const AppContent: React.FC = () => {
   const location = useLocation();
-  const isChatPage = location.pathname.startsWith('/chat');
-  const isSpecificChatOpen = location.pathname.startsWith('/chat/') && location.pathname !== '/chat';
   const { tg } = useTelegram();
+  
+  const isFullScreenPage = location.pathname.startsWith('/chat') || location.pathname.startsWith('/dashboard');
+  const isSpecificChatOpen = location.pathname.startsWith('/chat/') && location.pathname !== '/chat';
 
   useEffect(() => {
     if (tg?.MainButton) {
@@ -55,13 +56,13 @@ const AppContent: React.FC = () => {
     }
   }, [tg]);
 
-  const appContainerClass = isChatPage
+  const appContainerClass = isFullScreenPage
     ? "bg-base-200 h-screen flex flex-col overflow-hidden font-sans text-base-content"
     : "min-h-screen flex flex-col overflow-x-hidden font-sans text-base-content";
-
-  const mainClass = isChatPage
+    
+  const mainClass = isFullScreenPage
     ? "flex-grow overflow-hidden"
-    : "flex-grow";
+    : "flex-grow container mx-auto px-4 sm:px-6 py-8";
 
   return (
     <div className={appContainerClass}>
@@ -97,7 +98,7 @@ const AppContent: React.FC = () => {
           <Route path="/import" element={<ProtectedRoute><ImportPage /></ProtectedRoute>} />
         </Routes>
       </main>
-      {!isChatPage && <Footer />}
+      {!isFullScreenPage && <Footer />}
       { !isSpecificChatOpen && <MobileNavBar /> }
     </div>
   );
