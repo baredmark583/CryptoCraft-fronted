@@ -1,12 +1,11 @@
 import React, { useMemo } from 'react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { useAuth } from '../hooks/useAuth';
 import { apiService } from '../services/apiService';
 import type { Order } from '../types';
 import Spinner from './Spinner';
-import DynamicIcon from './DynamicIcon';
 
-const KpiCard: React.FC<{ title: string, value: string | number, trend: 'up' | 'down', trendValue: string, iconUrl: string }> = ({ title, value, trend, trendValue, iconUrl }) => (
+const KpiCard: React.FC<{ title: string, value: string | number, trend: 'up' | 'down', trendValue: string }> = ({ title, value, trend, trendValue }) => (
     <article className="kpi-card">
         <div className="kpi-meta">
             <span className="kpi-label">{title}</span>
@@ -84,8 +83,8 @@ const DashboardTab: React.FC = () => {
     return (
         <div className="space-y-2">
             <div className="summary-grid">
-                <KpiCard title="Всего покупок" value={totalPurchases} trend="down" trendValue="-9.05%" iconUrl="https://api.iconify.design/lucide-shopping-bag.svg" />
-                <KpiCard title="Всего продаж" value={totalSales} trend="up" trendValue="+11.01%" iconUrl="https://api.iconify.design/lucide-receipt-russian-ruble.svg" />
+                <KpiCard title="Всего покупок" value={totalPurchases} trend="down" trendValue="-9.05%" />
+                <KpiCard title="Всего продаж" value={totalSales} trend="up" trendValue="+11.01%" />
             </div>
             <div className="charts-grid">
                 <article className="chart-card">
@@ -99,7 +98,7 @@ const DashboardTab: React.FC = () => {
                                 <YAxis axisLine={false} tickLine={false} fontSize={12} />
                                 <Tooltip cursor={{fill: 'rgba(255,251,235,0.8)'}} contentStyle={{backgroundColor: '#fff', border: '1px solid #fef3c7', borderRadius: '0.75rem'}} />
                                 <Bar dataKey="Sales" radius={[5, 5, 0, 0]}>
-                                    <Cell fill="oklch(var(--p))" />
+                                    <Cell fill="#f59e0b" />
                                 </Bar>
                             </BarChart>
                         </ResponsiveContainer>
@@ -107,21 +106,21 @@ const DashboardTab: React.FC = () => {
                 </article>
                 <article className="chart-card">
                     <div className="card-head">
-                        <strong className="card-title">Статистика</strong>
+                        <strong className="card-title">Выручка</strong>
                     </div>
                      <div className="h-56">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={revenueChartData} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
                                 <defs>
                                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="oklch(var(--p))" stopOpacity={0.8}/>
-                                        <stop offset="95%" stopColor="oklch(var(--p))" stopOpacity={0}/>
+                                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.8}/>
+                                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
                                     </linearGradient>
                                 </defs>
                                 <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={12} />
                                 <YAxis axisLine={false} tickLine={false} fontSize={12} />
                                 <Tooltip contentStyle={{backgroundColor: '#fff', border: '1px solid #fef3c7', borderRadius: '0.75rem'}} />
-                                <Area type="monotone" dataKey="Revenue" stroke="oklch(var(--p))" fillOpacity={1} fill="url(#colorRevenue)" />
+                                <Area type="monotone" dataKey="Revenue" stroke="#f59e0b" fillOpacity={1} fill="url(#colorRevenue)" />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
@@ -142,7 +141,6 @@ const DashboardTab: React.FC = () => {
                     </div>
                 ): (
                     <div className="overflow-x-auto">
-                        {/* A simplified table can be rendered here if needed */}
                          <p className="text-sm text-center text-base-content/70">Подробная информация о продажах доступна на вкладке "Мои продажи".</p>
                     </div>
                 )}

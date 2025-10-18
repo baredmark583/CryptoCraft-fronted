@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiService } from '../services/apiService';
 import type { Product } from '../types';
@@ -15,39 +15,50 @@ import SalesTab from '../components/SalesTab';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import WalletTab from '../components/WalletTab';
 import SettingsTab from '../components/SettingsTab';
-import './DashboardPage.css'; // Import new styles
+import './DashboardPage.css';
 
 export type DashboardTabType = 'dashboard' | 'listings' | 'workshop' | 'wishlist' | 'collections' | 'purchases' | 'sales' | 'analytics' | 'wallet' | 'settings';
+type SpecialTabType = 'platform' | 'dao' | 'live';
 
-// Copied from old DashboardSidebar for use within this component
-const TABS: { id: DashboardTabType; label: string; iconUrl: string; }[] = [
-    { id: 'dashboard', label: 'Сводка', iconUrl: 'https://api.iconify.design/lucide-layout-dashboard.svg' },
-    { id: 'listings', label: 'Товары', iconUrl: 'https://api.iconify.design/lucide-box.svg' },
-    { id: 'workshop', label: 'Мастерская', iconUrl: 'https://api.iconify.design/lucide-hammer.svg' },
-    { id: 'wishlist', label: 'Избранное', iconUrl: 'https://api.iconify.design/lucide-heart.svg' },
-    { id: 'collections', label: 'Коллекции', iconUrl: 'https://api.iconify.design/lucide-folders.svg' },
-    { id: 'purchases', label: 'Мои покупки', iconUrl: 'https://api.iconify.design/lucide-shopping-bag.svg' },
-    { id: 'sales', label: 'Мои продажи', iconUrl: 'https://api.iconify.design/lucide-receipt-russian-ruble.svg' },
-    { id: 'analytics', label: 'Аналитика', iconUrl: 'https://api.iconify.design/lucide-chart-line.svg' },
-    { id: 'wallet', label: 'Кошелек', iconUrl: 'https://api.iconify.design/lucide-wallet.svg' },
-    { id: 'settings', label: 'Настройки', iconUrl: 'https://api.iconify.design/lucide-settings.svg' },
+const TABS: { id: DashboardTabType | SpecialTabType; label: string; iconUrl: string; implemented: boolean }[] = [
+    { id: 'dashboard', label: 'Сводка', iconUrl: 'https://api.iconify.design/lucide-layout-dashboard.svg', implemented: true },
+    { id: 'listings', label: 'Товары', iconUrl: 'https://api.iconify.design/lucide-box.svg', implemented: true },
+    { id: 'workshop', label: 'Мастерская', iconUrl: 'https://api.iconify.design/lucide-hammer.svg', implemented: true },
+    { id: 'wishlist', label: 'Избранное', iconUrl: 'https://api.iconify.design/lucide-heart.svg', implemented: true },
+    { id: 'collections', label: 'Коллекции', iconUrl: 'https://api.iconify.design/lucide-folders.svg', implemented: true },
+    { id: 'purchases', label: 'Мои покупки', iconUrl: 'https://api.iconify.design/lucide-shopping-bag.svg', implemented: true },
+    { id: 'sales', label: 'Мои продажи', iconUrl: 'https://api.iconify.design/lucide-receipt-russian-ruble.svg', implemented: true },
+    { id: 'analytics', label: 'Аналитика', iconUrl: 'https://api.iconify.design/lucide-chart-line.svg', implemented: true },
+    { id: 'wallet', label: 'Кошелек', iconUrl: 'https://api.iconify.design/lucide-wallet.svg', implemented: true },
+    { id: 'settings', label: 'Настройки', iconUrl: 'https://api.iconify.design/lucide-settings.svg', implemented: true },
+    { id: 'platform', label: 'Платформа', iconUrl: 'https://api.iconify.design/lucide-layers.svg', implemented: false },
+    { id: 'dao', label: 'Управление DAO', iconUrl: 'https://api.iconify.design/lucide-organization.svg', implemented: false },
+    { id: 'live', label: 'Прямой эфир', iconUrl: 'https://api.iconify.design/lucide-radio.svg', implemented: false },
 ];
-
 
 const DashboardPage: React.FC = () => {
     const { user, logout } = useAuth();
-    const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
 
     const [userProducts, setUserProducts] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [hint, setHint] = useState<{ text: string, visible: boolean }>({ text: '', visible: false });
 
     const activeTab = (searchParams.get('tab') as DashboardTabType) || 'dashboard';
 
-    const setActiveTab = (tab: DashboardTabType) => {
-        setSearchParams({ tab });
-        setIsSidebarOpen(false); // Close sidebar on selection
+    const showHint = (text: string) => {
+        setHint({ text, visible: true });
+        setTimeout(() => setHint({ text: '', visible: false }), 2000);
+    };
+
+    const handleTabClick = (tab: typeof TABS[0]) => {
+        if (tab.implemented) {
+            setSearchParams({ tab: tab.id });
+        } else {
+            showHint(`${tab.label} скоро будет доступно`);
+        }
+        setIsSidebarOpen(false); // Close sidebar on any selection
     };
 
     useEffect(() => {
@@ -79,38 +90,27 @@ const DashboardPage: React.FC = () => {
         }
         if (!user) return null;
 
-        // Render only the active tab
-        const CurrentTab = () => {
-             switch (activeTab) {
-                case 'dashboard': return <DashboardTab />;
-                case 'listings': return <ListingsTab products={userProducts} isOwnProfile={true} onProductUpdate={handleProductUpdate} />;
-                case 'workshop': return <WorkshopTab user={user} />;
-                case 'wishlist': return <WishlistTab />;
-                case 'collections': return <CollectionsTab />;
-                case 'purchases': return <PurchasesTab />;
-                case 'sales': return <SalesTab />;
-                case 'analytics': return <AnalyticsDashboard sellerId={user.id} />;
-                case 'wallet': return <WalletTab user={user} />;
-                case 'settings': return <SettingsTab user={user} />;
-                default: return <DashboardTab />;
-            }
+        switch (activeTab) {
+            case 'dashboard': return <DashboardTab />;
+            case 'listings': return <ListingsTab products={userProducts} isOwnProfile={true} onProductUpdate={handleProductUpdate} />;
+            case 'workshop': return <WorkshopTab user={user} />;
+            case 'wishlist': return <WishlistTab />;
+            case 'collections': return <CollectionsTab />;
+            case 'purchases': return <PurchasesTab />;
+            case 'sales': return <SalesTab />;
+            case 'analytics': return <AnalyticsDashboard sellerId={user.id} />;
+            case 'wallet': return <WalletTab user={user} />;
+            case 'settings': return <SettingsTab user={user} />;
+            default: return <DashboardTab />;
         }
-
-        return (
-            <section className="panels">
-                <div data-panel={activeTab} className="panel is-active">
-                    <CurrentTab />
-                </div>
-            </section>
-        );
     };
     
     if (!user) return <div className="flex justify-center py-16"><Spinner size="lg"/></div>;
 
-    const topTabs: DashboardTabType[] = ['dashboard', 'listings', 'sales', 'analytics', 'wallet', 'settings'];
+    const topTabs: (DashboardTabType)[] = ['dashboard', 'listings', 'sales', 'analytics', 'wallet', 'settings'];
 
     return (
-        <section id="sb-account" className={isSidebarOpen ? 'sidebar-open' : ''}>
+        <section id="sb-account" className={`h-full ${isSidebarOpen ? 'sidebar-open' : ''}`}>
             <div className="container">
                 <div className="card">
                     <aside aria-label="Меню личного кабинета" className="sidebar">
@@ -126,7 +126,7 @@ const DashboardPage: React.FC = () => {
                                 <button
                                     key={tab.id}
                                     type="button"
-                                    onClick={() => setActiveTab(tab.id)}
+                                    onClick={() => handleTabClick(tab)}
                                     role="tab"
                                     aria-selected={activeTab === tab.id}
                                     className={`menu-btn ${activeTab === tab.id ? 'is-active' : ''}`}
@@ -162,7 +162,7 @@ const DashboardPage: React.FC = () => {
                                    <button 
                                      key={tab.id}
                                      type="button"
-                                     onClick={() => setActiveTab(tab.id)}
+                                     onClick={() => handleTabClick(tab)}
                                      className={`tab-btn ${activeTab === tab.id ? 'is-active' : ''}`}
                                    >
                                        <img src={tab.iconUrl} alt="" />
@@ -171,10 +171,35 @@ const DashboardPage: React.FC = () => {
                                )
                            })}
                         </div>
-                        {renderTabContent()}
+                        <section className="panels">
+                            <div className="panel is-active">
+                                {renderTabContent()}
+                            </div>
+                        </section>
                     </main>
                 </div>
             </div>
+             {hint.visible && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        left: '50%',
+                        bottom: '22px',
+                        transform: 'translateX(-50%)',
+                        padding: '10px 14px',
+                        borderRadius: '12px',
+                        border: '1px solid rgb(254, 243, 199)',
+                        background: 'rgb(255, 251, 235)',
+                        color: 'rgba(120, 53, 15, 0.95)',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                        zIndex: 60,
+                        transition: 'opacity 0.3s ease-in-out',
+                        opacity: 1,
+                    }}
+                >
+                    {hint.text}
+                </div>
+            )}
         </section>
     );
 };

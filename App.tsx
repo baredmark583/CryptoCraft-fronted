@@ -66,7 +66,7 @@ const AppContent: React.FC = () => {
 
   return (
     <div className={appContainerClass}>
-      <Header />
+      {!isFullScreenPage && <Header />}
       <main className={mainClass}>
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -99,7 +99,7 @@ const AppContent: React.FC = () => {
         </Routes>
       </main>
       {!isFullScreenPage && <Footer />}
-      { !isSpecificChatOpen && <MobileNavBar /> }
+      { !isSpecificChatOpen && !isFullScreenPage && <MobileNavBar /> }
     </div>
   );
 };
