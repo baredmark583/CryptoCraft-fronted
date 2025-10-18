@@ -61,7 +61,7 @@ const DashboardPage: React.FC = () => {
                 position: 'fixed', left: '50%', bottom: '22px', transform: 'translateX(-50%)',
                 padding: '10px 14px', borderRadius: '12px', border: '1px solid rgb(254, 243, 199)',
                 background: 'rgb(255, 251, 235)', color: 'rgba(120, 53, 15, 0.95)',
-                boxShadow: '0 1px 2px rgba(0,0,0,0.05)', zIndex: '60'
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)', zIndex: '60', opacity: '0', transition: 'opacity 300ms'
               });
               document.body.appendChild(node);
             }
@@ -70,6 +70,9 @@ const DashboardPage: React.FC = () => {
             if (hintTimer) clearTimeout(hintTimer);
             hintTimer = setTimeout(() => { if (node) node.style.opacity = '0'; }, 1500);
         }
+        
+        // Make hint function available globally for onClick handlers in JSX
+        (window as any).hint = hint;
 
         function drawLineChart(canvas: HTMLCanvasElement | null, series: number[]): void {
             if (!canvas) return;
@@ -120,6 +123,8 @@ const DashboardPage: React.FC = () => {
         return () => {
             if (openBtn) openBtn.removeEventListener('click', openSidebar);
             if (overlay) overlay.removeEventListener('click', closeSidebar);
+            const hintNode = document.getElementById('acc-hint');
+            if (hintNode) hintNode.remove();
         };
 
     }, []);
@@ -149,93 +154,14 @@ const DashboardPage: React.FC = () => {
 
     if (!user) return <div className="flex justify-center py-16"><Spinner size="lg"/></div>;
     
+    const hint = (text: string) => (window as any).hint(text);
+
     const renderTabContent = () => {
         if (isLoading) {
             return <div className="flex justify-center items-center h-96"><Spinner /></div>;
         }
         switch (activeTab) {
-            case 'products': return (
-                <article className="list-card">
-                  <div className="card-head">
-                    <strong className="card-title">Ваши товары</strong>
-                    <button type="button" className="gjs-t-button" style={{padding: '0.5rem 0.9rem', fontWeight: 700}}>
-                      <img src="https://api.iconify.design/lucide-plus.svg" alt="Добавить" width="18" height="18" style={{filter: 'invert(1)'}} />
-                      Добавить товар
-                    </button>
-                  </div>
-                  <div className="products-grid">
-                    <article className="product-row">
-                      <img loading="lazy" decoding="async" alt="Керамическая ваза" src="https://app.grapesjs.com/api/assets/random-image?query=%22handmade%20ceramic%20vase%20beige%20studio%22&w=320&h=240" className="thumb" />
-                      <div className="meta">
-                        <strong className="name">Керамическая ваза «Песчаный берег»</strong>
-                        <div className="tags">
-                          <span className="tag success">
-                            <img src="https://api.iconify.design/lucide-badge-check.svg" alt="Опубликовано" width="16" height="16" />
-                            Опубликовано
-                          </span>
-                          <span className="tag">
-                            <img src="https://api.iconify.design/lucide-eye.svg" alt="Просмотры" width="16" height="16" />
-                            124
-                          </span>
-                          <span className="tag">
-                            <img src="https://api.iconify.design/lucide-heart.svg" alt="Лайки" width="16" height="16" />
-                            18
-                          </span>
-                          <span className="tag">
-                            <img src="https://api.iconify.design/lucide-message-square.svg" alt="Сообщения" width="16" height="16" />
-                            3
-                          </span>
-                        </div>
-                      </div>
-                      <div className="price">1 200 ₽</div>
-                      <div className="actions">
-                        <button type="button" className="btn-secondary">
-                          <img src="https://api.iconify.design/lucide-pencil.svg" alt="Редактировать" width="16" height="16" />
-                          Редактировать
-                        </button>
-                        <button type="button" className="btn-ghost">
-                          <img src="https://api.iconify.design/lucide-external-link.svg" alt="Просмотр" width="16" height="16" />
-                          Просмотр
-                        </button>
-                      </div>
-                    </article>
-                    <article className="product-row">
-                      <img loading="lazy" decoding="async" alt="Деревянная подставка" src="https://app.grapesjs.com/api/assets/random-image?query=%22handcrafted%20wood%20stand%20product%20beige%22&w=320&h=240" className="thumb" />
-                      <div className="meta">
-                        <strong className="name">Деревянная подставка для приборов</strong>
-                        <div className="tags">
-                          <span className="tag warning">
-                            <img src="https://api.iconify.design/lucide-file-clock.svg" alt="Черновик" width="16" height="16" />
-                            Черновик
-                          </span>
-                          <span className="tag">
-                            <img src="https://api.iconify.design/lucide-eye.svg" alt="Просмотры" width="16" height="16" />
-                            32
-                          </span>
-                        </div>
-                      </div>
-                      <div className="price">450 ₽</div>
-                      <div className="actions">
-                        <button type="button" className="btn-secondary">
-                          <img src="https://api.iconify.design/lucide-rocket.svg" alt="Опубликовать" width="16" height="16" />
-                          Опубликовать
-                        </button>
-                        <button type="button" className="btn-ghost">
-                          <img src="https://api.iconify.design/lucide-pencil.svg" alt="Редактировать" width="16" height="16" />
-                          Редактировать
-                        </button>
-                      </div>
-                    </article>
-                  </div>
-                  <div className="empty hint-muted" style={{display: 'none'}}>
-                    <div>
-                      <img src="https://api.iconify.design/lucide-package.svg" alt="Нет товаров" />
-                      <strong>Пока нет товаров</strong>
-                      <span className="muted">Добавьте первое объявление, чтобы начать продажи.</span>
-                    </div>
-                  </div>
-                </article>
-            );
+            case 'products': return <ListingsTab products={userProducts} isOwnProfile={true} onProductUpdate={handleProductUpdate} />;
             case 'workshop': return <WorkshopTab user={user} />;
             case 'favorites': return <WishlistTab />;
             case 'collections': return <CollectionsTab />;
@@ -261,19 +187,19 @@ const DashboardPage: React.FC = () => {
                       </div>
                     </div>
                     <nav role="tablist" aria-label="Разделы" className="menu">
-                      <button type="button" data-tab="summary" role="tab" className={`menu-btn ${activeTab === 'summary' ? 'is-active' : ''}`} onClick={() => setSearchParams({tab: 'summary'})}><img src="https://api.iconify.design/lucide-layout-dashboard.svg" alt="Сводка" /><span>Сводка</span></button>
-                      <button type="button" data-tab="products" role="tab" className={`menu-btn ${activeTab === 'products' ? 'is-active' : ''}`} onClick={() => setSearchParams({tab: 'products'})}><img src="https://api.iconify.design/lucide-box.svg" alt="Товары" /><span>Товары</span></button>
-                      <button type="button" data-tab="workshop" role="tab" className={`menu-btn ${activeTab === 'workshop' ? 'is-active' : ''}`} onClick={() => setSearchParams({tab: 'workshop'})}><img src="https://api.iconify.design/lucide-hammer.svg" alt="Мастерская" /><span>Мастерская</span></button>
-                      <button type="button" data-tab="favorites" role="tab" className={`menu-btn ${activeTab === 'favorites' ? 'is-active' : ''}`} onClick={() => setSearchParams({tab: 'favorites'})}><img src="https://api.iconify.design/lucide-heart.svg" alt="Избранное" /><span>Избранное</span></button>
-                      <button type="button" data-tab="collections" role="tab" className={`menu-btn ${activeTab === 'collections' ? 'is-active' : ''}`} onClick={() => setSearchParams({tab: 'collections'})}><img src="https://api.iconify.design/lucide-folders.svg" alt="Коллекции" /><span>Коллекции</span></button>
-                      <button type="button" data-tab="purchases" role="tab" className={`menu-btn ${activeTab === 'purchases' ? 'is-active' : ''}`} onClick={() => setSearchParams({tab: 'purchases'})}><img src="https://api.iconify.design/lucide-shopping-bag.svg" alt="Мои покупки" /><span>Мои покупки</span></button>
-                      <button type="button" data-tab="sales" role="tab" className={`menu-btn ${activeTab === 'sales' ? 'is-active' : ''}`} onClick={() => setSearchParams({tab: 'sales'})}><img src="https://api.iconify.design/lucide-receipt-russian-ruble.svg" alt="Мои продажи" /><span>Мои продажи</span></button>
-                      <button type="button" data-tab="analytics" role="tab" className={`menu-btn ${activeTab === 'analytics' ? 'is-active' : ''}`} onClick={() => setSearchParams({tab: 'analytics'})}><img src="https://api.iconify.design/lucide-chart-line.svg" alt="Аналитика" /><span>Аналитика</span></button>
-                      <button type="button" data-tab="wallet" role="tab" className={`menu-btn ${activeTab === 'wallet' ? 'is-active' : ''}`} onClick={() => setSearchParams({tab: 'wallet'})}><img src="https://api.iconify.design/lucide-wallet.svg" alt="Кошелек" /><span>Кошелек</span></button>
-                      <button type="button" data-tab="settings" role="tab" className={`menu-btn ${activeTab === 'settings' ? 'is-active' : ''}`} onClick={() => setSearchParams({tab: 'settings'})}><img src="https://api.iconify.design/lucide-settings.svg" alt="Настройки" /><span>Настройки</span></button>
-                      <button type="button" data-tab="platform" role="tab" className="menu-btn"><img src="https://api.iconify.design/lucide-layers.svg" alt="Платформа" /><span>Платформа</span></button>
-                      <button type="button" data-tab="dao" role="tab" className="menu-btn"><img src="https://api.iconify.design/lucide-organization.svg" alt="Управление DAO" /><span>Управление DAO</span></button>
-                      <button type="button" data-tab="live" role="tab" className="menu-btn"><img src="https://api.iconify.design/lucide-radio.svg" alt="Прямой эфир" /><span>Прямой эфир</span></button>
+                      <button type="button" role="tab" className={`menu-btn ${activeTab === 'summary' ? 'is-active' : ''}`} onClick={() => setSearchParams({tab: 'summary'})}><img src="https://api.iconify.design/lucide-layout-dashboard.svg" alt="Сводка" /><span>Сводка</span></button>
+                      <button type="button" role="tab" className={`menu-btn ${activeTab === 'products' ? 'is-active' : ''}`} onClick={() => setSearchParams({tab: 'products'})}><img src="https://api.iconify.design/lucide-box.svg" alt="Товары" /><span>Товары</span></button>
+                      <button type="button" role="tab" className="menu-btn" onClick={() => hint('Скоро будет доступно')}><img src="https://api.iconify.design/lucide-hammer.svg" alt="Мастерская" /><span>Мастерская</span></button>
+                      <button type="button" role="tab" className="menu-btn" onClick={() => hint('Скоро будет доступно')}><img src="https://api.iconify.design/lucide-heart.svg" alt="Избранное" /><span>Избранное</span></button>
+                      <button type="button" role="tab" className="menu-btn" onClick={() => hint('Скоро будет доступно')}><img src="https://api.iconify.design/lucide-folders.svg" alt="Коллекции" /><span>Коллекции</span></button>
+                      <button type="button" role="tab" className="menu-btn" onClick={() => hint('Скоро будет доступно')}><img src="https://api.iconify.design/lucide-shopping-bag.svg" alt="Мои покупки" /><span>Мои покупки</span></button>
+                      <button type="button" role="tab" className={`menu-btn ${activeTab === 'sales' ? 'is-active' : ''}`} onClick={() => setSearchParams({tab: 'sales'})}><img src="https://api.iconify.design/lucide-receipt-russian-ruble.svg" alt="Мои продажи" /><span>Мои продажи</span></button>
+                      <button type="button" role="tab" className={`menu-btn ${activeTab === 'analytics' ? 'is-active' : ''}`} onClick={() => setSearchParams({tab: 'analytics'})}><img src="https://api.iconify.design/lucide-chart-line.svg" alt="Аналитика" /><span>Аналитика</span></button>
+                      <button type="button" role="tab" className={`menu-btn ${activeTab === 'wallet' ? 'is-active' : ''}`} onClick={() => setSearchParams({tab: 'wallet'})}><img src="https://api.iconify.design/lucide-wallet.svg" alt="Кошелек" /><span>Кошелек</span></button>
+                      <button type="button" role="tab" className={`menu-btn ${activeTab === 'settings' ? 'is-active' : ''}`} onClick={() => setSearchParams({tab: 'settings'})}><img src="https://api.iconify.design/lucide-settings.svg" alt="Настройки" /><span>Настройки</span></button>
+                      <button type="button" role="tab" className="menu-btn" onClick={() => hint('Скоро будет доступно')}><img src="https://api.iconify.design/lucide-layers.svg" alt="Платформа" /><span>Платформа</span></button>
+                      <button type="button" role="tab" className="menu-btn" onClick={() => hint('Скоро будет доступно')}><img src="https://api.iconify.design/lucide-organization.svg" alt="Управление DAO" /><span>Управление DAO</span></button>
+                      <button type="button" role="tab" className="menu-btn" onClick={() => hint('Скоро будет доступно')}><img src="https://api.iconify.design/lucide-radio.svg" alt="Прямой эфир" /><span>Прямой эфир</span></button>
                     </nav>
                     <div className="sidebar-footer">
                       <button type="button" aria-label="Выйти из аккаунта" className="logout-btn" onClick={logout}>
@@ -293,24 +219,7 @@ const DashboardPage: React.FC = () => {
                         <strong className="title">Личный кабинет</strong>
                       </div>
                     </header>
-                    <div role="tablist" aria-label="Вкладки" className="tabs">
-                        {['summary', 'products', 'sales', 'analytics', 'wallet', 'settings'].map(tabId => {
-                            const tabInfo = {
-                                summary: { label: 'Сводка', icon: 'https://api.iconify.design/lucide-activity.svg' },
-                                products: { label: 'Товары', icon: 'https://api.iconify.design/lucide-box.svg' },
-                                sales: { label: 'Продажи', icon: 'https://api.iconify.design/lucide-receipt-russian-ruble.svg' },
-                                analytics: { label: 'Аналитика', icon: 'https://api.iconify.design/lucide-chart-line.svg' },
-                                wallet: { label: 'Кошелек', icon: 'https://api.iconify.design/lucide-wallet.svg' },
-                                settings: { label: 'Настройки', icon: 'https://api.iconify.design/lucide-settings.svg' }
-                            };
-                            return (
-                                <button key={tabId} type="button" data-panel={tabId} className={`tab-btn ${activeTab === tabId ? 'is-active' : ''}`} onClick={() => setSearchParams({tab: tabId as DashboardTabType})}>
-                                    <img src={tabInfo[tabId].icon} alt="" />
-                                    <span>{tabInfo[tabId].label}</span>
-                                </button>
-                            )
-                        })}
-                    </div>
+                    
                     <section className="panels">
                       <div data-panel="summary" className={`panel ${activeTab === 'summary' ? 'is-active' : ''}`}>
                         <div className="summary-grid">
