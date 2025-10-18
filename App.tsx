@@ -61,7 +61,7 @@ const AppContent: React.FC = () => {
     : "min-h-screen flex flex-col overflow-x-hidden font-sans text-base-content";
     
   const mainClass = isFullScreenPage
-    ? "flex-grow overflow-hidden"
+    ? "flex-grow min-h-0" // FIX: Removed overflow-hidden to allow child components to manage their own scroll.
     : "flex-grow container mx-auto px-4 sm:px-6 py-8";
 
   return (

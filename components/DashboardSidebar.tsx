@@ -6,10 +6,13 @@ import type { DashboardTabType } from '../pages/DashboardPage';
 import DynamicIcon from './DynamicIcon';
 
 const TABS: { id: DashboardTabType; label: string; iconName: string; }[] = [
-    { id: 'dashboard', label: 'Сводка', iconName: 'dashboard' },
-    { id: 'listings', label: 'Товары', iconName: 'listings' },
+    // FIX: Changed 'dashboard' to 'summary' to match DashboardTabType.
+    { id: 'summary', label: 'Сводка', iconName: 'dashboard' },
+    // FIX: Changed 'listings' to 'products' to match DashboardTabType.
+    { id: 'products', label: 'Товары', iconName: 'listings' },
     { id: 'workshop', label: 'Мастерская', iconName: 'workshop' },
-    { id: 'wishlist', label: 'Избранное', iconName: 'wishlist-heart' },
+    // FIX: Changed 'wishlist' to 'favorites' to match DashboardTabType.
+    { id: 'favorites', label: 'Избранное', iconName: 'wishlist-heart' },
     { id: 'collections', label: 'Коллекции', iconName: 'collection-add' },
     { id: 'purchases', label: 'Мои покупки', iconName: 'purchases' },
     { id: 'sales', label: 'Мои продажи', iconName: 'sales' },

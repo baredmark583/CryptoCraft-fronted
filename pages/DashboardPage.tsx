@@ -17,14 +17,14 @@ import WalletTab from '../components/WalletTab';
 import SettingsTab from '../components/SettingsTab';
 import './DashboardPage.css';
 
-export type DashboardTabType = 'dashboard' | 'listings' | 'workshop' | 'wishlist' | 'collections' | 'purchases' | 'sales' | 'analytics' | 'wallet' | 'settings';
+export type DashboardTabType = 'summary' | 'products' | 'workshop' | 'favorites' | 'collections' | 'purchases' | 'sales' | 'analytics' | 'wallet' | 'settings';
 type SpecialTabType = 'platform' | 'dao' | 'live';
 
 const TABS: { id: DashboardTabType | SpecialTabType; label: string; iconUrl: string; implemented: boolean }[] = [
-    { id: 'dashboard', label: 'Сводка', iconUrl: 'https://api.iconify.design/lucide-layout-dashboard.svg', implemented: true },
-    { id: 'listings', label: 'Товары', iconUrl: 'https://api.iconify.design/lucide-box.svg', implemented: true },
+    { id: 'summary', label: 'Сводка', iconUrl: 'https://api.iconify.design/lucide-layout-dashboard.svg', implemented: true },
+    { id: 'products', label: 'Товары', iconUrl: 'https://api.iconify.design/lucide-box.svg', implemented: true },
     { id: 'workshop', label: 'Мастерская', iconUrl: 'https://api.iconify.design/lucide-hammer.svg', implemented: true },
-    { id: 'wishlist', label: 'Избранное', iconUrl: 'https://api.iconify.design/lucide-heart.svg', implemented: true },
+    { id: 'favorites', label: 'Избранное', iconUrl: 'https://api.iconify.design/lucide-heart.svg', implemented: true },
     { id: 'collections', label: 'Коллекции', iconUrl: 'https://api.iconify.design/lucide-folders.svg', implemented: true },
     { id: 'purchases', label: 'Мои покупки', iconUrl: 'https://api.iconify.design/lucide-shopping-bag.svg', implemented: true },
     { id: 'sales', label: 'Мои продажи', iconUrl: 'https://api.iconify.design/lucide-receipt-russian-ruble.svg', implemented: true },
@@ -45,7 +45,7 @@ const DashboardPage: React.FC = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [hint, setHint] = useState<{ text: string, visible: boolean }>({ text: '', visible: false });
 
-    const activeTab = (searchParams.get('tab') as DashboardTabType) || 'dashboard';
+    const activeTab = (searchParams.get('tab') as DashboardTabType) || 'summary';
 
     const showHint = (text: string) => {
         setHint({ text, visible: true });
@@ -91,10 +91,10 @@ const DashboardPage: React.FC = () => {
         if (!user) return null;
 
         switch (activeTab) {
-            case 'dashboard': return <DashboardTab />;
-            case 'listings': return <ListingsTab products={userProducts} isOwnProfile={true} onProductUpdate={handleProductUpdate} />;
+            case 'summary': return <DashboardTab />;
+            case 'products': return <ListingsTab products={userProducts} isOwnProfile={true} onProductUpdate={handleProductUpdate} />;
             case 'workshop': return <WorkshopTab user={user} />;
-            case 'wishlist': return <WishlistTab />;
+            case 'favorites': return <WishlistTab />;
             case 'collections': return <CollectionsTab />;
             case 'purchases': return <PurchasesTab />;
             case 'sales': return <SalesTab />;
@@ -107,7 +107,7 @@ const DashboardPage: React.FC = () => {
     
     if (!user) return <div className="flex justify-center py-16"><Spinner size="lg"/></div>;
 
-    const topTabs: (DashboardTabType)[] = ['dashboard', 'listings', 'sales', 'analytics', 'wallet', 'settings'];
+    const topTabs: (DashboardTabType)[] = ['summary', 'products', 'sales', 'analytics', 'wallet', 'settings'];
 
     return (
         <section id="sb-account" className={`h-full ${isSidebarOpen ? 'sidebar-open' : ''}`}>
