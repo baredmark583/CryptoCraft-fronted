@@ -266,11 +266,11 @@
 }
 
 #sb-account .panel {
-    display: none;
+  display: block;
 }
 
-#sb-account .panel.is-active {
-  display: block;
+#sb-account .panel:not(.is-active) {
+  display: none;
 }
 
 #sb-account .summary-grid {
