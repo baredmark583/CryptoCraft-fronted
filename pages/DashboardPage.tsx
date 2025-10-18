@@ -10,7 +10,6 @@ import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import WalletTab from '../components/WalletTab';
 import SettingsTab from '../components/SettingsTab';
 import DashboardTab from '../components/DashboardTab';
-import './DashboardPage.css';
 import { apiService } from '../services/apiService';
 
 export type DashboardTabType = 'summary' | 'products' | 'workshop' | 'favorites' | 'collections' | 'purchases' | 'sales' | 'analytics' | 'wallet' | 'settings' | 'platform' | 'dao' | 'live';
@@ -53,7 +52,6 @@ const DashboardPage: React.FC = () => {
     };
     
     useEffect(() => {
-        // FIX: Replaced NodeJS.Timeout with ReturnType<typeof setTimeout> to resolve type error in browser environment.
         let timer: ReturnType<typeof setTimeout>;
         if (hintText) {
             timer = setTimeout(() => setHintText(''), 1500);
@@ -82,6 +80,7 @@ const DashboardPage: React.FC = () => {
         fetchProfileData();
     }, [user]);
 
+    // FIX: Corrected the parameter name in 'handleProductUpdate' from 'product' to 'updatedProduct' to resolve a 'Cannot find name' error.
     const handleProductUpdate = (updatedProduct: Product) => {
         setUserProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
     };
@@ -131,9 +130,9 @@ const DashboardPage: React.FC = () => {
     ];
 
     return (
-        <section id="sb-account" className={isSidebarOpen ? 'sidebar-open' : ''}>
+        <section className="w-full h-full">
             {hintText && (
-                <div id="acc-hint" style={{
+                <div style={{
                     position: 'fixed', left: '50%', bottom: '22px', transform: 'translateX(-50%)',
                     padding: '10px 14px', borderRadius: '12px', border: '1px solid rgb(254, 243, 199)',
                     background: 'rgb(255, 251, 235)', color: 'rgba(120, 53, 15, 0.95)',
@@ -142,70 +141,81 @@ const DashboardPage: React.FC = () => {
                     {hintText}
                 </div>
             )}
-            <div className="container">
-                <div className="card">
-                    <aside aria-label="Меню личного кабинета" className="sidebar">
-                        <div className="sidebar-head">
-                            <img alt={`Аватар: ${user.name}`} src={user.avatarUrl} className="avatar" />
-                            <div className="profile">
-                                <strong className="name">{user.name}</strong>
-                                <span className="role">Продавец</span>
+            <div className="mx-auto p-1 lg:p-4 h-full">
+                <div className="grid lg:grid-cols-[300px_1fr] grid-cols-1 bg-white border border-amber-200/80 rounded-2xl overflow-hidden h-full relative">
+                    <aside 
+                        aria-label="Меню личного кабинета" 
+                        className={`p-5 flex flex-col gap-3 bg-white overflow-hidden fixed lg:relative inset-y-0 left-0 z-50 w-4/5 max-w-sm lg:w-full lg:max-w-none transition-transform duration-300 ease-in-out lg:translate-x-0 lg:border-r lg:border-amber-200/80 shadow-2xl lg:shadow-none ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+                    >
+                        <div className="flex items-center gap-3 p-3 rounded-xl border border-amber-200/80 bg-white">
+                            <img alt={`Аватар: ${user.name}`} src={user.avatarUrl} className="w-11 h-11 rounded-xl border border-amber-100 object-cover bg-white shrink-0" />
+                            <div className="flex flex-col min-w-0">
+                                <strong className="font-bold text-amber-900 truncate font-manrope">{user.name}</strong>
+                                <span className="text-sm text-amber-800/70">Продавец</span>
                             </div>
                         </div>
-                        <nav role="tablist" aria-label="Разделы" className="menu">
+                        <nav role="tablist" aria-label="Разделы" className="mt-1 flex flex-col gap-1 overflow-y-auto flex-grow">
                              {sidebarTabs.map(tab => (
                                 <button
                                     key={tab.id}
                                     type="button"
                                     role="tab"
-                                    className={`menu-btn ${activeTab === tab.id ? 'is-active' : ''}`}
+                                    className={`grid grid-cols-[22px_1fr_auto] items-center gap-2 p-2 rounded-lg border text-left font-semibold w-full transition-colors ${
+                                        activeTab === tab.id 
+                                        ? 'border-amber-500 bg-amber-950/5 text-amber-900' 
+                                        : 'border-transparent text-amber-950/90 hover:bg-amber-50 hover:border-amber-100'
+                                    }`}
                                     aria-selected={activeTab === tab.id}
                                     onClick={() => handleSetTab(tab.id)}
                                 >
-                                    <img src={tab.icon} alt={tab.label} />
+                                    <img src={tab.icon} alt="" className="w-[18px] h-[18px] opacity-90"/>
                                     <span>{tab.label}</span>
                                 </button>
                             ))}
                         </nav>
-                        <div className="sidebar-footer">
-                            <button type="button" aria-label="Выйти из аккаунта" className="logout-btn" onClick={logout}>
-                                <img src="https://api.iconify.design/lucide-log-out.svg" alt="Выйти" />
+                        <div className="mt-auto pt-2">
+                            <button type="button" aria-label="Выйти из аккаунта" className="inline-flex items-center gap-2 justify-center p-2.5 font-bold text-white bg-red-500 rounded-xl w-full hover:brightness-95 transition-all" onClick={logout}>
+                                <img src="https://api.iconify.design/lucide-log-out.svg" alt="Выйти" className="w-[18px] h-[18px]" />
                                 <span>Выйти</span>
                             </button>
                         </div>
                     </aside>
-                    <main aria-label="Рабочая область" className="main">
-                        <div aria-hidden={!isSidebarOpen} className="overlay" onClick={() => setIsSidebarOpen(false)}></div>
-                        <header className="main-header">
-                            <button type="button" id="acc-open" aria-label="Открыть меню" className="mobile-toggle" onClick={() => setIsSidebarOpen(true)}>
-                                <img src="https://api.iconify.design/lucide-menu.svg" alt="Меню" />
+                    <main aria-label="Рабочая область" className="p-1 sm:p-5 flex flex-col bg-white overflow-hidden">
+                        <div aria-hidden={!isSidebarOpen} className={`fixed inset-0 bg-stone-900/40 z-40 lg:hidden ${isSidebarOpen ? 'block' : 'hidden'}`} onClick={() => setIsSidebarOpen(false)}></div>
+                        <header className="flex items-center justify-between gap-3 p-2.5 px-3 border border-amber-200/80 rounded-xl bg-white shadow-sm">
+                            <button type="button" aria-label="Открыть меню" className="lg:hidden inline-flex items-center gap-2 p-2 rounded-lg border border-amber-300 bg-white text-amber-900/90 hover:bg-amber-50 transition-colors" onClick={() => setIsSidebarOpen(true)}>
+                                <img src="https://api.iconify.design/lucide-menu.svg" alt="Меню" className="w-[18px] h-[18px]" />
                             </button>
-                            <div className="title-wrap">
+                            <div className="flex items-center gap-2 min-w-0">
                                 <img src="https://api.iconify.design/lucide-sparkles.svg" alt="SandBoard" width="18" height="18" />
-                                <strong className="title">Личный кабинет</strong>
+                                <strong className="font-extrabold text-amber-900 font-manrope text-xl truncate">Личный кабинет</strong>
                             </div>
-                            <form method="get" action="#search" role="search" className="search">
-                                <div className="search-field">
-                                    <img src="https://api.iconify.design/lucide-search.svg" alt="Поиск" />
-                                    <input type="search" placeholder="Поиск по объявлениям..." aria-label="Поиск по объявлениям" className="search-input" />
+                            <form method="get" action="#search" role="search" className="hidden lg:block">
+                                <div className="flex items-center gap-2 bg-amber-50/80 border border-amber-200/80 rounded-xl px-4 py-2">
+                                    <img src="https://api.iconify.design/lucide-search.svg" alt="Поиск" className="w-5 h-5 opacity-70" />
+                                    <input type="search" placeholder="Поиск по объявлениям..." aria-label="Поиск по объявлениям" className="w-full bg-transparent outline-none placeholder:opacity-60 text-base-content" />
                                 </div>
                             </form>
                         </header>
-                        <div role="tablist" aria-label="Вкладки" className="tabs">
+                        <div role="tablist" aria-label="Вкладки" className="mt-3 grid gap-2 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
                             {topBarTabs.map(tab => (
                                 <button
                                     key={tab.id}
                                     type="button"
-                                    className={`tab-btn ${activeTab === tab.id ? 'is-active' : ''}`}
+                                    className={`inline-flex items-center gap-2 justify-center p-2 rounded-lg border text-sm font-semibold transition-colors cursor-pointer w-full ${
+                                        activeTab === tab.id
+                                        ? 'bg-amber-50 border-amber-500 text-amber-900'
+                                        : 'border-amber-300 bg-white text-amber-950 hover:bg-amber-50'
+                                    }`}
                                     onClick={() => handleSetTab(tab.id)}
                                 >
-                                    <img src={tab.icon} alt="" />
-                                    <span>{tab.label}</span>
+                                    <img src={tab.icon} alt="" className="w-[18px] h-[18px]" />
+                                    <span className="hidden sm:inline">{tab.label}</span>
                                 </button>
                             ))}
                         </div>
-                        <section className="panels">
-                            <div className={`panel is-active`}>
+                        <section className="mt-3 flex-grow overflow-y-auto pr-2">
+                            <div>
                                 {renderTabContent()}
                             </div>
                         </section>

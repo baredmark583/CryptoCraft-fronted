@@ -6,13 +6,13 @@ import type { Order } from '../types';
 import Spinner from './Spinner';
 
 const KpiCard: React.FC<{ title: string, value: string | number, trend: 'up' | 'down', trendValue: string }> = ({ title, value, trend, trendValue }) => (
-    <article className="kpi-card">
-        <div className="kpi-meta">
-            <span className="kpi-label">{title}</span>
-            <span className="kpi-value">{value}</span>
+    <article className="flex items-center justify-between gap-3 p-3 rounded-xl border border-amber-200/80 bg-white">
+        <div className="flex flex-col gap-0.5">
+            <span className="text-sm text-amber-800/80">{title}</span>
+            <span className="font-extrabold text-amber-900 text-2xl leading-tight font-manrope">{value}</span>
         </div>
-        <span className={`kpi-trend ${trend}`}>
-            <img src={trend === 'up' ? "https://api.iconify.design/lucide-trending-up.svg" : "https://api.iconify.design/lucide-trending-down.svg"} alt={trend === 'up' ? "Рост" : "Снижение"} />
+        <span className={`inline-flex items-center gap-1.5 px-2 py-1.5 rounded-full font-bold text-sm border ${trend === 'up' ? 'text-white bg-green-500 border-green-500' : 'text-white bg-red-500 border-red-500'}`}>
+            <img src={trend === 'up' ? "https://api.iconify.design/lucide-trending-up.svg" : "https://api.iconify.design/lucide-trending-down.svg"} alt={trend === 'up' ? "Рост" : "Снижение"} className="w-4 h-4" />
             {trendValue}
         </span>
     </article>
@@ -82,14 +82,14 @@ const DashboardTab: React.FC = () => {
 
     return (
         <div className="space-y-2">
-            <div className="summary-grid">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                 <KpiCard title="Всего покупок" value={totalPurchases} trend="down" trendValue="-9.05%" />
                 <KpiCard title="Всего продаж" value={totalSales} trend="up" trendValue="+11.01%" />
             </div>
-            <div className="charts-grid">
-                <article className="chart-card">
-                    <div className="card-head">
-                        <strong className="card-title">Продажи за месяц</strong>
+            <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-3 mb-3">
+                <article className="p-3 rounded-xl border border-amber-200/80 bg-white">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                        <strong className="font-bold text-amber-900 font-manrope">Продажи за месяц</strong>
                     </div>
                     <div className="h-56">
                         <ResponsiveContainer width="100%" height="100%">
@@ -104,9 +104,9 @@ const DashboardTab: React.FC = () => {
                         </ResponsiveContainer>
                     </div>
                 </article>
-                <article className="chart-card">
-                    <div className="card-head">
-                        <strong className="card-title">Выручка</strong>
+                <article className="p-3 rounded-xl border border-amber-200/80 bg-white">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                        <strong className="font-bold text-amber-900 font-manrope">Выручка</strong>
                     </div>
                      <div className="h-56">
                         <ResponsiveContainer width="100%" height="100%">
@@ -126,17 +126,17 @@ const DashboardTab: React.FC = () => {
                     </div>
                 </article>
             </div>
-            <article className="list-card">
-                <div className="card-head">
-                    <strong className="card-title">Последние заказы</strong>
-                    <span className="muted">{sales.length}</span>
+            <article className="p-3 rounded-xl border border-amber-200/80 bg-white">
+                <div className="flex items-center justify-between gap-2 mb-2">
+                    <strong className="font-bold text-amber-900 font-manrope">Последние заказы</strong>
+                    <span className="text-sm text-amber-900/80">{sales.length}</span>
                 </div>
                 {sales.length === 0 ? (
-                    <div className="empty">
-                        <div>
-                            <img src="https://api.iconify.design/lucide-inbox.svg" alt="Пусто" />
-                            <strong>Недавних продаж нет.</strong>
-                            <span className="muted">Как только появятся новые заказы, они отобразятся здесь.</span>
+                    <div className="grid place-items-center p-5 rounded-lg border-dashed border-amber-100 bg-amber-50 text-amber-950/90 text-center">
+                        <div className="flex flex-col items-center gap-2 max-w-lg">
+                            <img src="https://api.iconify.design/lucide-inbox.svg" alt="Пусто" className="w-5 h-5 opacity-90" />
+                            <strong className="font-bold">Недавних продаж нет.</strong>
+                            <span className="text-sm text-amber-900/80">Как только появятся новые заказы, они отобразятся здесь.</span>
                         </div>
                     </div>
                 ): (
