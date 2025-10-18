@@ -51,10 +51,8 @@ const DashboardPage: React.FC = () => {
         if (openBtn) openBtn.addEventListener('click', openSidebar);
         if (overlay) overlay.addEventListener('click', closeSidebar);
         
-        // Lightweight hint
         let hintTimer: ReturnType<typeof setTimeout> | null = null;
-        function hint(text: string) {
-            // FIX: Explicitly type `node` as HTMLElement to allow access to the `style` property.
+        function hint(text: string): void {
             let node: HTMLElement | null = document.querySelector('#acc-hint');
             if (!node) {
               node = document.createElement('div');
@@ -73,8 +71,7 @@ const DashboardPage: React.FC = () => {
             hintTimer = setTimeout(() => { if (node) node.style.opacity = '0'; }, 1500);
         }
 
-        // Charts
-        function drawLineChart(canvas: HTMLCanvasElement | null, series: number[], opts = {}) {
+        function drawLineChart(canvas: HTMLCanvasElement | null, series: number[]): void {
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
@@ -120,8 +117,6 @@ const DashboardPage: React.FC = () => {
         const salesData = [0, 1, 0, 2, 1, 0, 0, 1, 0, 1, 0, 0, 2, 0, 0, 1, 0, 0, 0, 2, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1];
         drawLineChart(csales, salesData);
 
-        // This script is self-contained for handling its own state.
-        // It's better to let it run once and manage its elements.
         return () => {
             if (openBtn) openBtn.removeEventListener('click', openSidebar);
             if (overlay) overlay.removeEventListener('click', closeSidebar);
@@ -159,7 +154,88 @@ const DashboardPage: React.FC = () => {
             return <div className="flex justify-center items-center h-96"><Spinner /></div>;
         }
         switch (activeTab) {
-            case 'products': return <ListingsTab products={userProducts} isOwnProfile={true} onProductUpdate={handleProductUpdate} />;
+            case 'products': return (
+                <article className="list-card">
+                  <div className="card-head">
+                    <strong className="card-title">Ваши товары</strong>
+                    <button type="button" className="gjs-t-button" style={{padding: '0.5rem 0.9rem', fontWeight: 700}}>
+                      <img src="https://api.iconify.design/lucide-plus.svg" alt="Добавить" width="18" height="18" style={{filter: 'invert(1)'}} />
+                      Добавить товар
+                    </button>
+                  </div>
+                  <div className="products-grid">
+                    <article className="product-row">
+                      <img loading="lazy" decoding="async" alt="Керамическая ваза" src="https://app.grapesjs.com/api/assets/random-image?query=%22handmade%20ceramic%20vase%20beige%20studio%22&w=320&h=240" className="thumb" />
+                      <div className="meta">
+                        <strong className="name">Керамическая ваза «Песчаный берег»</strong>
+                        <div className="tags">
+                          <span className="tag success">
+                            <img src="https://api.iconify.design/lucide-badge-check.svg" alt="Опубликовано" width="16" height="16" />
+                            Опубликовано
+                          </span>
+                          <span className="tag">
+                            <img src="https://api.iconify.design/lucide-eye.svg" alt="Просмотры" width="16" height="16" />
+                            124
+                          </span>
+                          <span className="tag">
+                            <img src="https://api.iconify.design/lucide-heart.svg" alt="Лайки" width="16" height="16" />
+                            18
+                          </span>
+                          <span className="tag">
+                            <img src="https://api.iconify.design/lucide-message-square.svg" alt="Сообщения" width="16" height="16" />
+                            3
+                          </span>
+                        </div>
+                      </div>
+                      <div className="price">1 200 ₽</div>
+                      <div className="actions">
+                        <button type="button" className="btn-secondary">
+                          <img src="https://api.iconify.design/lucide-pencil.svg" alt="Редактировать" width="16" height="16" />
+                          Редактировать
+                        </button>
+                        <button type="button" className="btn-ghost">
+                          <img src="https://api.iconify.design/lucide-external-link.svg" alt="Просмотр" width="16" height="16" />
+                          Просмотр
+                        </button>
+                      </div>
+                    </article>
+                    <article className="product-row">
+                      <img loading="lazy" decoding="async" alt="Деревянная подставка" src="https://app.grapesjs.com/api/assets/random-image?query=%22handcrafted%20wood%20stand%20product%20beige%22&w=320&h=240" className="thumb" />
+                      <div className="meta">
+                        <strong className="name">Деревянная подставка для приборов</strong>
+                        <div className="tags">
+                          <span className="tag warning">
+                            <img src="https://api.iconify.design/lucide-file-clock.svg" alt="Черновик" width="16" height="16" />
+                            Черновик
+                          </span>
+                          <span className="tag">
+                            <img src="https://api.iconify.design/lucide-eye.svg" alt="Просмотры" width="16" height="16" />
+                            32
+                          </span>
+                        </div>
+                      </div>
+                      <div className="price">450 ₽</div>
+                      <div className="actions">
+                        <button type="button" className="btn-secondary">
+                          <img src="https://api.iconify.design/lucide-rocket.svg" alt="Опубликовать" width="16" height="16" />
+                          Опубликовать
+                        </button>
+                        <button type="button" className="btn-ghost">
+                          <img src="https://api.iconify.design/lucide-pencil.svg" alt="Редактировать" width="16" height="16" />
+                          Редактировать
+                        </button>
+                      </div>
+                    </article>
+                  </div>
+                  <div className="empty hint-muted" style={{display: 'none'}}>
+                    <div>
+                      <img src="https://api.iconify.design/lucide-package.svg" alt="Нет товаров" />
+                      <strong>Пока нет товаров</strong>
+                      <span className="muted">Добавьте первое объявление, чтобы начать продажи.</span>
+                    </div>
+                  </div>
+                </article>
+            );
             case 'workshop': return <WorkshopTab user={user} />;
             case 'favorites': return <WishlistTab />;
             case 'collections': return <CollectionsTab />;
