@@ -45,7 +45,7 @@ const AppContent: React.FC = () => {
   const location = useLocation();
   const { tg } = useTelegram();
   
-  const isFullScreenPage = location.pathname.startsWith('/chat') || location.pathname.startsWith('/dashboard');
+  const isFullScreenPage = location.pathname.startsWith('/chat');
   const isSpecificChatOpen = location.pathname.startsWith('/chat/') && location.pathname !== '/chat';
 
   useEffect(() => {
@@ -55,11 +55,11 @@ const AppContent: React.FC = () => {
   }, [tg]);
   
   const mainClass = isFullScreenPage
-    ? "flex-grow" 
+    ? "flex-grow overflow-hidden" 
     : "flex-grow";
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col h-screen bg-base-200">
       {!isFullScreenPage && <Header />}
       <main className={mainClass}>
         <Routes>
