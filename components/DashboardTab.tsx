@@ -19,7 +19,7 @@ const KpiCard: React.FC<{ title: string, value: string | number, trend: 'up' | '
 );
 
 
-const DashboardTab: React.FC = () => {
+const SummaryDashboardTab: React.FC = () => {
     const { user } = useAuth();
     const [sales, setSales] = React.useState<Order[]>([]);
     const [purchases, setPurchases] = React.useState<Order[]>([]);
@@ -149,4 +149,4 @@ const DashboardTab: React.FC = () => {
     );
 };
 
-export default DashboardTab;
+export default SummaryDashboardTab;

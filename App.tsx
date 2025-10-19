@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './hooks/useAuth';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { AuthProvider } from './hooks/useAuth';
 import { AppContextProvider } from './hooks/useAppContext';
 import { TonConnectUIProvider } from './hooks/useTonConnect';
 import { NotificationsProvider } from './hooks/useNotifications';
@@ -14,7 +14,6 @@ import { useTelegram } from './hooks/useTelegram';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import MobileNavBar from './components/MobileNavBar';
-import Spinner from './components/Spinner';
 import HomePage from './pages/HomePage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import CreateListingPage from './pages/CreateListingPage';
@@ -36,13 +35,12 @@ import ProposalDetailPage from './pages/ProposalDetailPage';
 import CreateProposalPage from './pages/CreateProposalPage';
 import CreateLiveStreamPage from './pages/CreateLiveStreamPage';
 import ProductListPage from './pages/ProductListPage';
-// FIX: Changed import to a named import to resolve "no default export" error.
 import { ImportPage } from './pages/ImportPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import DashboardPage from './pages/DashboardPage';
 
 
-// This component contains the main application layout and routes for authenticated users.
+// This component contains the main application layout and routes.
 const AppContent: React.FC = () => {
   const location = useLocation();
   const { tg } = useTelegram();
@@ -55,17 +53,13 @@ const AppContent: React.FC = () => {
       tg.MainButton.hide();
     }
   }, [tg]);
-
-  const appContainerClass = isFullScreenPage
-    ? "bg-base-200 h-screen flex flex-col overflow-hidden font-sans text-base-content"
-    : "min-h-screen flex flex-col overflow-x-hidden font-sans text-base-content";
-    
+  
   const mainClass = isFullScreenPage
-    ? "flex-grow min-h-0" // FIX: Removed overflow-hidden to allow child components to manage their own scroll.
-    : "flex-grow container mx-auto px-4 sm:px-6 py-8";
+    ? "flex-grow" 
+    : "flex-grow";
 
   return (
-    <div className={appContainerClass}>
+    <div className="flex flex-col min-h-screen">
       {!isFullScreenPage && <Header />}
       <main className={mainClass}>
         <Routes>
@@ -104,47 +98,25 @@ const AppContent: React.FC = () => {
   );
 };
 
-// This component wraps the main app content with providers that are specific to an authenticated user.
-const AuthenticatedApp: React.FC = () => (
-  <NotificationsProvider>
-    <CollectionsProvider>
-      <CurrencyProvider>
-        <CartProvider>
-          <WishlistProvider>
-            <AppContent />
-          </WishlistProvider>
-        </CartProvider>
-      </CurrencyProvider>
-    </CollectionsProvider>
-  </NotificationsProvider>
-);
-
-// This component handles the initial loading and authentication check,
-// then renders the appropriate part of the application.
-const AppInitializer: React.FC = () => {
-  const { isLoading } = useAuth();
-  if (isLoading) {
-    return (
-      <div className="bg-base-200 min-h-screen flex items-center justify-center">
-        <Spinner size="lg" />
-      </div>
-    );
-  }
-  // The app is now always rendered, letting internal components and routes handle auth state.
-  return <AuthenticatedApp />;
-}
-
-// The root App component sets up the global providers that are needed
-// for both authenticated and unauthenticated experiences.
 const App: React.FC = () => {
   return (
     <AppContextProvider>
       <AuthProvider>
         <TonConnectUIProvider>
           <IconProvider>
-            <Router>
-              <AppInitializer />
-            </Router>
+            <NotificationsProvider>
+              <CollectionsProvider>
+                <CurrencyProvider>
+                  <CartProvider>
+                    <WishlistProvider>
+                      <Router>
+                        <AppContent />
+                      </Router>
+                    </WishlistProvider>
+                  </CartProvider>
+                </CurrencyProvider>
+              </CollectionsProvider>
+            </NotificationsProvider>
           </IconProvider>
         </TonConnectUIProvider>
       </AuthProvider>

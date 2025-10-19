@@ -1,15 +1,15 @@
 import React, { useMemo, useState } from 'react';
 import type { User, Product } from '../types';
 import { Link } from 'react-router-dom';
-// FIX: Changed 'ProfileTab' to 'PublicProfileTab' to match the exported type.
-import type { PublicProfileTab } from '../pages/ProfilePage';
+// FIX: Replaced PublicProfileTab with DashboardTabType as ProfilePage no longer exports this type.
+import type { DashboardTabType } from '../pages/DashboardPage';
 import AuthenticationRequestModal from './AuthenticationRequestModal';
 
 interface ElectronicsDashboardTabProps {
     user: User;
     products: Product[];
     onProductUpdate: (updatedProduct: Product) => void;
-    setActiveTab: (tab: PublicProfileTab) => void;
+    setActiveTab: (tab: DashboardTabType) => void;
 }
 
 const StatCard: React.FC<{ title: string; value: string; icon: React.ReactElement }> = ({ title, value, icon }) => (
@@ -126,7 +126,8 @@ const ElectronicsDashboardTab: React.FC<ElectronicsDashboardTabProps> = ({ user,
                         <Link to="/create" className="flex-1 text-center bg-brand-primary hover:bg-brand-primary-hover text-white font-bold py-3 px-6 rounded-lg transition-colors">
                             + Разместить новый товар
                         </Link>
-                        <button onClick={() => setActiveTab('listings')} className="flex-1 text-center bg-brand-surface hover:bg-brand-border text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                        {/* FIX: Changed 'listings' to 'products' to match the DashboardTabType. */}
+                        <button onClick={() => setActiveTab('products')} className="flex-1 text-center bg-brand-surface hover:bg-brand-border text-white font-bold py-3 px-6 rounded-lg transition-colors">
                             Управлять товарами
                         </button>
                     </div>
