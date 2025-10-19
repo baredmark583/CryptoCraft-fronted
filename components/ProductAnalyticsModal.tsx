@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import type { Product } from '../types';
 import { apiService } from '../services/apiService';
 import Spinner from './Spinner';
+import { useCurrency } from '../hooks/useCurrency';
 
 interface ProductAnalyticsModalProps {
   isOpen: boolean;
@@ -17,6 +18,7 @@ const ProductAnalyticsModal: React.FC<ProductAnalyticsModalProps> = ({ isOpen, o
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [simulatedDiscount, setSimulatedDiscount] = useState('');
+  const { getFormattedPrice } = useCurrency();
 
   const {
       currentPrice,
@@ -128,22 +130,22 @@ const ProductAnalyticsModal: React.FC<ProductAnalyticsModalProps> = ({ isOpen, o
                     <span className="text-base-content/70">Цена для покупателя</span>
                      <div className="text-right">
                         {isDiscountApplied && (
-                            <span className="font-mono text-base-content/70 line-through mr-2">{currentPrice.toFixed(2)}</span>
+                            <span className="font-mono text-base-content/70 line-through mr-2">{getFormattedPrice(currentPrice)}</span>
                         )}
-                        <span className="font-mono text-white font-semibold">{discountedPrice.toFixed(2)} USDT</span>
+                        <span className="font-mono text-white font-semibold">{getFormattedPrice(discountedPrice)}</span>
                     </div>
                 </li>
                  <li className="flex justify-between items-center">
                     <span className="text-base-content/70">Затраты на товар</span>
-                    <span className="font-mono text-red-400">- {purchaseCost.toFixed(2)} USDT</span>
+                    <span className="font-mono text-red-400">- {getFormattedPrice(purchaseCost)}</span>
                 </li>
                  <li className="flex justify-between items-center">
                     <span className="text-base-content/70">Комиссия ({isDiscountApplied ? 'с учетом скидки' : '2%'})</span>
-                    <span className="font-mono text-red-400">- {commission.toFixed(2)} USDT</span>
+                    <span className="font-mono text-red-400">- {getFormattedPrice(commission)}</span>
                 </li>
                 <li className="flex justify-between items-center border-t border-base-300 pt-2 mt-2">
                     <span className="font-bold text-white">Чистая прибыль</span>
-                    <span className={`font-mono font-bold text-lg ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>{profit.toFixed(2)} USDT</span>
+                    <div className={`font-mono font-bold text-lg ${profit >= 0 ? 'text-green-400' : 'text-red-400'}`}>{getFormattedPrice(profit)}</div>
                 </li>
             </ul>
           </div>
@@ -173,11 +175,11 @@ const ProductAnalyticsModal: React.FC<ProductAnalyticsModalProps> = ({ isOpen, o
             {newPrice !== null && (
                  <div className="mt-4 text-center p-4 bg-primary/10 rounded-lg">
                     <p className="text-sm text-base-content/70">Новая цена будет:</p>
-                    <p className="text-2xl font-bold text-white">
-                        <span className="line-through text-base-content/70/80">{currentPrice.toFixed(2)}</span>
+                    <div className="text-2xl font-bold text-white">
+                        <span className="line-through text-base-content/70/80">{getFormattedPrice(currentPrice)}</span>
                         <span className="mx-2">&rarr;</span>
-                        <span className="text-primary">{newPrice.toFixed(2)} USDT</span>
-                    </p>
+                        <span className="text-primary">{getFormattedPrice(newPrice)}</span>
+                    </div>
                     <button onClick={handleApplyPriceChange} disabled={isSaving} className="mt-4 w-full bg-primary hover:bg-primary-focus text-white font-bold py-2 px-4 rounded-lg flex justify-center items-center disabled:bg-gray-500">
                         {isSaving ? <Spinner size="sm" /> : 'Применить новую цену'}
                     </button>

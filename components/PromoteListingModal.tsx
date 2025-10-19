@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Product } from '../types';
 import Spinner from './Spinner';
+import { useCurrency } from '../hooks/useCurrency';
 
 interface PromoteListingModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface PromoteListingModalProps {
 const PromoteListingModal: React.FC<PromoteListingModalProps> = ({ isOpen, onClose, onSubmit, product }) => {
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { getFormattedPrice } = useCurrency();
 
   if (!isOpen) return null;
 
@@ -50,7 +52,7 @@ const PromoteListingModal: React.FC<PromoteListingModalProps> = ({ isOpen, onClo
           
           <div className="text-center mb-6">
               <p className="text-base-content">Разместите ваш товар на главной странице и в топе категории на 7 дней.</p>
-              <p className="text-4xl font-bold text-primary mt-2">5 USDT</p>
+              <div className="text-4xl font-bold text-primary mt-2">{getFormattedPrice(5)}</div>
           </div>
 
           {error && <p className="text-red-500 text-sm mb-4 text-center">{error}</p>}

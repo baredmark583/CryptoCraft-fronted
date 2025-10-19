@@ -2,21 +2,23 @@ import React, { useState, useEffect } from 'react';
 import type { Order, User } from '../types';
 import { apiService } from '../services/apiService';
 import Spinner from './Spinner';
+import { useCurrency } from '../hooks/useCurrency';
 
 interface WalletStats {
     totalEarned: number;
     pendingClearance: number;
 }
 
-const StatCard: React.FC<{ title: string; value: string; subtext?: string; colorClass?: string }> = ({ title, value, subtext, colorClass = 'text-white' }) => (
+const StatCard: React.FC<{ title: string; value: React.ReactNode; subtext?: string; colorClass?: string }> = ({ title, value, subtext, colorClass = 'text-white' }) => (
     <div className="bg-brand-background p-6 rounded-lg">
         <p className="text-sm text-brand-text-secondary">{title}</p>
-        <p className={`text-3xl font-bold ${colorClass}`}>{value}</p>
+        <div className={`text-3xl font-bold ${colorClass}`}>{value}</div>
         {subtext && <p className="text-xs text-brand-text-secondary mt-1">{subtext}</p>}
     </div>
 );
 
 const WalletTab: React.FC<{ user: User }> = ({ user }) => {
+    const { getFormattedPrice } = useCurrency();
     const [orders, setOrders] = useState<Order[]>([]);
     const [stats, setStats] = useState<WalletStats | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -57,25 +59,25 @@ const WalletTab: React.FC<{ user: User }> = ({ user }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard 
                     title="Доступно к выводу" 
-                    value={`${user.balance.toFixed(2)} USDT`} 
+                    value={getFormattedPrice(user.balance)} 
                     colorClass="text-green-400"
                 />
                 <StatCard 
                     title="Ожидает поступления" 
-                    value={`${(stats?.pendingClearance || 0).toFixed(2)} USDT`}
+                    value={getFormattedPrice(stats?.pendingClearance || 0)}
                     subtext="Отправленные, но не подтвержденные заказы"
                 />
                  {user.commissionOwed > 0 && (
                      <StatCard 
                         title="Задолженность" 
-                        value={`${user.commissionOwed.toFixed(2)} USDT`} 
+                        value={getFormattedPrice(user.commissionOwed)} 
                         subtext="Комиссия платформы"
                         colorClass="text-red-400"
                     />
                  )}
                  <StatCard 
                     title="Всего заработано" 
-                    value={`${(stats?.totalEarned || 0).toFixed(2)} USDT`} 
+                    value={getFormattedPrice(stats?.totalEarned || 0)} 
                     subtext="Завершенные сделки"
                 />
             </div>
@@ -107,9 +109,9 @@ const WalletTab: React.FC<{ user: User }> = ({ user }) => {
                                             <p className="text-sm text-brand-text-secondary">{new Date(order.orderDate).toLocaleDateString()}</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className={`font-bold text-lg ${isIncome ? 'text-green-400' : 'text-brand-text-secondary'}`}>
-                                                {isIncome ? `+${profit.toFixed(2)}` : `${order.total.toFixed(2)}`} USDT
-                                            </p>
+                                            <div className={`font-bold text-lg ${isIncome ? 'text-green-400' : 'text-brand-text-secondary'}`}>
+                                                {isIncome ? getFormattedPrice(profit) : getFormattedPrice(order.total)}
+                                            </div>
                                              <p className="text-xs text-brand-text-secondary">{isIncome ? 'Прибыль' : order.status}</p>
                                         </div>
                                     </li>

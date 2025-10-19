@@ -4,9 +4,11 @@ import { apiService } from '../services/apiService';
 import type { Order } from '../types';
 import Spinner from './Spinner';
 import { Link } from 'react-router-dom';
+import { useCurrency } from '../hooks/useCurrency';
 
 const SalesTab: React.FC = () => {
     const { user } = useAuth();
+    const { getFormattedPrice } = useCurrency();
     const [sales, setSales] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [generatingWaybill, setGeneratingWaybill] = useState<string | null>(null);
@@ -49,9 +51,9 @@ const SalesTab: React.FC = () => {
                             <img src={item.product.imageUrls[0]} alt={item.product.title} className="w-16 h-16 object-cover rounded-md"/>
                              <div className="flex-grow">
                                 <p className="font-semibold text-white">{item.product.title}</p>
-                                <p className="text-sm text-base-content/70">{item.quantity} x {item.price.toFixed(2)} USDT</p>
+                                <p className="text-sm text-base-content/70">{item.quantity} x {getFormattedPrice(item.price)}</p>
                              </div>
-                             <p className="font-bold text-lg text-white">{order.total.toFixed(2)} USDT</p>
+                             <p className="font-bold text-lg text-white">{getFormattedPrice(order.total)}</p>
                          </div>
                     ))}
                      <div className="flex flex-wrap gap-2 mt-3 justify-end">

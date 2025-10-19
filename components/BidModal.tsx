@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import type { Product } from '../types';
 import Spinner from './Spinner';
+import { useCurrency } from '../hooks/useCurrency';
 
 interface BidModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ const BidModal: React.FC<BidModalProps> = ({ isOpen, onClose, onSubmit, product 
   const [bidAmount, setBidAmount] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { getFormattedPrice } = useCurrency();
 
   const minNextBid = useMemo(() => {
     const current = product.currentBid || product.startingBid || 0;
@@ -68,7 +70,7 @@ const BidModal: React.FC<BidModalProps> = ({ isOpen, onClose, onSubmit, product 
           
           <div className="text-center bg-base-200 p-4 rounded-lg mb-6">
               <p className="text-sm text-base-content/70">Текущая ставка</p>
-              <p className="text-3xl font-bold text-primary">{product.currentBid?.toFixed(2) || product.startingBid?.toFixed(2)} USDT</p>
+              <div className="text-3xl font-bold text-primary">{getFormattedPrice(product.currentBid || product.startingBid || 0)}</div>
           </div>
           
           <div className="mb-4">
@@ -98,7 +100,7 @@ const BidModal: React.FC<BidModalProps> = ({ isOpen, onClose, onSubmit, product 
             disabled={isSubmitting}
             className="w-full bg-primary hover:bg-primary-focus text-primary-content font-bold py-3 rounded-lg transition-colors flex items-center justify-center disabled:bg-gray-500 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? <Spinner size="sm" /> : `Сделать ставку ${bidAmount ? parseFloat(bidAmount).toFixed(2) : ''} USDT`}
+            {isSubmitting ? <Spinner size="sm" /> : <>Сделать ставку {bidAmount ? getFormattedPrice(parseFloat(bidAmount)) : ''}</>}
           </button>
            <p className="text-xs text-base-content/70 text-center mt-3">Размещая ставку, вы обязуетесь выкупить товар в случае выигрыша.</p>
         </form>
