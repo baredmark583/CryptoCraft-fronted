@@ -4,6 +4,7 @@ import type { Product } from '../types';
 import PromoteListingModal from './PromoteListingModal';
 import ProductAnalyticsModal from './ProductAnalyticsModal';
 import { apiService } from '../services/apiService';
+import { useCurrency } from '../hooks/useCurrency';
 
 interface ListingsTabProps {
     products: Product[];
@@ -51,6 +52,7 @@ const StatItem: React.FC<{ icon: string, value: number | string }> = ({ icon, va
 
 
 const ListingsTab: React.FC<ListingsTabProps> = ({ products, isOwnProfile, onProductUpdate }) => {
+    const { getFormattedPrice } = useCurrency();
     const [promotingProduct, setPromotingProduct] = useState<Product | null>(null);
     const [analyticsProduct, setAnalyticsProduct] = useState<Product | null>(null);
 
@@ -118,7 +120,7 @@ const ListingsTab: React.FC<ListingsTabProps> = ({ products, isOwnProfile, onPro
                                 <div className="flex-grow"></div> {/* Spacer */}
                             </div>
                             <div className="flex-shrink-0 flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-4">
-                                {product.price && <span className="font-bold text-lg text-amber-900 font-manrope whitespace-nowrap">{product.price.toLocaleString('ru-RU')} ₽</span>}
+                                {product.price != null && <span className="font-bold text-lg text-amber-900 font-manrope whitespace-nowrap">{getFormattedPrice(product.price)}</span>}
                                 <div className="flex items-center gap-2 mt-auto">
                                     {product.status === 'Active' && (
                                         <>

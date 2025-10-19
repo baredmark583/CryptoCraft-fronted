@@ -35,7 +35,7 @@ const BidModal: React.FC<BidModalProps> = ({ isOpen, onClose, onSubmit, product 
     e.preventDefault();
     const amount = parseFloat(bidAmount);
     if (isNaN(amount) || amount < minNextBid) {
-      setError(`Минимальная ставка: ${minNextBid.toFixed(2)} USDT`);
+      setError(`Минимальная ставка: ${minNextBid.toFixed(2)}`);
       return;
     }
     setError('');
@@ -74,7 +74,7 @@ const BidModal: React.FC<BidModalProps> = ({ isOpen, onClose, onSubmit, product 
           </div>
           
           <div className="mb-4">
-            <label htmlFor="bid-amount" className="block text-sm font-medium text-base-content/70 mb-2">Ваша ставка (USDT)</label>
+            <label htmlFor="bid-amount" className="block text-sm font-medium text-base-content/70 mb-2">Ваша ставка</label>
             <input
               id="bid-amount"
               type="number"

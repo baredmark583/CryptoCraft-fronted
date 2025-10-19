@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 // FIX: Replaced PublicProfileTab with DashboardTabType as ProfilePage no longer exports this type.
 import type { DashboardTabType } from '../pages/DashboardPage';
 import AuthenticationRequestModal from './AuthenticationRequestModal';
+import { useCurrency } from '../hooks/useCurrency';
 
 interface ElectronicsDashboardTabProps {
     user: User;
@@ -12,7 +13,7 @@ interface ElectronicsDashboardTabProps {
     setActiveTab: (tab: DashboardTabType) => void;
 }
 
-const StatCard: React.FC<{ title: string; value: string; icon: React.ReactElement }> = ({ title, value, icon }) => (
+const StatCard: React.FC<{ title: string; value: React.ReactNode; icon: React.ReactElement }> = ({ title, value, icon }) => (
     <div className="bg-brand-surface p-6 rounded-lg flex items-center gap-4">
         <div className="bg-brand-primary/20 text-brand-primary p-3 rounded-full">{icon}</div>
         <div>
@@ -23,6 +24,7 @@ const StatCard: React.FC<{ title: string; value: string; icon: React.ReactElemen
 );
 
 const ElectronicsDashboardTab: React.FC<ElectronicsDashboardTabProps> = ({ user, products, onProductUpdate, setActiveTab }) => {
+    const { getFormattedPrice } = useCurrency();
     const [authenticatingProduct, setAuthenticatingProduct] = useState<Product | null>(null);
 
     const electronicsStats = useMemo(() => {
@@ -55,7 +57,7 @@ const ElectronicsDashboardTab: React.FC<ElectronicsDashboardTabProps> = ({ user,
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <StatCard 
                             title="Общая стоимость" 
-                            value={`${electronicsStats.totalValue.toFixed(2)} USDT`}
+                            value={getFormattedPrice(electronicsStats.totalValue)}
                             icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v.01" /></svg>}
                         />
                         <StatCard 
@@ -104,10 +106,10 @@ const ElectronicsDashboardTab: React.FC<ElectronicsDashboardTabProps> = ({ user,
                                         <img src={product.imageUrls[0]} alt={product.title} className="w-12 h-12 object-cover rounded-md flex-shrink-0" />
                                         <div className="flex-grow">
                                             <p className="font-semibold text-white truncate">{product.title}</p>
-                                            <p className="text-xs text-brand-text-secondary">Продано за {(product.price || 0).toFixed(2)} USDT</p>
+                                            <p className="text-xs text-brand-text-secondary">Продано за {getFormattedPrice(product.price || 0)}</p>
                                         </div>
                                         <div className="text-right flex-shrink-0">
-                                            <p className="font-bold text-green-400 text-lg">+{product.profit.toFixed(2)}</p>
+                                            <p className="font-bold text-green-400 text-lg">+{getFormattedPrice(product.profit)}</p>
                                             <p className="text-xs text-brand-text-secondary">Прибыль</p>
                                         </div>
                                     </div>

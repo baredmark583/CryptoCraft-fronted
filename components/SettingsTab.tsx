@@ -7,8 +7,10 @@ import { useAuth } from '../hooks/useAuth';
 import { cloudinaryService } from '../services/cloudinaryService';
 import { Link } from 'react-router-dom';
 import DynamicIcon from './DynamicIcon';
+import { useCurrency } from '../hooks/useCurrency';
 
 const SettingsTab: React.FC<{ user: User }> = ({ user }) => {
+    const { getFormattedPrice } = useCurrency();
     const { updateUser } = useAuth();
     const [formData, setFormData] = useState({
         name: user.name,
@@ -311,7 +313,7 @@ const SettingsTab: React.FC<{ user: User }> = ({ user }) => {
                                 <label className="block text-sm font-medium text-base-content/70">Тип скидки</label>
                                 <select name="discountType" value={newPromoData.discountType} onChange={handlePromoDataChange} className="mt-1 w-full bg-base-100 border border-base-300 rounded-md p-2">
                                     <option value="PERCENTAGE">Процент (%)</option>
-                                    <option value="FIXED_AMOUNT">Фикс. сумма (USDT)</option>
+                                    <option value="FIXED_AMOUNT">Фикс. сумма</option>
                                 </select>
                             </div>
                         </div>
@@ -336,7 +338,7 @@ const SettingsTab: React.FC<{ user: User }> = ({ user }) => {
                             </div>
                         )}
                         <div>
-                            <label className="block text-sm font-medium text-base-content/70">Минимальная сумма заказа (USDT)</label>
+                            <label className="block text-sm font-medium text-base-content/70">Минимальная сумма заказа</label>
                             <input type="number" name="minPurchaseAmount" value={newPromoData.minPurchaseAmount || ''} onChange={handlePromoDataChange} placeholder="Не обязательно" className="mt-1 w-full bg-base-100 border border-base-300 rounded-md p-2" />
                         </div>
 
@@ -355,7 +357,7 @@ const SettingsTab: React.FC<{ user: User }> = ({ user }) => {
                                         <div>
                                             <span className="font-mono text-lg font-bold text-primary bg-base-100 px-2 py-1 rounded">{promo.code}</span>
                                             <p className="text-sm text-base-content/70 mt-1">
-                                                -{promo.discountValue}{promo.discountType === 'PERCENTAGE' ? '%' : ' USDT'}
+                                                -{promo.discountType === 'PERCENTAGE' ? `${promo.discountValue}%` : getFormattedPrice(promo.discountValue)}
                                                 {promo.scope === 'CATEGORY' ? ` на категорию "${promo.applicableCategory}"` : ' на весь заказ'}
                                             </p>
                                         </div>

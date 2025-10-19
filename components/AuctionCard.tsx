@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import type { Product } from '../types';
 import { useCountdown } from '../hooks/useCountdown';
+import { useCurrency } from '../hooks/useCurrency';
 
 interface AuctionCardProps {
   product: Product;
@@ -22,6 +23,7 @@ const Countdown: React.FC<{ targetDate: number }> = ({ targetDate }) => {
 }
 
 const AuctionCard: React.FC<AuctionCardProps> = ({ product }) => {
+  const { getFormattedPrice } = useCurrency();
 
   return (
     <div className="card bg-base-100 border border-base-300 group transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1">
@@ -55,7 +57,7 @@ const AuctionCard: React.FC<AuctionCardProps> = ({ product }) => {
                 <div className="text-sm text-base-content/70">
                     Текущая ставка
                 </div>
-                <p className="text-xl font-bold text-primary">{product.currentBid ?? product.startingBid} USDT</p>
+                <p className="text-xl font-bold text-primary">{getFormattedPrice(product.currentBid ?? product.startingBid ?? 0)}</p>
             </div>
         </div>
       </Link>

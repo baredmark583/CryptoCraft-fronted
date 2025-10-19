@@ -155,7 +155,7 @@ const ProductAnalyticsModal: React.FC<ProductAnalyticsModalProps> = ({ isOpen, o
                 <h3 className="font-semibold text-white mb-3">Изменить цену</h3>
                 <div className="flex gap-2 p-1 bg-base-100 rounded-lg mb-4">
                     <button onClick={() => { setChangeType('percent'); setNewPrice(null); }} className={`flex-1 text-center p-2 rounded-md transition-colors ${changeType === 'percent' ? 'bg-primary text-white' : 'hover:bg-base-300/50'}`}>Процент (%)</button>
-                    <button onClick={() => { setChangeType('fixed'); setNewPrice(null); }} className={`flex-1 text-center p-2 rounded-md transition-colors ${changeType === 'fixed' ? 'bg-primary text-white' : 'hover:bg-base-300/50'}`}>Фиксировано (USDT)</button>
+                    <button onClick={() => { setChangeType('fixed'); setNewPrice(null); }} className={`flex-1 text-center p-2 rounded-md transition-colors ${changeType === 'fixed' ? 'bg-primary text-white' : 'hover:bg-base-300/50'}`}>Фиксированная сумма</button>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                     <button onClick={() => handleCalculatePrice('decrease')} className="col-span-1 bg-red-600/80 hover:bg-red-700 text-white font-bold py-2 rounded-lg">- Уменьшить</button>

@@ -3,6 +3,7 @@ import { useTonConnectUI } from '../hooks/useTonConnect';
 // FIX: toNano is not exported from @tonconnect/ui-react. A local implementation is provided below.
 import Spinner from './Spinner';
 import { TREASURY_WALLET_ADDRESS } from '../constants';
+import { useCurrency } from '../hooks/useCurrency';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ const toNano = (value: number) => {
 };
 
 const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, amount, recipientAddress, onSuccess }) => {
+  const { getFormattedPrice } = useCurrency();
   const [tonConnectUI] = useTonConnectUI();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
@@ -67,7 +69,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, amount, re
           
           <div className="text-center bg-base-200 p-4 rounded-lg mb-6">
               <p className="text-sm text-base-content/70">Сумма к оплате</p>
-              <p className="text-4xl font-bold text-primary">{amount.toFixed(2)} USDT</p>
+              <p className="text-4xl font-bold text-primary">{getFormattedPrice(amount)}</p>
           </div>
            <div className="text-sm space-y-2 mb-6">
               <div className="flex justify-between">

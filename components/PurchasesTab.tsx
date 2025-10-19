@@ -8,8 +8,10 @@ import ReviewModal from './ReviewModal';
 import OpenDisputeModal from './OpenDisputeModal';
 import NFTCertificateModal from './NFTCertificateModal';
 import DynamicIcon from './DynamicIcon';
+import { useCurrency } from '../hooks/useCurrency';
 
 const PurchasesTab: React.FC = () => {
+    const { getFormattedPrice } = useCurrency();
     const { user } = useAuth();
     const navigate = useNavigate();
     const [purchases, setPurchases] = useState<Order[]>([]);
@@ -85,7 +87,7 @@ const PurchasesTab: React.FC = () => {
                                      <img src={item.product.imageUrls[0]} alt={item.product.title} className="w-16 h-16 object-cover rounded-md"/>
                                      <div className="flex-grow">
                                         <p className="font-semibold text-white">{item.product.title}</p>
-                                        <p className="text-sm text-base-content/70">{item.quantity} x {item.price.toFixed(2)} USDT</p>
+                                        <p className="text-sm text-base-content/70">{item.quantity} x {getFormattedPrice(item.price)}</p>
                                      </div>
                                  </div>
                             ))}

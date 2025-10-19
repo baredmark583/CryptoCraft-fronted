@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import type { Message, Product } from '../types';
+import { useCurrency } from '../hooks/useCurrency';
 
 interface ChatMessageProps {
   message: Message;
@@ -10,6 +11,7 @@ interface ChatMessageProps {
 }
 
 const ProductContextCard: React.FC<{ product: Product, isOwnMessage: boolean }> = ({ product, isOwnMessage }) => {
+    const { getFormattedPrice } = useCurrency();
     const price = product.price || 0;
     const bgColor = isOwnMessage ? 'bg-white/10 hover:bg-white/20' : 'bg-black/5 hover:bg-black/10';
     const textColor = isOwnMessage ? 'text-white' : 'text-inherit';
@@ -21,7 +23,7 @@ const ProductContextCard: React.FC<{ product: Product, isOwnMessage: boolean }> 
                 <img src={product.imageUrls[0]} alt={product.title} className="w-12 h-12 rounded-md object-cover" />
                 <div className="overflow-hidden">
                     <p className={`font-semibold truncate ${textColor}`}>{product.title}</p>
-                    <p className={`text-sm font-bold ${priceColor}`}>{price.toLocaleString()} USDT</p>
+                    <p className={`text-sm font-bold ${priceColor}`}>{getFormattedPrice(price)}</p>
                 </div>
             </div>
         </Link>

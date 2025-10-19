@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import type { Product } from '../types';
 import Spinner from './Spinner';
 import { apiService } from '../services/apiService';
+import { useCurrency } from '../hooks/useCurrency';
+import { AUTHENTICATION_FEE } from '../constants';
 
 interface AuthenticationRequestModalProps {
   isOpen: boolean;
@@ -11,6 +13,7 @@ interface AuthenticationRequestModalProps {
 }
 
 const AuthenticationRequestModal: React.FC<AuthenticationRequestModalProps> = ({ isOpen, onClose, product, onUpdate }) => {
+  const { getFormattedPrice } = useCurrency();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
@@ -62,7 +65,7 @@ const AuthenticationRequestModal: React.FC<AuthenticationRequestModalProps> = ({
                         <li>Наши специалисты проверяют подлинность и состояние товара.</li>
                         <li>Мы создаем детальный отчет и присваиваем товару значок "Подлинность подтверждена".</li>
                     </ol>
-                    <p className="font-semibold text-white">Стоимость услуги: <span className="text-brand-primary">15 USDT</span> (будет списана с вашего баланса).</p>
+                    <p className="font-semibold text-white">Стоимость услуги: <span className="text-brand-primary">{getFormattedPrice(AUTHENTICATION_FEE)}</span> (будет списана с вашего баланса).</p>
                 </div>
                 {error && <p className="text-red-500 text-sm mt-4 text-center">{error}</p>}
                 <button
