@@ -8,6 +8,7 @@ import Spinner from '../components/Spinner';
 import { io, Socket } from 'socket.io-client';
 import { useTelegram } from '../hooks/useTelegram';
 import ImageModal from '../components/ImageModal';
+import { useCurrency } from '../hooks/useCurrency';
 
 const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:3001';
 
@@ -25,6 +26,7 @@ const useDebounce = (callback: (...args: any[]) => void, delay: number) => {
 };
 
 const ProductContextCard: React.FC<{ product: Product, isOwnMessage: boolean }> = ({ product, isOwnMessage }) => {
+    const { getFormattedPrice } = useCurrency();
     const price = product.price || 0;
     const bgColor = isOwnMessage ? 'bg-white/10 hover:bg-white/20' : 'bg-black/5 hover:bg-black/10';
     const textColor = isOwnMessage ? 'text-white' : 'text-inherit';
@@ -36,7 +38,7 @@ const ProductContextCard: React.FC<{ product: Product, isOwnMessage: boolean }> 
                 <img src={product.imageUrls[0]} alt={product.title} className="w-12 h-12 rounded-md object-cover" />
                 <div className="overflow-hidden">
                     <p className={`font-semibold truncate ${textColor}`}>{product.title}</p>
-                    <p className={`text-sm font-bold ${priceColor}`}>{price.toLocaleString()} USDT</p>
+                    <p className={`text-sm font-bold ${priceColor}`}>{getFormattedPrice(price)}</p>
                 </div>
             </div>
         </Link>

@@ -418,7 +418,7 @@ const CheckoutPage: React.FC = () => {
                                         <div className="flex items-start">
                                             <input type="checkbox" checked={requestAuthentication} onChange={(e) => setRequestAuthentication(e.target.checked)} className="h-5 w-5 rounded bg-brand-surface border-brand-border text-brand-secondary focus:ring-brand-secondary mt-1"/>
                                             <div className="ml-3">
-                                                <span className="font-bold text-white">Заказать проверку подлинности (+{AUTHENTICATION_FEE} USDT)</span>
+                                                <span className="font-bold text-white">Заказать проверку подлинности (+{getFormattedPrice(AUTHENTICATION_FEE)})</span>
                                                 <p className="text-sm text-brand-text-secondary mt-1">Продавец отправит товар в наш центр, где эксперт проверит его подлинность и состояние перед отправкой вам. Это добавит 2-3 дня к доставке, но гарантирует качество.</p>
                                             </div>
                                         </div>
@@ -549,7 +549,7 @@ const CheckoutPage: React.FC = () => {
                                                 </button>
                                              </div>
                                               {promoErrors[sellerId] && <p className="text-red-500 text-xs mt-1">{promoErrors[sellerId]}</p>}
-                                              {promo && <p className="text-green-400 text-xs mt-1">Код "{promo.code}" ({promo.type === 'PERCENTAGE' ? `-${promo.value}%` : `-${promo.value} USDT`}) применен!</p>}
+                                              {promo && <p className="text-green-400 text-xs mt-1">Код "{promo.code}" ({promo.type === 'PERCENTAGE' ? `-${promo.value}%` : `-${getFormattedPrice(promo.value)}`}) применен!</p>}
                                          </div>
                                          <div className="flex justify-between items-baseline mt-2 text-sm">
                                             <span className="text-brand-text-secondary">Подытог:</span>

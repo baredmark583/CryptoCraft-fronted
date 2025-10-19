@@ -5,6 +5,7 @@ import { apiService } from '../services/apiService';
 import type { Dispute, DisputeMessage, User } from '../types';
 import Spinner from '../components/Spinner';
 import { cloudinaryService } from '../services/cloudinaryService';
+import { useCurrency } from '../hooks/useCurrency';
 
 const DisputeMessageBubble: React.FC<{ message: DisputeMessage, authUser: User }> = ({ message, authUser }) => {
     const isOwnMessage = message.senderId === authUser.id;
@@ -43,6 +44,7 @@ const DisputeCenterPage: React.FC = () => {
     const { user } = useAuth();
     const [dispute, setDispute] = useState<Dispute | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const { getFormattedPrice } = useCurrency();
     
     const [newMessage, setNewMessage] = useState('');
     const [imageFile, setImageFile] = useState<File | null>(null);
@@ -140,7 +142,7 @@ const DisputeCenterPage: React.FC = () => {
                             <div>
                                 <p className="font-semibold text-white">{firstItem.product.title}</p>
                                 <p className="text-sm text-brand-text-secondary">Заказ #{order.id}</p>
-                                <p className="text-sm text-brand-text-secondary">Сумма: {order.total.toFixed(2)} USDT</p>
+                                <p className="text-sm text-brand-text-secondary">Сумма: {getFormattedPrice(order.total)}</p>
                             </div>
                         </div>
                     </div>
