@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Product } from '../types';
-import ProductCard from './ProductCard';
 import PromoteListingModal from './PromoteListingModal';
 import ProductAnalyticsModal from './ProductAnalyticsModal';
-import DynamicIcon from './DynamicIcon';
 import { apiService } from '../services/apiService';
 
 interface ListingsTabProps {
@@ -12,6 +10,45 @@ interface ListingsTabProps {
     isOwnProfile: boolean;
     onProductUpdate: (product: Product) => void;
 }
+
+const StatusBadge: React.FC<{ status: Product['status'] }> = ({ status }) => {
+    let text, iconName, colorClasses;
+
+    switch (status) {
+        case 'Active':
+            text = 'Опубликовано';
+            iconName = 'https://api.iconify.design/lucide-check-circle-2.svg';
+            colorClasses = 'border-green-300 bg-green-50 text-green-700';
+            break;
+        case 'Pending Moderation':
+            text = 'Черновик';
+            iconName = 'https://api.iconify.design/lucide-file-text.svg';
+            colorClasses = 'border-amber-300 bg-amber-50 text-amber-700';
+            break;
+        case 'Rejected':
+            text = 'Отклонено';
+            iconName = 'https://api.iconify.design/lucide-x-circle.svg';
+            colorClasses = 'border-red-300 bg-red-50 text-red-700';
+            break;
+        default:
+            return null;
+    }
+
+    return (
+        <span className={`inline-flex items-center gap-1.5 px-2 py-1 text-xs font-medium rounded-full border ${colorClasses}`}>
+            <img src={iconName} alt="" className="w-3.5 h-3.5" />
+            {text}
+        </span>
+    );
+};
+
+const StatItem: React.FC<{ icon: string, value: number | string }> = ({ icon, value }) => (
+    <div className="inline-flex items-center gap-1 text-xs text-amber-800/80 px-2 py-1 bg-amber-100/60 rounded-md border border-amber-200/60">
+        <img src={icon} alt="" className="w-3.5 h-3.5 opacity-70" />
+        <span>{value}</span>
+    </div>
+);
+
 
 const ListingsTab: React.FC<ListingsTabProps> = ({ products, isOwnProfile, onProductUpdate }) => {
     const [promotingProduct, setPromotingProduct] = useState<Product | null>(null);
@@ -24,37 +61,96 @@ const ListingsTab: React.FC<ListingsTabProps> = ({ products, isOwnProfile, onPro
         setPromotingProduct(null);
     }
     
+    // Mock data for stats as it's not in the Product type
+    const productStats: Record<string, { views?: number, likes?: number, comments?: number }> = {
+        'prod-1': { views: 124, likes: 18, comments: 3 },
+        'prod-2': { views: 32 },
+        'prod-3': { views: 32 },
+    };
+
     if (products.length === 0) {
         return (
             <div className="text-center py-16">
                 <p className="text-base-content/70">{isOwnProfile ? 'У вас пока нет товаров.' : 'У этого пользователя пока нет товаров.'}</p>
-                {isOwnProfile && <Link to="/create" className="btn btn-primary mt-4">Создать первое объявление</Link>}
+                {isOwnProfile && 
+                    <div className="mt-6">
+                        <Link to="/create" className="btn btn-primary bg-amber-800 hover:bg-amber-900 text-white shadow-sm">
+                            <img src="https://api.iconify.design/lucide-plus.svg" alt="" className="w-5 h-5"/>
+                            Создать первое объявление
+                        </Link>
+                    </div>
+                }
             </div>
         );
     }
     
     return (
         <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {products.map(product => (
-                    <div key={product.id}>
-                        <ProductCard product={product} />
-                        {isOwnProfile && (
-                            <div className="mt-2 flex gap-2">
-                                <Link to={`/edit/${product.id}`} className="flex-1 text-center text-sm bg-base-200/50 hover:bg-base-300/50 text-white font-semibold py-2 px-3 rounded-lg transition-colors">
-                                    Редактировать
+            {isOwnProfile && (
+                <div className="flex justify-between items-center mb-6 p-4 bg-amber-50/50 rounded-lg border-b border-amber-200">
+                    <h2 className="text-2xl font-bold text-amber-900 font-manrope">Ваши товары</h2>
+                    <Link to="/create" className="btn btn-primary bg-amber-800 hover:bg-amber-900 text-white shadow-sm">
+                        <img src="https://api.iconify.design/lucide-plus.svg" alt="" className="w-5 h-5"/>
+                        Добавить товар
+                    </Link>
+                </div>
+            )}
+
+            <div className="space-y-4">
+                {products.map(product => {
+                    const stats = productStats[product.id] || { views: Math.floor(Math.random() * 50) };
+                    
+                    return (
+                        <div key={product.id} className="bg-white border border-amber-200/80 rounded-xl p-4 flex flex-col sm:flex-row gap-4 hover:shadow-md transition-shadow">
+                            <Link to={`/product/${product.id}`} className="flex-shrink-0">
+                                <img src={product.imageUrls[0]} alt={product.title} className="w-full h-40 sm:w-32 sm:h-32 object-cover rounded-lg"/>
+                            </Link>
+                            <div className="flex-grow flex flex-col">
+                                <Link to={`/product/${product.id}`} className="font-bold text-lg text-amber-900 hover:underline">
+                                    {product.title}
                                 </Link>
-                                <button onClick={() => setAnalyticsProduct(product)} className="text-sm p-2 rounded-lg bg-base-200/50 hover:bg-base-300/50" title="Аналитика">
-                                    <DynamicIcon name="analytics" className="w-5 h-5" fallback={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M11 2a1 1 0 10-2 0v1a1 1 0 102 0V2zM15.657 5.657a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 14.95a1 1 0 001.414 1.414l.707-.707a1 1 0 00-1.414-1.414l-.707.707zM2 10a1 1 0 011-1h1a1 1 0 110 2H3a1 1 0 01-1-1zM10 4a6 6 0 100 12 6 6 0 000-12zM10 16a6 6 0 01-6-6 6 6 0 1112 0 6 6 0 01-6 6z" /></svg>} />
-                                </button>
-                                <button onClick={() => setPromotingProduct(product)} className="text-sm p-2 rounded-lg bg-base-200/50 hover:bg-base-300/50" title="Продвигать">
-                                    <DynamicIcon name="promote" className="w-5 h-5 text-yellow-400" fallback={<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-11.25a.75.75 0 00-1.5 0v4.59L7.3 9.24a.75.75 0 00-1.1 1.02l3.25 3.5a.75.75 0 001.1 0l3.25-3.5a.75.75 0 10-1.1-1.02l-1.95 2.1V6.75z" clipRule="evenodd" /></svg>} />
-                                </button>
+                                <div className="mt-2 flex items-center flex-wrap gap-2">
+                                    <StatusBadge status={product.status} />
+                                    {stats.views && <StatItem icon="https://api.iconify.design/lucide-eye.svg" value={stats.views} />}
+                                    {stats.likes && <StatItem icon="https://api.iconify.design/lucide-heart.svg" value={stats.likes} />}
+                                    {stats.comments && <StatItem icon="https://api.iconify.design/lucide-message-square.svg" value={stats.comments} />}
+                                </div>
+                                <div className="flex-grow"></div> {/* Spacer */}
                             </div>
-                        )}
-                    </div>
-                ))}
+                            <div className="flex-shrink-0 flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-4">
+                                {product.price && <span className="font-bold text-lg text-amber-900 font-manrope whitespace-nowrap">{product.price.toLocaleString('ru-RU')} ₽</span>}
+                                <div className="flex items-center gap-2 mt-auto">
+                                    {product.status === 'Active' && (
+                                        <>
+                                            <Link to={`/edit/${product.id}`} className="btn btn-sm btn-outline">
+                                                <img src="https://api.iconify.design/lucide-pencil.svg" alt="" className="w-4 h-4 mr-1"/>
+                                                Редактировать
+                                            </Link>
+                                            <Link to={`/product/${product.id}`} className="btn btn-sm btn-outline">
+                                                <img src="https://api.iconify.design/lucide-external-link.svg" alt="" className="w-4 h-4 mr-1"/>
+                                                Просмотр
+                                            </Link>
+                                        </>
+                                    )}
+                                    {product.status === 'Pending Moderation' && (
+                                        <>
+                                            <button className="btn btn-sm btn-outline btn-success">
+                                                <img src="https://api.iconify.design/lucide-upload-cloud.svg" alt="" className="w-4 h-4 mr-1"/>
+                                                Опубликовать
+                                            </button>
+                                            <Link to={`/edit/${product.id}`} className="btn btn-sm btn-outline">
+                                                <img src="https://api.iconify.design/lucide-pencil.svg" alt="" className="w-4 h-4 mr-1"/>
+                                                Редактировать
+                                            </Link>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
             </div>
+
             {promotingProduct && <PromoteListingModal isOpen={!!promotingProduct} onClose={() => setPromotingProduct(null)} onSubmit={handlePromote} product={promotingProduct} />}
             {analyticsProduct && <ProductAnalyticsModal isOpen={!!analyticsProduct} onClose={() => setAnalyticsProduct(null)} product={analyticsProduct} onUpdate={onProductUpdate} />}
         </>
