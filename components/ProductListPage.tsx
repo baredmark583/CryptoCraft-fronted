@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { apiService } from '../services/apiService';
 import type { Product } from '../types';
@@ -78,6 +78,12 @@ const ProductListPage: React.FC = () => {
     setFilters(prev => ({ ...prev, specialFilter: e.target.value as Filters['specialFilter'] }));
   };
 
+  const soldView = useMemo(() => filters.specialFilter === 'sold', [filters.specialFilter]);
+  const pageTitle = useMemo(
+    () => activeTab === 'catalog' ? (filters.category === 'Все' ? 'Каталог' : filters.category) : 'Аукцион',
+    [activeTab, filters.category],
+  );
+
   const renderContent = () => {
     if (isLoading) {
         return (
@@ -96,7 +102,6 @@ const ProductListPage: React.FC = () => {
     }
 
     if (activeTab === 'catalog') {
-        const soldView = filters.specialFilter === 'sold';
         return (
              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {products.map(product => (
@@ -118,8 +123,6 @@ const ProductListPage: React.FC = () => {
     return null;
   }
   
-  const pageTitle = activeTab === 'catalog' ? (filters.category === 'Все' ? 'Каталог' : filters.category) : 'Аукцион';
-
   return (
     <div className="flex flex-col lg:flex-row gap-8">
         {isFilterOpen && (

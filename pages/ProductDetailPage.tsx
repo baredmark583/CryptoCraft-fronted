@@ -41,6 +41,7 @@ const ProductDetailPage: React.FC = () => {
     const [selectedAttributes, setSelectedAttributes] = useState<Record<string, string>>({});
     const [isBidModalOpen, setIsBidModalOpen] = useState(false);
     const [isNftModalOpen, setIsNftModalOpen] = useState(false);
+    const [viewingReviewMedia, setViewingReviewMedia] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
     
     const { getFormattedPrice } = useCurrency();
@@ -69,9 +70,9 @@ const ProductDetailPage: React.FC = () => {
                 setSelectedMedia({ type: 'image', src: productData.imageUrls[0] });
             }
 
-            // Fetch reviews for the seller
-            const sellerReviews = await apiService.getReviewsByUserId(productData.seller.id);
-            setReviews(sellerReviews.filter(r => r.productId === productData.id));
+            // Fetch reviews for the product
+            const productReviews = await apiService.getReviewsByProductId(productData.id);
+            setReviews(productReviews);
 
             // Fetch similar products
             const allProducts = await apiService.getProducts({ category: productData.category });
@@ -248,7 +249,7 @@ const ProductDetailPage: React.FC = () => {
                 <div className="space-y-4">
                     {reviews.length > 0 ? (
                         reviews.map(review => (
-                            <ReviewCard key={review.id} review={review} onImageClick={() => {}} />
+                            <ReviewCard key={review.id} review={review} onPreviewMedia={(url) => setViewingReviewMedia(url)} />
                         ))
                     ) : (
                         <p className="text-base-content/70 text-center py-8">Отзывов на этот товар пока нет.</p>
@@ -278,6 +279,7 @@ const ProductDetailPage: React.FC = () => {
         
         {isBidModalOpen && <BidModal isOpen={isBidModalOpen} onClose={() => setIsBidModalOpen(false)} onSubmit={async () => {}} product={product} />}
         {isNftModalOpen && <NFTCertificateModal product={product} onClose={() => setIsNftModalOpen(false)} />}
+        {viewingReviewMedia && <ImageModal imageUrl={viewingReviewMedia} onClose={() => setViewingReviewMedia(null)} />}
     </>
     );
 };

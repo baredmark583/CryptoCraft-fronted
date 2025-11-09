@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { apiService } from '../services/apiService';
-import type { Order, Product, TrackingEvent } from '../types';
+import type { Order, Product, TrackingEvent, ReviewMediaAttachment } from '../types';
 import Spinner from './Spinner';
 import ReviewModal from './ReviewModal';
 import OpenDisputeModal from './OpenDisputeModal';
@@ -61,6 +61,37 @@ const PurchasesTab: React.FC = () => {
         const history = await apiService.getTrackingHistory(orderId);
         setTrackingHistory(history || []);
         setIsLoadingHistory(false);
+    };
+
+    const handleReviewSubmit = async (
+        order: Order,
+        payload: { rating: number; text: string; attachments: ReviewMediaAttachment[] },
+    ) => {
+        const primaryProduct = order.items[0]?.product;
+        if (!primaryProduct) {
+            alert('Не удалось определить товар для отзыва.');
+            return;
+        }
+
+        try {
+            const review = await apiService.submitReview({
+                productId: primaryProduct.id,
+                orderId: order.id,
+                rating: payload.rating,
+                text: payload.text,
+                attachments: payload.attachments,
+            });
+            if (review?.isHidden) {
+                alert('Отзыв отправлен и появится после модерации.');
+            } else {
+                alert('Спасибо! Отзыв опубликован.');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Не удалось отправить отзыв. Попробуйте позже.');
+        } finally {
+            setReviewingOrder(null);
+        }
     };
 
     if (isLoading) return <div className="flex justify-center py-8"><Spinner /></div>;
@@ -123,7 +154,14 @@ const PurchasesTab: React.FC = () => {
                     );
                 })}
             </div>
-            {reviewingOrder && <ReviewModal isOpen={!!reviewingOrder} onClose={() => setReviewingOrder(null)} order={reviewingOrder} onSubmit={async () => alert("Отзыв отправлен!")}/>}
+            {reviewingOrder && (
+                <ReviewModal
+                    isOpen={!!reviewingOrder}
+                    onClose={() => setReviewingOrder(null)}
+                    order={reviewingOrder}
+                    onSubmit={(payload) => handleReviewSubmit(reviewingOrder, payload)}
+                />
+            )}
             {disputingOrder && <OpenDisputeModal isOpen={!!disputingOrder} onClose={() => setDisputingOrder(null)} order={disputingOrder} onSubmit={handleOpenDispute} />}
             {viewingNftForProduct && <NFTCertificateModal product={viewingNftForProduct} onClose={() => setViewingNftForProduct(null)} />}
         </>

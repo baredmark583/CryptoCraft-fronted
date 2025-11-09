@@ -3,7 +3,7 @@ import React, { useState, useCallback } from 'react';
 import { useTelegramBackButton } from '../hooks/useTelegram';
 import { apiService } from '../services/apiService';
 import { geminiService } from '../services/geminiService';
-import type { ImportItem, Product, ImportedListingData } from '../types';
+import type { ImportItem, Product, ImportedListingData, AiResponseMeta } from '../types';
 import Spinner from '../components/Spinner';
 import { useAuth } from '../hooks/useAuth';
 import * as cheerio from 'cheerio';
@@ -91,8 +91,24 @@ export const ImportPage: React.FC = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
 
-    const updateItemStatus = useCallback((id: string, status: ImportItem['status'], data: { listing?: ImportedListingData, errorMessage?: string } = {}) => {
-        setImportItems(prev => prev.map(item => item.id === id ? { ...item, status, listing: data.listing || item.listing, errorMessage: data.errorMessage } : item));
+    const updateItemStatus = useCallback((
+        id: string,
+        status: ImportItem['status'],
+        data: { listing?: ImportedListingData; errorMessage?: string; aiMeta?: AiResponseMeta } = {},
+    ) => {
+        setImportItems(prev =>
+            prev.map(item =>
+                item.id === id
+                    ? {
+                        ...item,
+                        status,
+                        listing: data.listing || item.listing,
+                        errorMessage: data.errorMessage,
+                        aiMeta: data.aiMeta || item.aiMeta,
+                    }
+                    : item,
+            ),
+        );
     }, []);
 
     const handleAddUrls = () => {
@@ -149,9 +165,9 @@ export const ImportPage: React.FC = () => {
 
             // 3. Send clean HTML to AI for processing
             updateItemStatus(itemToProcess.id, 'enriching');
-            const result = await geminiService.processImportedHtml(cleanHtml);
-            
-            updateItemStatus(itemToProcess.id, 'success', { listing: result });
+            const aiResult = await geminiService.processImportedHtml(cleanHtml);
+            console.debug('AI import meta:', aiResult.meta);
+            updateItemStatus(itemToProcess.id, 'success', { listing: aiResult.data, aiMeta: aiResult.meta });
 
         } catch (error: any) {
             updateItemStatus(itemToProcess.id, 'error', { errorMessage: `Не удалось загрузить страницу напрямую. Ошибка: ${error.message}. Вероятнее всего, сайт блокирует прямые запросы из браузера (CORS).` });

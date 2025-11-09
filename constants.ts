@@ -9,11 +9,18 @@ export const AUTHENTICATION_FEE = 15;
 // --- CATEGORY DEFINITIONS ---
 
 export interface CategoryField {
-  name: string; // Used as id
-  label: string; // Displayed label
+  id?: string;
+  name: string;
+  label: string;
   type: 'text' | 'number' | 'select';
   required?: boolean;
-  options?: string[]; // For select type
+  options?: string[];
+}
+
+export interface CategoryFieldWithMeta extends CategoryField {
+  inherited?: boolean;
+  sourceCategoryId?: string | null;
+  sourceCategoryName?: string;
 }
 
 export interface CategorySchema {
@@ -23,6 +30,7 @@ export interface CategorySchema {
   iconUrl?: string | null;
   parentId?: string | null;
   subcategories?: CategorySchema[];
+  resolvedFields?: CategoryFieldWithMeta[];
 }
 
 export const CATEGORIES: CategorySchema[] = [

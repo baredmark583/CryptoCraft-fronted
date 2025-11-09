@@ -5,6 +5,7 @@ import PromoteListingModal from './PromoteListingModal';
 import ProductAnalyticsModal from './ProductAnalyticsModal';
 import { apiService } from '../services/apiService';
 import { useCurrency } from '../hooks/useCurrency';
+import Spinner from './Spinner';
 
 interface ListingsTabProps {
     products: Product[];
@@ -22,7 +23,7 @@ const StatusBadge: React.FC<{ status: Product['status'] }> = ({ status }) => {
             colorClasses = 'border-green-300 bg-green-50 text-green-700';
             break;
         case 'Pending Moderation':
-            text = 'Черновик';
+            text = 'На модерации';
             iconName = 'https://api.iconify.design/lucide-file-text.svg';
             colorClasses = 'border-amber-300 bg-amber-50 text-amber-700';
             break;
@@ -55,13 +56,39 @@ const ListingsTab: React.FC<ListingsTabProps> = ({ products, isOwnProfile, onPro
     const { getFormattedPrice } = useCurrency();
     const [promotingProduct, setPromotingProduct] = useState<Product | null>(null);
     const [analyticsProduct, setAnalyticsProduct] = useState<Product | null>(null);
+    const [appealDrafts, setAppealDrafts] = useState<Record<string, string>>({});
+    const [appealSubmittingId, setAppealSubmittingId] = useState<string | null>(null);
 
     const handlePromote = async () => {
         if (!promotingProduct) return;
         const updatedProduct = await apiService.updateListing(promotingProduct.id, { isPromoted: true });
         onProductUpdate(updatedProduct);
         setPromotingProduct(null);
-    }
+    };
+
+    const handleAppealChange = (productId: string, value: string) => {
+        setAppealDrafts(prev => ({ ...prev, [productId]: value }));
+    };
+
+    const handleAppealSubmit = async (product: Product) => {
+        const message = (appealDrafts[product.id] || '').trim();
+        if (!message) {
+            alert('Опишите, что именно вы исправили или почему решение нужно пересмотреть.');
+            return;
+        }
+        setAppealSubmittingId(product.id);
+        try {
+            const updated = await apiService.appealProductModeration(product.id, message);
+            onProductUpdate(updated);
+            setAppealDrafts(prev => ({ ...prev, [product.id]: '' }));
+            alert('Апелляция отправлена. Мы сообщим, как только модераторы пересмотрят решение.');
+        } catch (error) {
+            console.error(error);
+            alert('Не удалось отправить апелляцию. Попробуйте ещё раз.');
+        } finally {
+            setAppealSubmittingId(null);
+        }
+    };
     
     // Mock data for stats as it's not in the Product type
     const productStats: Record<string, { views?: number, likes?: number, comments?: number }> = {
@@ -135,19 +162,47 @@ const ListingsTab: React.FC<ListingsTabProps> = ({ products, isOwnProfile, onPro
                                         </>
                                     )}
                                     {product.status === 'Pending Moderation' && (
-                                        <>
-                                            <button className="btn btn-sm btn-outline btn-success">
-                                                <img src="https://api.iconify.design/lucide-upload-cloud.svg" alt="" className="w-4 h-4 mr-1"/>
-                                                Опубликовать
-                                            </button>
-                                            <Link to={`/edit/${product.id}`} className="btn btn-sm btn-outline">
-                                                <img src="https://api.iconify.design/lucide-pencil.svg" alt="" className="w-4 h-4 mr-1"/>
-                                                Редактировать
-                                            </Link>
-                                        </>
+                                        <p className="text-xs text-amber-700 bg-amber-50/70 border border-amber-200 rounded px-3 py-1">
+                                            Товар проверяется модератором. Обычно это занимает до 24 часов.
+                                        </p>
                                     )}
                                 </div>
                             </div>
+                            {isOwnProfile && product.status === 'Rejected' && (
+                                <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-4 text-sm text-red-800 space-y-3">
+                                    {product.rejectionReason && (
+                                        <div>
+                                            <p className="font-semibold">Причина отклонения</p>
+                                            <p>{product.rejectionReason}</p>
+                                        </div>
+                                    )}
+                                    {product.appealMessage ? (
+                                        <div className="text-xs text-red-700">
+                                            Апелляция отправлена: «{product.appealMessage}». Дождитесь ответа модератора.
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <label className="block text-xs font-semibold text-red-700">
+                                                Хотите обжаловать решение? Расскажите, что вы исправили или почему товар соответствует правилам.
+                                            </label>
+                                            <textarea
+                                                className="w-full bg-white border border-red-200 rounded-md p-2 text-sm"
+                                                rows={3}
+                                                value={appealDrafts[product.id] || ''}
+                                                onChange={(e) => handleAppealChange(product.id, e.target.value)}
+                                                placeholder="Например: обновил фото, уточнил происхождение товара и добавил сертификат."
+                                            />
+                                            <button
+                                                className="btn btn-sm bg-red-600 hover:bg-red-700 text-white"
+                                                onClick={() => handleAppealSubmit(product)}
+                                                disabled={appealSubmittingId === product.id}
+                                            >
+                                                {appealSubmittingId === product.id ? <Spinner size="sm" /> : 'Отправить апелляцию'}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     );
                 })}

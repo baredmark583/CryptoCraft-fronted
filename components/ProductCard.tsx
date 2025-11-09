@@ -106,4 +106,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, isSoldView = false }
   );
 };
 
-export default ProductCard;
+const areEqual = (prev: ProductCardProps, next: ProductCardProps) => {
+  const prevProduct = prev.product;
+  const nextProduct = next.product;
+  return (
+    prev.isSoldView === next.isSoldView &&
+    prevProduct.id === nextProduct.id &&
+    prevProduct.price === nextProduct.price &&
+    prevProduct.salePrice === nextProduct.salePrice &&
+    prevProduct.status === nextProduct.status
+  );
+};
+
+export default React.memo(ProductCard, areEqual);

@@ -1,10 +1,10 @@
 // This service now acts as a hybrid: part real API client, part mock service.
 // This allows for gradual backend integration without breaking the UI.
 import type {
-  User, Product, Review, Chat, Message, Order, Notification, Collection,
+  User, Product, ProductRevision, Review, ReviewMediaAttachment, Chat, Message, Order, Notification, Collection,
   WorkshopPost, WorkshopComment, ForumThread, ForumPost, SellerAnalytics, FeedItem,
   PromoCode, SellerDashboardData, CartItem, ShippingAddress, MessageContent, Dispute, DisputeMessage, LiveStream, OrderItem, TrackingEvent, Proposal, VoteChoice,
-  GeneratedListing, VerificationAnalysis, AiInsight, AiFocus, ImportedListingData, Icon, NovaPoshtaCity, NovaPoshtaWarehouse
+  GeneratedListing, VerificationAnalysis, AiInsight, AiFocus, ImportedListingData, Icon, NovaPoshtaCity, NovaPoshtaWarehouse, AiResponse
 } from '../types';
 import type { CategorySchema } from '../constants';
 
@@ -22,18 +22,14 @@ const API_BASE_URL = (import.meta as any).env.VITE_API_BASE_URL || 'http://local
  */
 const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
   try {
-    const token = localStorage.getItem('authToken');
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       ...options.headers,
     };
 
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
+      credentials: 'include',
       headers,
     });
 
@@ -51,6 +47,45 @@ const apiFetch = async (endpoint: string, options: RequestInit = {}) => {
     console.error(`API fetch error: ${options.method || 'GET'} ${endpoint}`, error);
     throw error;
   }
+};
+
+const RESPONSE_CACHE = new Map<string, { data: unknown; expiresAt: number }>();
+const DEFAULT_CACHE_TTL = 60 * 1000;
+const LONG_CACHE_TTL = 5 * 60 * 1000;
+
+const withCache = async <T>(key: string, fetcher: () => Promise<T>, ttl = DEFAULT_CACHE_TTL): Promise<T> => {
+  const cached = RESPONSE_CACHE.get(key);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data as T;
+  }
+  const data = await fetcher();
+  RESPONSE_CACHE.set(key, { data, expiresAt: Date.now() + ttl });
+  return data;
+};
+
+const invalidateCacheByPrefix = (prefix: string) => {
+  for (const key of RESPONSE_CACHE.keys()) {
+    if (key.startsWith(prefix)) {
+      RESPONSE_CACHE.delete(key);
+    }
+  }
+};
+
+const normalizeReview = (review: Review & { product?: Product }): Review => {
+  if (!review) return review;
+  const attachments =
+    Array.isArray(review.attachments) && review.attachments.length
+      ? review.attachments
+      : review.imageUrl
+      ? [{ type: 'image', url: review.imageUrl }]
+      : [];
+
+  return {
+    ...review,
+    attachments,
+    productId: review.productId || review.product?.id || review.productId,
+    createdAt: review.createdAt || (typeof review.timestamp === 'number' ? new Date(review.timestamp).toISOString() : review.timestamp),
+  };
 };
 
 
@@ -131,11 +166,11 @@ export const apiService = {
   },
   
   getPublicIcons: async (): Promise<Icon[]> => {
-    return apiFetch('/icons/public');
+    return withCache('icons:public', () => apiFetch('/icons/public'), LONG_CACHE_TTL);
   },
 
   getCategories: async (): Promise<CategorySchema[]> => {
-    return apiFetch('/categories');
+    return withCache('categories:all', () => apiFetch('/categories'), LONG_CACHE_TTL);
   },
 
   getMe: async (): Promise<User> => {
@@ -149,7 +184,7 @@ export const apiService = {
     });
   },
   
-  loginWithTelegramWidget: async (widgetData: any): Promise<{ access_token: string; user: User }> => {
+  loginWithTelegramWidget: async (widgetData: any): Promise<{ user: User }> => {
     return apiFetch('/auth/telegram/web-login', {
       method: 'POST',
       body: JSON.stringify(widgetData),
@@ -160,12 +195,9 @@ export const apiService = {
     const formData = new FormData();
     formData.append('file', file);
 
-    const token = localStorage.getItem('authToken');
     const response = await fetch(`${API_BASE_URL}/upload`, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
+      credentials: 'include',
       body: formData,
     });
     if (!response.ok) throw new Error('File upload failed');
@@ -190,11 +222,28 @@ export const apiService = {
       body: JSON.stringify(payload),
     });
   },
-  
+
   updateListing: async (id: string, updates: Partial<Product>): Promise<Product> => {
       return apiFetch(`/products/${id}`, {
           method: 'PATCH',
           body: JSON.stringify(updates),
+      });
+  },
+
+  getProductRevisions: async (productId: string): Promise<ProductRevision[]> => {
+      return apiFetch(`/products/${productId}/revisions`);
+  },
+
+  restoreProductRevision: async (productId: string, revisionId: string): Promise<Product> => {
+      return apiFetch(`/products/${productId}/revisions/${revisionId}/restore`, {
+          method: 'POST',
+      });
+  },
+
+  appealProductModeration: async (productId: string, message: string): Promise<Product> => {
+      return apiFetch(`/products/${productId}/moderation/appeal`, {
+          method: 'POST',
+          body: JSON.stringify({ message }),
       });
   },
 
@@ -366,11 +415,23 @@ export const apiService = {
   },
 
   getChats: async (): Promise<Chat[]> => {
-    return apiFetch('/chats');
+    const chats = await apiFetch('/chats');
+    if (!Array.isArray(chats)) {
+      return [];
+    }
+    return chats.map((chat) => ({
+      ...chat,
+      messages: Array.isArray(chat.messages) ? chat.messages : [],
+    }));
   },
 
   getChatById: async (chatId: string): Promise<Chat | null> => {
-    return apiFetch(`/chats/${chatId}`);
+    const chat = await apiFetch(`/chats/${chatId}`);
+    if (!chat) return null;
+    return {
+      ...chat,
+      messages: Array.isArray(chat.messages) ? chat.messages : [],
+    };
   },
   
   findOrCreateChat: async (userId1: string, userId2: string): Promise<Chat> => {
@@ -385,6 +446,8 @@ export const apiService = {
         text: content.text,
         imageUrl: content.imageUrl,
         productContext: content.productContext ? { id: content.productContext.id } : undefined,
+        attachments: content.attachments,
+        quickReplies: content.quickReplies,
     };
     return apiFetch(`/chats/${chatId}/messages`, {
         method: 'POST',
@@ -395,15 +458,27 @@ export const apiService = {
   // --- MOCKED API METHODS (for features not yet on backend) ---
   
   getReviewsByUserId: async (userId: string): Promise<Review[]> => {
-    return apiFetch(`/reviews/user/${userId}`);
+    const reviews = await apiFetch(`/reviews/user/${userId}`);
+    return Array.isArray(reviews) ? reviews.map(normalizeReview) : [];
+  },
+
+  getReviewsByProductId: async (productId: string): Promise<Review[]> => {
+    const reviews = await apiFetch(`/reviews/product/${productId}`);
+    return Array.isArray(reviews) ? reviews.map(normalizeReview) : [];
   },
   
-  submitReview: async (productId: string, author: User, rating: number, text: string, imageUrl?: string): Promise<Review> => {
-    // The author is determined by the auth token on the backend.
-    return apiFetch('/reviews', {
+  submitReview: async (payload: {
+    productId: string;
+    orderId: string;
+    rating: number;
+    text?: string;
+    attachments?: ReviewMediaAttachment[];
+  }): Promise<Review> => {
+    const review = await apiFetch('/reviews', {
         method: 'POST',
-        body: JSON.stringify({ productId, rating, text, imageUrl }),
+        body: JSON.stringify(payload),
     });
+    return normalizeReview(review);
   },
 
   getNotificationsByUserId: async (userId: string): Promise<Notification[]> => {
@@ -449,59 +524,95 @@ export const apiService = {
   
   getFeedForUser: async(userId: string): Promise<{ items: FeedItem[], isDiscovery: boolean }> => {
       // Backend gets userId from token.
-      return apiFetch('/workshop/feed');
+      return withCache(`workshop:feed:${userId}`, () => apiFetch('/workshop/feed'));
   },
   
   getPostsBySellerId: async (sellerId: string): Promise<WorkshopPost[]> => {
-      return apiFetch(`/workshop/posts/user/${sellerId}`);
+      return withCache(`workshop:user:${sellerId}`, () => apiFetch(`/workshop/posts/user/${sellerId}`));
   },
 
-  likeWorkshopPost: async (postId: string, userId: string): Promise<void> => {
-      // Backend gets userId from token.
+  likeWorkshopPost: async (postId: string): Promise<void> => {
       return apiFetch(`/workshop/posts/${postId}/like`, { method: 'POST' });
   },
 
-  addCommentToWorkshopPost: async (postId: string, userId: string, text: string): Promise<WorkshopComment> => {
-      // Backend gets userId from token.
+  addCommentToWorkshopPost: async (postId: string, text: string): Promise<WorkshopComment> => {
       return apiFetch(`/workshop/posts/${postId}/comments`, {
           method: 'POST',
           body: JSON.stringify({ text }),
       });
   },
-  
-  createWorkshopPost: async (postData: { sellerId: string; text: string; imageUrl?: string }): Promise<WorkshopPost> => {
-      // Backend gets sellerId from token.
-      return apiFetch('/workshop/posts', {
+
+  reportWorkshopPost: async (postId: string, reason: string): Promise<void> => {
+      return apiFetch(`/workshop/posts/${postId}/report`, {
           method: 'POST',
-          body: JSON.stringify({ text: postData.text, imageUrl: postData.imageUrl }),
+          body: JSON.stringify({ reason }),
       });
   },
 
-   getForumThreads: async (): Promise<ForumThread[]> => {
-       return apiFetch('/forum/threads');
+  reportWorkshopComment: async (commentId: string, reason: string): Promise<void> => {
+      return apiFetch(`/workshop/comments/${commentId}/report`, {
+          method: 'POST',
+          body: JSON.stringify({ reason }),
+      });
+  },
+  
+  createWorkshopPost: async (postData: { text: string; imageUrl?: string }): Promise<WorkshopPost> => {
+      const result = await apiFetch('/workshop/posts', {
+          method: 'POST',
+          body: JSON.stringify({ text: postData.text, imageUrl: postData.imageUrl }),
+      });
+      invalidateCacheByPrefix('workshop:');
+      return result;
+  },
+
+   getForumThreads: async (params?: { page?: number; limit?: number; search?: string; tag?: string; pinnedOnly?: boolean }): Promise<ForumThread[]> => {
+       const query = new URLSearchParams();
+       if (params?.page) query.append('page', String(params.page));
+       if (params?.limit) query.append('limit', String(params.limit));
+       if (params?.search) query.append('search', params.search);
+       if (params?.tag) query.append('tag', params.tag);
+       if (params?.pinnedOnly) query.append('pinnedOnly', 'true');
+       const suffix = query.toString() ? `?${query.toString()}` : '';
+       const cacheKey = `forum:threads:${suffix || 'root'}`;
+       const response = await withCache(cacheKey, () => apiFetch(`/forum/threads${suffix}`));
+       return response?.data ?? [];
    },
    
    getForumThreadById: async (id: string): Promise<ForumThread | null> => {
        return apiFetch(`/forum/threads/${id}`);
    },
 
-   getForumPostsByThreadId: async (threadId: string): Promise<ForumPost[]> => {
-       return apiFetch(`/forum/threads/${threadId}/posts`);
+   getForumPostsByThreadId: async (threadId: string, params?: { page?: number; limit?: number }): Promise<ForumPost[]> => {
+       const query = new URLSearchParams();
+       if (params?.page) query.append('page', String(params.page));
+       if (params?.limit) query.append('limit', String(params.limit));
+       const suffix = query.toString() ? `?${query.toString()}` : '';
+       const response = await apiFetch(`/forum/threads/${threadId}/posts${suffix}`);
+       return response?.data ?? [];
    },
    
-   createForumThread: async (title: string, content: string, author: User): Promise<ForumThread> => {
-       // Backend gets author from token.
-       return apiFetch('/forum/threads', {
+   createForumThread: async (title: string, content: string, author: User, tags?: string[]): Promise<ForumThread> => {
+       const thread = await apiFetch('/forum/threads', {
            method: 'POST',
-           body: JSON.stringify({ title, content }),
+           body: JSON.stringify({ title, content, tags }),
        });
+       invalidateCacheByPrefix('forum:threads:');
+       return thread;
    },
    
    createForumPost: async (threadId: string, content: string, author: User): Promise<ForumPost> => {
-       // Backend gets author from token.
-       return apiFetch(`/forum/threads/${threadId}/posts`, {
+       const post = await apiFetch(`/forum/threads/${threadId}/posts`, {
            method: 'POST',
            body: JSON.stringify({ content }),
+       });
+       invalidateCacheByPrefix('forum:threads:');
+       return post;
+   },
+
+   reportForumPost: async (postId: string, reason: string): Promise<void> => {
+       return apiFetch(`/forum/posts/${postId}/report`, {
+           method: 'POST',
+           body: JSON.stringify({ reason }),
        });
    },
    
@@ -574,7 +685,7 @@ export const apiService = {
     },
     
     getLiveStreams: async (): Promise<LiveStream[]> => {
-        return apiFetch('/livestreams');
+        return withCache('livestreams:all', () => apiFetch('/livestreams'), 30 * 1000);
     },
 
     getLiveStreamById: async (id: string): Promise<LiveStream | null> => {
@@ -597,6 +708,24 @@ export const apiService = {
         return apiFetch(`/livestreams/${id}/end`, {
             method: 'PATCH',
         });
+    },
+
+    reportLiveStream: async (id: string, reason: string): Promise<void> => {
+        return apiFetch(`/livestreams/${id}/report`, {
+            method: 'POST',
+            body: JSON.stringify({ reason }),
+        });
+    },
+
+    attachLivestreamRecording: async (id: string, recordingUrl: string): Promise<LiveStream> => {
+        return apiFetch(`/livestreams/${id}/recording`, {
+            method: 'POST',
+            body: JSON.stringify({ recordingUrl, storageProvider: 'livekit' }),
+        });
+    },
+
+    getLivestreamAnalytics: async (id: string): Promise<LiveStream> => {
+        return apiFetch(`/livestreams/${id}/analytics`);
     },
 
     updateOrder: async (orderId: string, updates: Partial<Order>): Promise<Order> => {

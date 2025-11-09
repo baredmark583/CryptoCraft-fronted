@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../services/apiService';
 import { geminiService } from '../services/geminiService';
-import type { SellerAnalytics, TimeSeriesDataPoint, AiInsight } from '../types';
+import type { SellerAnalytics, TimeSeriesDataPoint, AiInsight, AiResponseMeta } from '../types';
 import Spinner from './Spinner';
 import { Link } from 'react-router-dom';
 
@@ -99,15 +99,19 @@ const AiAssistant: React.FC<{ analyticsData: SellerAnalytics }> = ({ analyticsDa
     const [insights, setInsights] = useState<AiInsight[] | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [lastMeta, setLastMeta] = useState<AiResponseMeta | null>(null);
 
     const getInsights = async () => {
         setIsLoading(true);
         setError('');
         try {
             const result = await geminiService.getAnalyticsInsights(analyticsData);
-            setInsights(result);
+            setInsights(result.data);
+            setLastMeta(result.meta);
+            console.debug('AI analytics meta:', result.meta);
         } catch (err: any) {
             setError(err.message || 'Не удалось получить советы.');
+            setLastMeta(null);
         } finally {
             setIsLoading(false);
         }
@@ -128,6 +132,12 @@ const AiAssistant: React.FC<{ analyticsData: SellerAnalytics }> = ({ analyticsDa
                 <button onClick={getInsights} className="bg-brand-primary hover:bg-brand-primary-hover text-white font-bold py-2 px-6 rounded-lg transition-colors">
                     Получить советы
                 </button>
+            )}
+
+            {lastMeta && (
+                <p className="text-xs text-brand-text-secondary mt-2">
+                    {`Провайдер: ${lastMeta.provider.toUpperCase()} · ${lastMeta.latencyMs} мс · токены: ${lastMeta.usage?.totalTokens ?? '—'}`}
+                </p>
             )}
 
             {isLoading && <div className="flex justify-center py-4"><Spinner/></div>}

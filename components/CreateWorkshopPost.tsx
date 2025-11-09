@@ -41,13 +41,7 @@ const CreateWorkshopPost: React.FC<CreateWorkshopPostProps> = ({ onPostCreated }
         imageUrl = await cloudinaryService.uploadImage(imageFile);
       }
       
-      const newPostData = {
-        sellerId: user.id,
-        text,
-        imageUrl,
-      };
-      
-      const createdPost = await apiService.createWorkshopPost(newPostData);
+      const createdPost = await apiService.createWorkshopPost({ text, imageUrl });
       onPostCreated(createdPost);
 
       // Reset form

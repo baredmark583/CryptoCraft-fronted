@@ -1,194 +1,407 @@
-
-
-import React, { useState, useEffect, useCallback } from 'react';
-// FIX: Upgraded react-router-dom to v6. Replaced useHistory with useNavigate.
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { apiService } from '../services/apiService';
-import type { ForumThread, LiveStream } from '../types';
-import Spinner from '../components/Spinner';
-import CreateThreadModal from '../components/CreateThreadModal';
 import { useAuth } from '../hooks/useAuth';
+import Spinner from '../components/Spinner';
+import WorkshopPostCard from '../components/WorkshopPostCard';
+import CreateThreadModal from '../components/CreateThreadModal';
+import type { FeedItem, ForumThread, LiveStream } from '../types';
 import DynamicIcon from '../components/DynamicIcon';
 
-const LiveStreamsSection: React.FC = () => {
-  const [streams, setStreams] = useState<LiveStream[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+type CommunityTab = 'feed' | 'threads' | 'live';
 
-  useEffect(() => {
-    const fetchStreams = async () => {
-      setIsLoading(true);
-      try {
-        const data = await apiService.getLiveStreams();
-        setStreams(data);
-      } catch (error) {
-        console.error("Failed to fetch streams", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchStreams();
-  }, []);
-
-  if (isLoading) {
-    return <div className="flex justify-center py-8"><Spinner /></div>;
-  }
-  
-  if (streams.length === 0) return null;
-
-  return (
-    <section className="mb-12">
-      <h2 className="text-3xl font-bold text-white mb-4">Прямые эфиры</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {streams.map(stream => (
-          <Link to={`/live/${stream.id}`} key={stream.id} className="block bg-base-100 rounded-lg group overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-primary/20 hover:-translate-y-1">
-            <div className="relative aspect-video bg-base-200">
-                <img src={stream.seller.headerImageUrl || 'https://picsum.photos/seed/livebg/600/400'} alt="Live Stream Background" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent p-4 flex flex-col justify-between">
-                  <div className="flex justify-between items-start">
-                    {stream.status === 'LIVE' && (
-                       <span className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full flex items-center w-fit">
-                          <span className="relative flex h-2 w-2 mr-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                          </span>
-                          LIVE
-                       </span>
-                    )}
-                     {stream.status === 'UPCOMING' && (
-                       <span className="bg-sky-600 text-white text-xs font-bold px-3 py-1 rounded-full">СКОРО</span>
-                    )}
-                    <div className="flex gap-3 text-white bg-black/40 backdrop-blur-sm p-1.5 rounded-full">
-                       <div className="flex items-center gap-1 text-xs">
-                           <DynamicIcon name="livestream-viewers" className="w-4 h-4" />
-                           <span>{stream.viewerCount || 0}</span>
-                       </div>
-                       <div className="flex items-center gap-1 text-xs">
-                          <DynamicIcon name="livestream-heart" className="w-4 h-4" />
-                           <span>{stream.likes || 0}</span>
-                       </div>
-                    </div>
-                  </div>
-                   <div className="flex items-center gap-3">
-                      <img src={stream.seller.avatarUrl} alt={stream.seller.name} className="w-10 h-10 rounded-full border-2 border-primary"/>
-                      <div>
-                          <p className="font-bold text-white leading-tight">{stream.title}</p>
-                          <p className="text-sm text-base-content/70">{stream.seller.name}</p>
-                      </div>
-                   </div>
-                </div>
-            </div>
-          </Link>
-        ))}
-      </div>
-    </section>
-  );
-}
-
+const THREADS_PER_PAGE = 6;
 
 const CommunityHubPage: React.FC = () => {
-  const [threads, setThreads] = useState<ForumThread[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const { user } = useAuth();
-  // FIX: Upgraded react-router-dom to v6. Replaced useHistory with useNavigate.
-  const navigate = useNavigate();
 
-  const fetchThreads = useCallback(async () => {
-    setIsLoading(true);
-    try {
-        const data = await apiService.getForumThreads();
-        setThreads(data);
-    } catch (error) {
-        console.error("Failed to fetch threads", error);
-    } finally {
-        setIsLoading(false);
-    }
-  }, []);
+  const [activeTab, setActiveTab] = useState<CommunityTab>('feed');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
+  const [threads, setThreads] = useState<ForumThread[]>([]);
+  const [liveStreams, setLiveStreams] = useState<LiveStream[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [selectedTag, setSelectedTag] = useState<string>('all');
+  const [threadsPage, setThreadsPage] = useState(1);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
-    fetchThreads();
-  }, [fetchThreads]);
+    const timer = setTimeout(() => setDebouncedSearch(searchTerm), 400);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
-  const handleCreateThread = async (title: string, content: string): Promise<ForumThread> => {
-      const newThread = await apiService.createForumThread(title, content, user);
-      // Refetch or optimistically update
-      setThreads(prev => [newThread, ...prev.filter(t => t.id !== newThread.id)]);
-      setIsModalOpen(false);
-      // FIX: Use navigate instead of history.push.
-      navigate(`/thread/${newThread.id}`);
-      return newThread;
+  useEffect(() => {
+    setThreadsPage(1);
+  }, [debouncedSearch, selectedTag]);
+
+  const fetchCommunityData = useCallback(async (withSpinner = true) => {
+    if (withSpinner) {
+      setIsLoading(true);
+    } else {
+      setIsRefreshing(true);
+    }
+    setError(null);
+    try {
+      const [feedResponse, forumThreads, streams] = await Promise.all([
+        apiService.getFeedForUser(user?.id ?? 'public'),
+        apiService.getForumThreads({
+          limit: 50,
+          search: debouncedSearch || undefined,
+          tag: selectedTag === 'all' ? undefined : selectedTag,
+        }),
+        apiService.getLiveStreams(),
+      ]);
+      setFeedItems(feedResponse?.items ?? []);
+      setThreads(forumThreads ?? []);
+      setLiveStreams(streams ?? []);
+    } catch (err) {
+      console.error(err);
+      setError('Не удалось загрузить активность сообщества. Попробуйте обновить страницу позже.');
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, [debouncedSearch, selectedTag, user?.id]);
+
+  useEffect(() => {
+    fetchCommunityData();
+  }, [fetchCommunityData]);
+
+  const stats = useMemo(() => {
+    const liveNow = liveStreams.filter(stream => stream.status === 'LIVE').length;
+    const upcoming = liveStreams.filter(stream => stream.status === 'UPCOMING').length;
+    const openThreads = threads.filter(thread => thread.status !== 'LOCKED').length;
+    return [
+      { label: 'Постов в ленте', value: feedItems.length },
+      { label: 'Открытых тредов', value: openThreads },
+      { label: 'Лайв-эфиров', value: liveNow },
+      { label: 'Ожидающих эфиров', value: upcoming },
+    ];
+  }, [feedItems.length, threads, liveStreams]);
+
+  const trendingTags = useMemo(() => {
+    const counts = new Map<string, number>();
+    threads.forEach(thread => {
+      thread.tags?.forEach(tag => {
+        counts.set(tag, (counts.get(tag) ?? 0) + 1);
+      });
+    });
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6);
+  }, [threads]);
+
+  const paginatedThreads = useMemo(() => {
+    const start = (threadsPage - 1) * THREADS_PER_PAGE;
+    return threads.slice(start, start + THREADS_PER_PAGE);
+  }, [threads, threadsPage]);
+
+  const totalThreadPages = Math.max(1, Math.ceil(threads.length / THREADS_PER_PAGE));
+
+  const handleCreateThread = async (title: string, content: string) => {
+    await apiService.createForumThread(title, content, user!);
+    setIsCreateModalOpen(false);
+    await fetchCommunityData(false);
   };
 
-  const renderContent = () => {
-    if (isLoading) {
-      return <div className="flex justify-center items-center h-64"><Spinner /></div>;
+  const renderFeed = () => {
+    if (!feedItems.length) {
+      return (
+        <div className="text-center py-12 text-base-content/70">
+          Пока что нет свежих постов. Поделитесь своей работой первым!
+        </div>
+      );
     }
-
-    if(threads.length === 0) {
-        return (
-            <div className="text-center py-16 bg-base-100 rounded-lg">
-                <h2 className="text-2xl font-bold text-white mb-2">На форуме пока тихо</h2>
-                <p className="text-base-content/70">Станьте первым, кто создаст новую тему для обсуждения!</p>
-            </div>
-        )
-    }
-
     return (
-      <div className="bg-base-100 rounded-lg shadow-lg">
-        <ul>
-          {threads.map((thread, index) => (
-            <li key={thread.id} className={`flex items-center p-4 ${index < threads.length - 1 ? 'border-b border-base-300' : ''}`}>
-              <div className="flex-shrink-0 mr-4">
-                <img src={thread.author.avatarUrl} alt={thread.author.name} className="w-12 h-12 rounded-full" />
-              </div>
-              <div className="flex-grow">
-                <Link to={`/thread/${thread.id}`} className="font-semibold text-white hover:text-primary text-lg leading-tight">
-                  {thread.isPinned && <span className="text-yellow-400 mr-2" title="Закреплено">📌</span>}
+      <div className="space-y-4">
+        {feedItems.map(item => (
+          <WorkshopPostCard key={item.post.id} post={item.post} seller={item.seller} />
+        ))}
+      </div>
+    );
+  };
+
+  const renderThreads = () => {
+    if (!threads.length && !isLoading) {
+      return (
+        <div className="text-center py-12 text-base-content/70">
+          Темы не найдены. Попробуйте сбросить фильтры или создать новую тему.
+        </div>
+      );
+    }
+    return (
+      <div className="space-y-4">
+        {paginatedThreads.map(thread => (
+          <div key={thread.id} className="p-4 rounded-xl border border-base-300 bg-base-100 flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <Link to={`/thread/${thread.id}`} className="text-xl font-semibold text-white hover:text-primary transition-colors">
                   {thread.title}
                 </Link>
-                <p className="text-sm text-base-content/70 mt-1">
-                  Автор: {thread.author.name} &bull; Создана: {new Date(thread.createdAt).toLocaleDateString()}
+                <p className="text-xs text-base-content/60">
+                  {thread.author.name} • {new Date(thread.createdAt).toLocaleString()} • {thread.replyCount} ответов
                 </p>
               </div>
-              <div className="text-right text-sm text-base-content/70 hidden sm:block">
-                <p>{thread.replyCount} ответов</p>
-                <p>Последний: {new Date(thread.lastReplyAt).toLocaleDateString()}</p>
+              {thread.isPinned && (
+                <span className="px-3 py-1 text-xs rounded-full bg-primary/20 text-primary uppercase tracking-wide">Закреплена</span>
+              )}
+            </div>
+            {thread.tags && thread.tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {thread.tags.map(tag => (
+                  <span key={`${thread.id}-${tag}`} className="px-2 py-1 text-xs rounded-full bg-base-200 text-base-content/80">
+                    #{tag}
+                  </span>
+                ))}
               </div>
-            </li>
-          ))}
-        </ul>
+            )}
+            <div className="flex items-center justify-between text-sm text-base-content/70">
+              <div className="flex items-center gap-3">
+                <span className="flex items-center gap-1">
+                  <DynamicIcon name="comment-bubble" className="w-4 h-4" />
+                  {thread.replyCount}
+                </span>
+                <span className="flex items-center gap-1">
+                  <DynamicIcon name="view" fallback={fallbackIcons.view} className="w-4 h-4" />
+                  {thread.viewCount ?? 0}
+                </span>
+              </div>
+              <Link to={`/thread/${thread.id}`} className="text-primary font-semibold hover:underline">
+                Читать тред →
+              </Link>
+            </div>
+          </div>
+        ))}
+
+        {totalThreadPages > 1 && (
+          <div className="flex justify-between items-center pt-4 border-t border-base-300">
+            <button
+              type="button"
+              disabled={threadsPage === 1}
+              onClick={() => setThreadsPage(page => Math.max(1, page - 1))}
+              className="px-3 py-1 rounded-lg bg-base-200 text-sm disabled:opacity-40"
+            >
+              Назад
+            </button>
+            <span className="text-sm text-base-content/70">
+              Страница {threadsPage} из {totalThreadPages}
+            </span>
+            <button
+              type="button"
+              disabled={threadsPage >= totalThreadPages}
+              onClick={() => setThreadsPage(page => Math.min(totalThreadPages, page + 1))}
+              className="px-3 py-1 rounded-lg bg-base-200 text-sm disabled:opacity-40"
+            >
+              Далее
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderLive = () => {
+    if (!liveStreams.length) {
+      return (
+        <div className="text-center py-12 text-base-content/70">
+          Прямые эфиры пока не запланированы.
+        </div>
+      );
+    }
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {liveStreams.map(stream => (
+          <div key={stream.id} className="p-4 rounded-xl border border-base-300 bg-base-100 flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-base-content/60">{stream.seller.name}</p>
+                <h3 className="text-lg font-semibold text-white">{stream.title}</h3>
+              </div>
+              <span
+                className={`px-3 py-1 text-xs rounded-full ${
+                  stream.status === 'LIVE'
+                    ? 'bg-red-500/20 text-red-300'
+                    : stream.status === 'UPCOMING'
+                    ? 'bg-primary/20 text-primary'
+                    : 'bg-base-200 text-base-content/70'
+                }`}
+              >
+                {stream.status === 'LIVE' ? 'В эфире' : stream.status === 'UPCOMING' ? 'Скоро' : 'Завершено'}
+              </span>
+            </div>
+            <p className="text-sm text-base-content/80 line-clamp-3">{stream.welcomeMessage || stream.featuredProduct?.description}</p>
+            <div className="flex items-center justify-between text-sm text-base-content/70">
+              <span className="flex items-center gap-1">
+                <DynamicIcon name="live" fallback={fallbackIcons.live} className="w-4 h-4" />
+                {stream.viewerCount ?? 0} зрителей
+              </span>
+              {stream.status !== 'ENDED' && (
+                <Link to={`/live/${stream.id}`} className="text-primary font-semibold hover:underline">
+                  Присоединиться
+                </Link>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     );
   };
 
   return (
-    <>
+    <div className="space-y-8">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <section className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-white mb-2">Центр сообщества</h1>
-            <p className="text-lg text-base-content/70">Обсуждения, вопросы и ответы от мастеров и покупателей.</p>
-          </section>
+          <p className="text-sm uppercase tracking-wide text-base-content/60">Сообщество</p>
+          <h1 className="text-3xl font-black text-white">CryptoCraft Hub</h1>
+          <p className="text-base-content/70 text-sm">
+            Лента мастерской, форум и прямые эфиры в одном месте. Делитесь прогрессом, ищите вдохновение и общайтесь с создателями.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => fetchCommunityData(false)}
+            className="px-4 py-2 rounded-lg bg-base-200 text-sm font-semibold flex items-center gap-2 disabled:opacity-60"
+            disabled={isRefreshing}
+          >
+            <DynamicIcon
+              name="refresh"
+              fallback={fallbackIcons.refresh}
+              className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`}
+            />
+            Обновить
+          </button>
+          {user && (
+            <button
+              type="button"
+              onClick={() => setIsCreateModalOpen(true)}
+              className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold"
+            >
+              Новая тема
+            </button>
+          )}
+        </div>
+      </div>
 
-          <LiveStreamsSection />
-          
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-3xl font-bold text-white">Форум</h2>
-            <button onClick={() => setIsModalOpen(true)} className="bg-primary hover:bg-primary-focus text-white font-bold py-2 px-4 rounded-lg">
-                Создать новую тему
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {stats.map(stat => (
+          <div key={stat.label} className="rounded-2xl border border-base-300 bg-base-100/80 p-4">
+            <p className="text-xs uppercase tracking-wide text-base-content/60">{stat.label}</p>
+            <p className="text-2xl font-bold text-white">{stat.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-base-100 rounded-2xl border border-base-300 p-4 space-y-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex gap-2 bg-base-200 rounded-xl p-1 w-full md:w-auto">
+            {(['feed', 'threads', 'live'] as CommunityTab[]).map(tab => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold ${
+                  activeTab === tab ? 'bg-primary text-white' : 'text-base-content/70'
+                }`}
+              >
+                {tab === 'feed' ? 'Лента' : tab === 'threads' ? 'Форум' : 'Лайвы'}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2 w-full md:w-auto">
+            <input
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              placeholder="Поиск по темам"
+              className="flex-1 bg-base-200 border border-base-300 rounded-lg px-3 py-2 text-sm"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setSearchTerm('');
+                setDebouncedSearch('');
+                setSelectedTag('all');
+              }}
+              className="px-3 py-2 rounded-lg bg-base-200 text-sm"
+            >
+              Сбросить
             </button>
           </div>
-
-          {renderContent()}
         </div>
-        {isModalOpen && (
-            <CreateThreadModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onSubmit={handleCreateThread}
-            />
-        )}
-    </>
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setSelectedTag('all')}
+            className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+              selectedTag === 'all' ? 'bg-primary/20 text-primary border-primary/40' : 'border-base-300'
+            }`}
+          >
+            Все темы
+          </button>
+          {trendingTags.map(([tag, count]) => (
+            <button
+              key={tag}
+              type="button"
+              onClick={() => setSelectedTag(tag)}
+              className={`px-3 py-1 rounded-full text-xs font-semibold border ${
+                selectedTag === tag ? 'bg-primary/20 text-primary border-primary/40' : 'border-base-300 text-base-content/80'
+              }`}
+            >
+              #{tag} · {count}
+            </button>
+          ))}
+        </div>
+
+        <div className="pt-2">
+          {error && (
+            <div className="mb-4 rounded-xl border border-red-500/40 bg-red-500/10 text-sm text-red-200 p-3">
+              {error}
+            </div>
+          )}
+          {isLoading ? (
+            <div className="flex justify-center py-16">
+              <Spinner size="lg" />
+            </div>
+          ) : (
+            <>
+              {activeTab === 'feed' && renderFeed()}
+              {activeTab === 'threads' && renderThreads()}
+              {activeTab === 'live' && renderLive()}
+            </>
+          )}
+        </div>
+      </div>
+
+      {isCreateModalOpen && (
+        <CreateThreadModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSubmit={handleCreateThread}
+        />
+      )}
+    </div>
   );
 };
 
 export default CommunityHubPage;
+const fallbackIcons = {
+  refresh: (
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M17.65 6.35A8 8 0 1 0 12 20a8 8 0 0 0 7.55-5h-2.1a6 6 0 1 1-1.9-6.36l-2.55 2.55H22V2l-2.35 2.35z" />
+    </svg>
+  ),
+  view: (
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 5C5 5 1 12 1 12s4 7 11 7 11-7 11-7-4-7-11-7zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10z" />
+    </svg>
+  ),
+  live: (
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 5a7 7 0 0 1 0 14v-2a5 5 0 1 0 0-10V5zm-5 7a5 5 0 0 0 5 5v2a7 7 0 0 1 0-14v2a5 5 0 0 0-5 5z" />
+    </svg>
+  ),
+};

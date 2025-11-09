@@ -45,8 +45,9 @@ const VerificationPage: React.FC = () => {
 
             setProcessingStep('Анализ документа с помощью AI...');
             const analysisResult = await geminiService.analyzeDocumentForVerification(base64Image);
+            console.debug('AI verification meta:', analysisResult.meta);
             
-            if (!analysisResult.isDocument) {
+            if (!analysisResult.data.isDocument) {
                 alert("Пожалуйста, загрузите фото документа, удостоверяющего личность.");
                 setStatus('idle');
                 return;

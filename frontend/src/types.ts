@@ -29,6 +29,40 @@ export type AuthenticationStatus =
   | 'PENDING'
   | 'AUTHENTICATED'
   | 'REJECTED';
+
+export type EscrowStatus =
+  | 'AWAITING_PAYMENT'
+  | 'PENDING_CONFIRMATION'
+  | 'FUNDED'
+  | 'RELEASED'
+  | 'REFUNDED'
+  | 'PARTIALLY_REFUNDED'
+  | 'CANCELLED'
+  | 'DISPUTED';
+
+export interface EscrowEvent {
+  id: string;
+  type: 'STATUS_CHANGE' | 'PAYMENT_DETECTED' | 'WEBHOOK' | 'MANUAL_ACTION' | 'NOTE';
+  description?: string;
+  payload?: Record<string, any>;
+  performedByUserId?: string;
+  performedByRole?: 'USER' | 'SELLER' | 'ADMIN' | 'SYSTEM';
+  createdAt: string;
+}
+
+export interface EscrowTransaction {
+  id: string;
+  status: EscrowStatus;
+  amount: number;
+  currency: 'USDT';
+  network: 'TON';
+  escrowType: 'CART' | 'DEPOSIT';
+  depositTransactionHash?: string;
+  releaseTransactionHash?: string;
+  refundTransactionHash?: string;
+  metadata?: Record<string, any>;
+  events?: EscrowEvent[];
+}
   
 export interface VariantAttribute {
   name: string;
@@ -173,8 +207,8 @@ export interface Order {
   total: number;
   status: OrderStatus;
   orderDate: number;
-  shippingAddress: ShippingAddress;
-  shippingMethod: 'NOVA_POSHTA' | 'UKRPOSHTA';
+  shippingAddress?: ShippingAddress;
+  shippingMethod: 'NOVA_POSHTA' | 'UKRPOSHTA' | 'MEETUP';
   paymentMethod: 'ESCROW' | 'DIRECT';
   trackingNumber?: string;
   smartContractAddress?: string;
@@ -182,6 +216,14 @@ export interface Order {
   disputeId?: string;
   authenticationRequested?: boolean;
   authenticationEvents?: AuthenticationEvent[];
+  checkoutMode?: 'CART' | 'DEPOSIT';
+  depositAmount?: number;
+  meetingDetails?: {
+    scheduledAt?: string;
+    location?: string;
+    notes?: string;
+  };
+  escrow?: EscrowTransaction;
 }
 
 export interface Notification {

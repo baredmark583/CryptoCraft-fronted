@@ -5,13 +5,24 @@ import { apiService } from '../services/apiService';
 // FIX: Add missing import for cloudinaryService.
 import { cloudinaryService } from '../services/cloudinaryService';
 import { useAuth } from '../hooks/useAuth';
-import type { Product, VariantAttribute, ProductVariant } from '../types';
+import type { Product, VariantAttribute, ProductVariant, ProductRevision } from '../types';
 // FIX: Correctly import types from constants file
-import type { CategoryField, CategorySchema } from '../constants';
+import type { CategorySchema, CategoryFieldWithMeta } from '../constants';
 import Spinner from '../components/Spinner';
 // FIX: Correctly import constants
 import { useTelegramBackButton } from '../hooks/useTelegram';
 import DynamicIcon from '../components/DynamicIcon';
+import {
+    findCategoryByName,
+    normalizeDynamicAttributesForCategory,
+    resolveFieldsForCategory,
+} from '../lib/categoryUtils';
+
+const revisionSourceLabels: Record<ProductRevision['source'], string> = {
+    CREATE: 'Создание',
+    UPDATE: 'Редактирование',
+    RESTORE: 'Восстановление',
+};
 
 // --- HELPERS ---
 const flattenCategoriesForSelect = (categories: CategorySchema[], level = 0): { label: string, value: string }[] => {
@@ -28,12 +39,12 @@ const flattenCategoriesForSelect = (categories: CategorySchema[], level = 0): { 
 };
 
 
-const DynamicField: React.FC<{ field: CategoryField, value: any, onChange: (name: string, value: any) => void }> = ({ field, value, onChange }) => {
+const DynamicField: React.FC<{ field: CategoryFieldWithMeta, value: any, onChange: (value: any) => void }> = ({ field, value, onChange }) => {
     const commonProps = {
         name: field.name,
         id: field.name,
-        value: value || '',
-        onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => onChange(field.name, e.target.value),
+        value: value ?? '',
+        onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => onChange(e.target.value),
         className: "mt-1 block w-full bg-base-200 border border-base-300 rounded-md shadow-sm py-2 px-3",
         required: field.required,
     };
@@ -55,8 +66,97 @@ const DynamicField: React.FC<{ field: CategoryField, value: any, onChange: (name
     }
 };
 
-
 type FormData = Omit<Product, 'id' | 'seller'> & { saleType: 'FIXED_PRICE' | 'AUCTION', auctionDurationDays?: 1 | 3 | 7, hasVariants: boolean };
+
+const PreviewShell: React.FC<{ title: string; subtitle?: string; onClose: () => void; children: React.ReactNode }> = ({ title, subtitle, onClose, children }) => (
+    <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+        <div className="bg-base-100 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+            <div className="p-4 border-b border-base-300 flex justify-between items-center gap-4">
+                <div>
+                    <h2 className="text-xl font-bold text-white">{title}</h2>
+                    {subtitle && <p className="text-sm text-base-content/60">{subtitle}</p>}
+                </div>
+                <button onClick={onClose} className="btn btn-sm btn-ghost text-white">Закрыть</button>
+            </div>
+            <div className="p-6 overflow-y-auto space-y-5">{children}</div>
+        </div>
+    </div>
+);
+
+const PreviewContent: React.FC<{
+    title: string;
+    category?: string;
+    price?: number;
+    salePrice?: number;
+    description?: string;
+    imageUrls: string[];
+    dynamicAttributes?: Record<string, string | number>;
+}> = ({ title, category, price, salePrice, description, imageUrls, dynamicAttributes }) => (
+    <>
+        <div>
+            <p className="text-2xl font-bold text-white">{title}</p>
+            {category && <p className="text-sm text-base-content/70 mt-1">{category}</p>}
+            {(price || salePrice) && (
+                <div className="mt-2 flex items-baseline gap-2 text-xl font-semibold text-primary">
+                    {price && <span>{price} USDT</span>}
+                    {salePrice && <span className="text-sm line-through text-base-content/60">{salePrice} USDT</span>}
+                </div>
+            )}
+        </div>
+        {description && (
+            <div className="prose prose-invert max-w-none text-base-content/80" dangerouslySetInnerHTML={{ __html: description }} />
+        )}
+        {imageUrls?.length > 0 && (
+            <div className="grid grid-cols-2 gap-3">
+                {imageUrls.map((url) => (
+                    <img key={url} src={url} alt="Предпросмотр изображения" className="w-full aspect-square object-cover rounded-lg border border-base-300" />
+                ))}
+            </div>
+        )}
+        {dynamicAttributes && Object.keys(dynamicAttributes).length > 0 && (
+            <div className="bg-base-200/40 rounded-lg p-4 space-y-1 text-sm">
+                {Object.entries(dynamicAttributes).map(([key, value]) => (
+                    <div key={key} className="flex justify-between gap-4">
+                        <span className="text-base-content/60">{key}</span>
+                        <span className="text-base-content font-medium">{String(value)}</span>
+                    </div>
+                ))}
+            </div>
+        )}
+    </>
+);
+
+const RevisionPreviewModal: React.FC<{ revision: ProductRevision; onClose: () => void }> = ({ revision, onClose }) => (
+    <PreviewShell
+        title={`Версия от ${new Date(revision.createdAt).toLocaleString()}`}
+        subtitle={revisionSourceLabels[revision.source]}
+        onClose={onClose}
+    >
+        <PreviewContent
+            title={revision.snapshot.title}
+            category={revision.snapshot.category}
+            price={revision.snapshot.price}
+            salePrice={revision.snapshot.salePrice}
+            description={revision.snapshot.description}
+            imageUrls={revision.snapshot.imageUrls || []}
+            dynamicAttributes={revision.snapshot.dynamicAttributes}
+        />
+    </PreviewShell>
+);
+
+const DraftPreviewModal: React.FC<{ formData: FormData; imageUrls: string[]; onClose: () => void }> = ({ formData, imageUrls, onClose }) => (
+    <PreviewShell title="Предпросмотр вашего черновика" onClose={onClose}>
+        <PreviewContent
+            title={formData.title}
+            category={formData.category}
+            price={formData.price}
+            salePrice={formData.salePrice}
+            description={formData.description}
+            imageUrls={imageUrls}
+            dynamicAttributes={formData.dynamicAttributes}
+        />
+    </PreviewShell>
+);
 
 
 const VariantEditor: React.FC<{
@@ -117,208 +217,66 @@ const VariantEditor: React.FC<{
 
     // Auto-generate variants whenever attributes change
     useEffect(() => {
-        const generateCombinations = (attrs: VariantAttribute[]): Record<string, string>[] => {
-            if (attrs.length === 0 || attrs.some(a => a.options.length === 0)) {
-                return [];
-            }
-        
-            let combinations: Record<string, string>[] = [{}];
-        
-            for (const attr of attrs) {
-                const newCombinations: Record<string, string>[] = [];
-                for (const combination of combinations) {
-                    for (const option of attr.options) {
-                        newCombinations.push({ ...combination, [attr.name]: option });
-                    }
-                }
-                combinations = newCombinations;
-            }
-            return combinations;
-        };
 
-        const combinations = generateCombinations(attributes);
-        
-        const newVariants = combinations.map((combo, index) => {
-            // Try to find an existing variant to preserve its data
-            const existingVariant = variants.find(v => {
-                return Object.entries(combo).every(([key, value]) => v.attributes[key] === value);
-            });
-            return {
-                id: existingVariant?.id || `variant-${Date.now()}-${index}`,
-                attributes: combo,
-                price: existingVariant?.price || 0,
-                stock: existingVariant?.stock || 0,
-                sku: existingVariant?.sku || '',
-            };
-        });
-        
-        onVariantsChange(newVariants);
-
-    }, [attributes, onVariantsChange]);
-
-
-    return (
-        <div className="space-y-6">
-            <div>
-                <h4 className="font-semibold text-white mb-2">1. Определите атрибуты</h4>
-                <div className="space-y-4">
-                    {attributes.map(attr => (
-                        <div key={attr.name} className="bg-base-200/50 p-3 rounded-md">
-                            <div className="flex justify-between items-center mb-2">
-                                <h5 className="font-medium text-base-content">{attr.name}</h5>
-                                <button type="button" onClick={() => removeAttribute(attr.name)} className="text-red-500 hover:text-red-400 text-xs font-bold">Удалить</button>
-                            </div>
-                            <div className="flex flex-wrap gap-2 mb-2">
-                                {attr.options.map(opt => (
-                                    <span key={opt} className="bg-secondary/80 text-white text-sm px-2 py-1 rounded-md flex items-center gap-1">
-                                        {opt}
-                                        <button type="button" onClick={() => removeOption(attr.name, opt)} className="font-bold text-white/70 hover:text-white">&times;</button>
-                                    </span>
-                                ))}
-                            </div>
-                             <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    placeholder="Новая опция (напр., Синий)"
-                                    value={newOptionInputs[attr.name] || ''}
-                                    onChange={(e) => setNewOptionInputs(prev => ({...prev, [attr.name]: e.target.value}))}
-                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addOption(attr.name); } }}
-                                    className="flex-grow bg-base-100 border border-base-300 rounded-md p-1.5 text-sm"
-                                />
-                                <button type="button" onClick={() => addOption(attr.name)} className="bg-secondary text-white px-3 text-sm rounded-md">+</button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-                 <div className="flex gap-2 mt-4">
-                    <input
-                        type="text"
-                        placeholder="Новый атрибут (напр., Размер)"
-                        value={newAttributeName}
-                        onChange={(e) => setNewAttributeName(e.target.value)}
-                         onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAttribute(); } }}
-                        className="flex-grow bg-base-100 border border-base-300 rounded-md p-2"
-                    />
-                    <button type="button" onClick={addAttribute} className="bg-primary hover:bg-primary-focus text-white font-bold py-2 px-4 rounded-lg">Добавить атрибут</button>
-                </div>
-            </div>
-
-            {variants.length > 0 && (
-                <div>
-                    <h4 className="font-semibold text-white mb-2">2. Настройте варианты</h4>
-                    <div className="overflow-x-auto scrollbar-hide">
-                        <table className="w-full text-sm text-left">
-                            <thead className="bg-base-200 text-xs text-base-content/70 uppercase">
-                                <tr>
-                                    <th scope="col" className="px-4 py-3">Вариант</th>
-                                    <th scope="col" className="px-4 py-3">Цена (USDT)</th>
-                                    <th scope="col" className="px-4 py-3">Кол-во</th>
-                                    <th scope="col" className="px-4 py-3">SKU</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {variants.map(variant => (
-                                    <tr key={variant.id} className="border-b border-base-300">
-                                        <td className="px-4 py-3 font-medium text-white whitespace-nowrap">{Object.values(variant.attributes).join(' / ')}</td>
-                                        <td className="px-4 py-3">
-                                            <input type="number" value={variant.price} onChange={e => handleVariantChange(variant.id, 'price', e.target.value)} className="w-24 bg-base-100 border border-base-300 rounded-md p-1.5" />
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <input type="number" value={variant.stock} onChange={e => handleVariantChange(variant.id, 'stock', e.target.value)} className="w-20 bg-base-100 border border-base-300 rounded-md p-1.5" />
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <input type="text" value={variant.sku} onChange={e => handleVariantChange(variant.id, 'sku', e.target.value)} className="w-28 bg-base-100 border border-base-300 rounded-md p-1.5" />
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
-        </div>
-    )
-};
-
-
-const EditListingPage: React.FC = () => {
-    const { id } = useParams<{ id: string }>();
-    const navigate = useNavigate();
-    const { user } = useAuth();
-    const [product, setProduct] = useState<Product | null>(null);
-    const [formData, setFormData] = useState<Partial<FormData> | null>(null);
-    const [imageUrls, setImageUrls] = useState<string[]>([]);
-    const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
-    const [videoFile, setVideoFile] = useState<File | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isUpdating, setIsUpdating] = useState(false);
-    const [categories, setCategories] = useState<CategorySchema[]>([]);
-
-    useTelegramBackButton(true);
-    
-    const categorySchema = useMemo(() => {
-        if (!formData?.category) return null;
-        const findCategory = (cats: CategorySchema[], name: string): CategorySchema | null => {
-            for (const cat of cats) {
-                if (cat.name === name) return cat;
-                if (cat.subcategories) {
-                    const found = findCategory(cat.subcategories, name);
-                    if (found) return found;
-                }
-            }
-            return null;
-        }
-        return findCategory(categories, formData.category);
-    }, [formData?.category, categories]);
-
-    const categoryOptions = useMemo(() => flattenCategoriesForSelect(categories), [categories]);
-
-    useEffect(() => {
         if (!id) {
+
             navigate('/profile');
+
             return;
+
         }
+
         const fetchProduct = async () => {
+
             setIsLoading(true);
-            const [data, fetchedCategories] = await Promise.all([
-                apiService.getProductById(id),
-                apiService.getCategories()
-            ]);
-            setCategories(fetchedCategories);
-            if (data && data.seller.id === user.id) {
-                setProduct(data);
-                setImageUrls(data.imageUrls);
-                setFormData({
-                    title: data.title,
-                    description: data.description,
-                    price: data.price,
-                    salePrice: data.salePrice,
-                    category: data.category,
-                    videoUrl: data.videoUrl,
-                    dynamicAttributes: data.dynamicAttributes,
-                    giftWrapAvailable: data.giftWrapAvailable,
-                    giftWrapPrice: data.giftWrapPrice,
-                    productType: data.productType || 'PHYSICAL',
-                    saleType: data.isAuction ? 'AUCTION' : 'FIXED_PRICE',
-                    startingBid: data.startingBid,
-                    purchaseCost: data.purchaseCost,
-                    weight: data.weight,
-                    isAuthenticationAvailable: data.isAuthenticationAvailable,
-                    hasVariants: !!data.variants && data.variants.length > 0,
-                    variantAttributes: data.variantAttributes || [],
-                    variants: data.variants || [],
-                    isB2BEnabled: data.isB2BEnabled,
-                    b2bMinQuantity: data.b2bMinQuantity,
-                    b2bPrice: data.b2bPrice,
-                });
-            } else {
-                alert("Товар не найден или у вас нет прав на его редактирование.");
+
+            try {
+
+                const [data, fetchedCategories, revisionHistory] = await Promise.all([
+
+                    apiService.getProductById(id),
+
+                    apiService.getCategories(),
+
+                    apiService.getProductRevisions(id),
+
+                ]);
+
+                setCategories(fetchedCategories);
+
+                if (data && data.seller.id === user.id) {
+
+                    syncProductToForm(data);
+
+                    setRevisions(revisionHistory);
+
+                } else {
+
+                    alert("Этот товар вам не принадлежит или у вас нет доступа.");
+
+                    navigate('/profile');
+
+                }
+
+            } catch (error) {
+
+                console.error('Failed to fetch product', error);
+
+                alert('Не удалось загрузить товар.');
+
                 navigate('/profile');
+
+            } finally {
+
+                setIsLoading(false);
+
             }
-            setIsLoading(false);
+
         };
+
         fetchProduct();
-    }, [id, user.id, navigate]);
+
+    }, [id, user.id, navigate, syncProductToForm]);
     
     const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -378,48 +336,165 @@ const EditListingPage: React.FC = () => {
         }
     };
 
-     const handleDynamicAttrChange = (name: string, value: any) => {
-        setFormData(prev => ({
-            ...prev!,
-            dynamicAttributes: {
-                ...prev!.dynamicAttributes,
-                [name]: value,
+    const handleDynamicAttrChange = (field: CategoryFieldWithMeta, rawValue: any) => {
+        setFormData(prev => {
+            if (!prev) return prev;
+            let value: string | number | undefined = rawValue;
+            if (field.type === 'number') {
+                value = rawValue === '' ? undefined : Number(rawValue);
+                if (value !== undefined && Number.isNaN(value)) {
+                    value = undefined;
+                }
             }
-        }));
+            const nextDynamic: Record<string, string | number> = {
+                ...(prev.dynamicAttributes || {}),
+            };
+            if (value === undefined || value === '') {
+                delete nextDynamic[field.name];
+            } else {
+                nextDynamic[field.name] = value;
+            }
+            return {
+                ...prev,
+                dynamicAttributes: nextDynamic,
+            };
+        });
+    };
+
+    const handleDraftPreview = () => {
+        if (formData) {
+            setIsDraftPreviewOpen(true);
+        }
+    };
+
+   const handleRevisionPreview = (revision: ProductRevision) => {
+        setPreviewRevision(revision);
+    };
+
+    const handleRevisionApply = (revision: ProductRevision) => {
+        setFormData(prev => {
+            if (!prev) return prev;
+            const snapshot = revision.snapshot;
+            return {
+                ...prev,
+                title: snapshot.title,
+                description: snapshot.description,
+                category: snapshot.category,
+                price: snapshot.price,
+                salePrice: snapshot.salePrice,
+                dynamicAttributes: snapshot.dynamicAttributes,
+                videoUrl: snapshot.videoUrl,
+                giftWrapAvailable: snapshot.giftWrapAvailable,
+                giftWrapPrice: snapshot.giftWrapPrice,
+                purchaseCost: snapshot.purchaseCost,
+                weight: snapshot.weight,
+                isB2BEnabled: snapshot.isB2BEnabled ?? prev.isB2BEnabled,
+                b2bMinQuantity: snapshot.b2bMinQuantity,
+                b2bPrice: snapshot.b2bPrice,
+                variantAttributes: snapshot.variantAttributes || prev.variantAttributes,
+                variants: snapshot.variants || prev.variants,
+                productType: snapshot.productType || prev.productType,
+            };
+        });
+        setImageUrls(revision.snapshot.imageUrls || []);
+        setNewImageFiles([]);
+    };
+
+    const handleRevisionRestore = async (revision: ProductRevision) => {
+        if (!id) return;
+        setRestoringRevisionId(revision.id);
+        try {
+            const restored = await apiService.restoreProductRevision(id, revision.id);
+            syncProductToForm(restored);
+            await loadRevisions();
+            alert('Версия успешно восстановлена.');
+        } catch (error) {
+            console.error(error);
+            alert('Не удалось восстановить выбранную версию.');
+        } finally {
+            setRestoringRevisionId(null);
+        }
     };
 
     const handleUpdate = async () => {
+
         if (!formData || !id) return;
+
         setIsUpdating(true);
+
         try {
+
             const dataToUpdate: Partial<Product> = { ...formData };
-            
-            // Handle image uploads
+
+
+
             const uploadedImageUrls = await Promise.all(
-                newImageFiles.map(file => cloudinaryService.uploadImage(file))
+
+                newImageFiles.map((file) => cloudinaryService.uploadImage(file)),
+
             );
+
             dataToUpdate.imageUrls = [...imageUrls, ...uploadedImageUrls];
-            
+
+
+
             if (videoFile) {
+
                 dataToUpdate.videoUrl = await cloudinaryService.uploadVideo(videoFile);
+
             }
 
+
+
             if (!formData.hasVariants) {
+
                 dataToUpdate.variants = [];
+
                 dataToUpdate.variantAttributes = [];
+
             }
+
             delete (dataToUpdate as any).hasVariants;
-            
-            await apiService.updateListing(id, dataToUpdate);
-            alert("Объявление успешно обновлено!");
-            navigate(`/product/${id}`);
+
+
+
+            dataToUpdate.dynamicAttributes = normalizeDynamicAttributesForCategory(
+
+                dataToUpdate.dynamicAttributes,
+
+                resolvedFields,
+
+            );
+
+
+
+            const updatedProduct = await apiService.updateListing(id, dataToUpdate);
+
+            syncProductToForm(updatedProduct);
+
+            setNewImageFiles([]);
+
+            setVideoFile(null);
+
+            await loadRevisions();
+
+            alert('Черновик успешно обновлён.');
+
         } catch (error) {
+
             console.error(error);
-            alert("Не удалось обновить объявление.");
+
+            alert('Не удалось обновить объявление.');
+
         } finally {
+
             setIsUpdating(false);
+
         }
+
     };
+
+
 
     if (isLoading) {
         return <div className="flex justify-center items-center h-96"><Spinner /></div>;
@@ -429,10 +504,25 @@ const EditListingPage: React.FC = () => {
         return null; 
     }
     
-    return (
-        <div className="max-w-4xl mx-auto bg-base-100 p-6 sm:p-8 rounded-lg shadow-xl">
-            <h1 className="text-3xl font-bold text-center mb-2 text-white">Редактировать объявление</h1>
-            <div className="space-y-6 mt-8">
+    return (
+        <>
+            <div className="max-w-4xl mx-auto bg-base-100 p-6 sm:p-8 rounded-lg shadow-xl">
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+
+                <h1 className="text-3xl font-bold text-white text-center sm:text-left">Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ РѕР±СЉСЏРІР»РµРЅРёРµ</h1>
+
+                <button onClick={handleDraftPreview} className="btn btn-sm btn-outline w-full sm:w-auto">
+
+                    <DynamicIcon name="eye" className="w-4 h-4 mr-2" />
+
+                    ������������
+
+                </button>
+
+            </div>
+
+            <div className="space-y-6">
                 {/* Image Management */}
                 <div>
                     <label className="block text-sm font-medium text-base-content/70 mb-2">Изображения</label>
@@ -587,7 +677,7 @@ const EditListingPage: React.FC = () => {
                     </select>
                 </div>
 
-                {categorySchema?.name === 'Электроника' && (
+                {selectedCategory?.name === 'Электроника' && (
                     <div className="bg-base-200/50 p-4 rounded-lg">
                         <label className="flex items-center space-x-3 cursor-pointer">
                             <input 
@@ -605,17 +695,89 @@ const EditListingPage: React.FC = () => {
                     </div>
                 )}
 
-                {categorySchema && categorySchema.fields.length > 0 && (
+                {resolvedFields.length > 0 && (
                 <div className="border-t border-base-300/50 pt-6 space-y-4">
                      <h3 className="text-lg font-semibold text-white">Характеристики категории "{formData.category}"</h3>
-                     {categorySchema.fields.map(field => (
+                     {resolvedFields.map(field => (
                          <div key={field.name}>
                              <label htmlFor={field.name} className="block text-sm font-medium text-base-content/70">{field.label}</label>
-                             <DynamicField field={field} value={formData.dynamicAttributes?.[field.label]} onChange={(name, value) => handleDynamicAttrChange(field.label, value)} />
+                             <DynamicField field={field} value={formData.dynamicAttributes?.[field.name]} onChange={(value) => handleDynamicAttrChange(field, value)} />
                          </div>
                      ))}
                 </div>
                 )}
+
+
+
+                {revisions.length > 0 && (
+
+                    <div className="border-t border-base-300/50 pt-6 space-y-4">
+
+                        <div className="flex items-center justify-between">
+
+                            <h3 className="text-lg font-semibold text-white">Версии черновика</h3>
+
+                            <span className="text-xs text-base-content/60">Всего: {revisions.length}</span>
+
+                        </div>
+
+                        <div className="space-y-3">
+
+                            {revisions.map((revision) => (
+
+                                <div key={revision.id} className="bg-base-200/40 border border-base-300/40 rounded-lg p-4 space-y-2">
+
+                                    <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+
+                                        <div>
+
+                                            <p className="font-semibold text-white">{new Date(revision.createdAt).toLocaleString()}</p>
+
+                                            <p className="text-base-content/60">{revisionSourceLabels[revision.source]}</p>
+
+                                        </div>
+
+                                        {revision.author && (
+
+                                            <p className="text-base-content/60">Автор: {revision.author.name}</p>
+
+                                        )}
+
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-2">
+
+                                        <button className="btn btn-xs btn-outline" onClick={() => handleRevisionPreview(revision)}>Предпросмотр</button>
+
+                                        <button className="btn btn-xs btn-outline" onClick={() => handleRevisionApply(revision)}>Загрузить в форму</button>
+
+                                        <button
+
+                                            className="btn btn-xs btn-outline btn-secondary"
+
+                                            onClick={() => handleRevisionRestore(revision)}
+
+                                            disabled={restoringRevisionId === revision.id || isUpdating}
+
+                                        >
+
+                                            {restoringRevisionId === revision.id ? <Spinner size="sm" /> : 'Восстановить'}
+
+                                        </button>
+
+                                    </div>
+
+                                </div>
+
+                            ))}
+
+                        </div>
+
+                    </div>
+
+                )}
+
+
 
                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
@@ -668,9 +830,18 @@ const EditListingPage: React.FC = () => {
                 <button onClick={handleUpdate} disabled={isUpdating} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-500">
                     {isUpdating ? <Spinner size="sm"/> : 'Сохранить изменения'}
                 </button>
-            </div>
-        </div>
+            </div>
+        </div>
+            {isDraftPreviewOpen && formData && (
+                <DraftPreviewModal formData={formData as FormData} imageUrls={imageUrls} onClose={() => setIsDraftPreviewOpen(false)} />
+            )}
+            {previewRevision && (
+                <RevisionPreviewModal revision={previewRevision} onClose={() => setPreviewRevision(null)} />
+            )}
+        </>
     );
 };
 
 export default EditListingPage;
+
+

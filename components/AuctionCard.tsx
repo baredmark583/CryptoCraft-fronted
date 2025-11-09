@@ -65,4 +65,14 @@ const AuctionCard: React.FC<AuctionCardProps> = ({ product }) => {
   );
 };
 
-export default AuctionCard;
+const areEqualAuction = (prev: AuctionCardProps, next: AuctionCardProps) => {
+  const prevProduct = prev.product;
+  const nextProduct = next.product;
+  return (
+    prevProduct.id === nextProduct.id &&
+    prevProduct.currentBid === nextProduct.currentBid &&
+    prevProduct.auctionEnds === nextProduct.auctionEnds
+  );
+};
+
+export default React.memo(AuctionCard, areEqualAuction);

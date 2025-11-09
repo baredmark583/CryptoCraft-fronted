@@ -122,9 +122,9 @@ const PhotoStudioPage: React.FC = () => {
             // Infer mime type
             const mimeType = currentImage.match(/data:(.*);base64,/)?.[1] || 'image/jpeg';
             
-            const editedImageBase64 = await geminiService.editImage(base64Data, mimeType, prompt);
-            
-            setCurrentImage(`data:image/png;base64,${editedImageBase64}`); // Gemini might return a different format, assume png for simplicity
+            const editResult = await geminiService.editImage(base64Data, mimeType, prompt);
+            console.debug('AI edit meta:', editResult.meta);
+            setCurrentImage(`data:image/png;base64,${editResult.data.base64Image}`); // Gemini might return a different format, assume png for simplicity
 
             // Update usage count
             const today = new Date().setHours(0, 0, 0, 0);

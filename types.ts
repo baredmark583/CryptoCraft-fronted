@@ -1,5 +1,25 @@
 // This file contains the core type definitions for the CryptoCraft application.
 
+export interface AiUsageMeta {
+  promptTokens?: number;
+  completionTokens?: number;
+  totalTokens?: number;
+  cachedTokens?: number;
+}
+
+export interface AiResponseMeta {
+  provider: string;
+  scenario: 'text' | 'vision' | 'image-edit';
+  latencyMs: number;
+  usage?: AiUsageMeta;
+  warnings?: string[];
+}
+
+export interface AiResponse<T> {
+  data: T;
+  meta: AiResponseMeta;
+}
+
 export interface User {
   id: string;
   telegramId?: number;
@@ -32,6 +52,40 @@ export type AuthenticationStatus =
   | 'PENDING'
   | 'AUTHENTICATED'
   | 'REJECTED';
+
+export type EscrowStatus =
+  | 'AWAITING_PAYMENT'
+  | 'PENDING_CONFIRMATION'
+  | 'FUNDED'
+  | 'RELEASED'
+  | 'REFUNDED'
+  | 'PARTIALLY_REFUNDED'
+  | 'CANCELLED'
+  | 'DISPUTED';
+
+export interface EscrowEvent {
+  id: string;
+  type: 'STATUS_CHANGE' | 'PAYMENT_DETECTED' | 'WEBHOOK' | 'MANUAL_ACTION' | 'NOTE';
+  description?: string;
+  payload?: Record<string, any>;
+  performedByUserId?: string;
+  performedByRole?: 'USER' | 'SELLER' | 'ADMIN' | 'SYSTEM';
+  createdAt: string;
+}
+
+export interface EscrowTransaction {
+  id: string;
+  status: EscrowStatus;
+  amount: number;
+  currency: 'USDT';
+  network: 'TON';
+  escrowType: 'CART' | 'DEPOSIT';
+  depositTransactionHash?: string;
+  releaseTransactionHash?: string;
+  refundTransactionHash?: string;
+  metadata?: Record<string, any>;
+  events?: EscrowEvent[];
+}
   
 export interface VariantAttribute {
   name: string;
@@ -98,6 +152,54 @@ export interface Product {
   status?: 'Pending Moderation' | 'Active' | 'Rejected';
   rejectionReason?: string;
   createdAt?: string;
+  appealMessage?: string;
+  moderatedAt?: string;
+}
+
+export interface ProductRevisionSnapshot {
+  title: string;
+  description: string;
+  category: string;
+  price?: number;
+  salePrice?: number;
+  imageUrls: string[];
+  dynamicAttributes: Record<string, string | number>;
+  videoUrl?: string;
+  productType?: 'PHYSICAL' | 'DIGITAL' | 'SERVICE';
+  giftWrapAvailable?: boolean;
+  giftWrapPrice?: number;
+  purchaseCost?: number;
+  weight?: number;
+  isB2BEnabled?: boolean;
+  b2bMinQuantity?: number;
+  b2bPrice?: number;
+  variants?: ProductVariant[];
+  variantAttributes?: VariantAttribute[];
+}
+
+export interface ProductRevision {
+  id: string;
+  source: 'CREATE' | 'UPDATE' | 'RESTORE';
+  snapshot: ProductRevisionSnapshot;
+  createdAt: string;
+  author?: Pick<User, 'id' | 'name' | 'avatarUrl'>;
+}
+
+export interface ReviewMediaAttachment {
+  id?: string;
+  type: 'image' | 'video';
+  url: string;
+  thumbnailUrl?: string;
+  name?: string;
+  mimeType?: string;
+  size?: number;
+}
+
+export interface ReviewBehaviorSignal {
+  code: string;
+  weight: number;
+  detail?: string;
+  triggeredAt: string;
 }
 
 export interface Review {
@@ -105,9 +207,15 @@ export interface Review {
   productId: string;
   author: User;
   rating: number;
-  text: string;
-  timestamp: number;
+  text?: string;
+  timestamp?: number | string;
+  createdAt?: string;
+  attachments?: ReviewMediaAttachment[];
   imageUrl?: string;
+  fraudScore?: number;
+  behaviorSignals?: ReviewBehaviorSignal[];
+  moderationFlags?: string[];
+  isHidden?: boolean;
 }
 
 export interface MessageContent {
@@ -115,20 +223,44 @@ export interface MessageContent {
   imageUrl?: string;
   productContext?: Product;
   quickReplies?: string[];
+  attachments?: MessageAttachment[];
+}
+
+export interface MessageAttachment {
+  id: string;
+  type: 'image' | 'file';
+  url: string;
+  name?: string;
+  mimeType?: string;
+  size?: number;
+  width?: number;
+  height?: number;
+  thumbnailUrl?: string;
+}
+
+export interface MessageReadReceipt {
+  userId: string;
+  readAt: string;
 }
 
 export interface Message extends MessageContent {
   id: string;
   sender: Partial<User>;
-  timestamp: number;
+  timestamp?: number | string;
+  createdAt?: string;
+  updatedAt?: string;
   chat?: { id: string };
+  attachments?: MessageAttachment[];
+  quickReplies?: string[];
+  readReceipts?: MessageReadReceipt[];
 }
 
 export interface Chat {
   id: string;
   participant: User;
   messages: Message[];
-  lastMessage: Message;
+  lastMessage: Message | null;
+  unreadCount?: number;
 }
 
 export interface ShippingAddress {
@@ -177,8 +309,8 @@ export interface Order {
   total: number;
   status: OrderStatus;
   orderDate: number;
-  shippingAddress: ShippingAddress;
-  shippingMethod: 'NOVA_POSHTA' | 'UKRPOSHTA';
+  shippingAddress?: ShippingAddress;
+  shippingMethod: 'NOVA_POSHTA' | 'UKRPOSHTA' | 'MEETUP';
   paymentMethod: 'ESCROW' | 'DIRECT';
   trackingNumber?: string;
   smartContractAddress?: string;
@@ -186,6 +318,14 @@ export interface Order {
   disputeId?: string;
   authenticationRequested?: boolean;
   authenticationEvents?: AuthenticationEvent[];
+  checkoutMode?: 'CART' | 'DEPOSIT';
+  depositAmount?: number;
+  meetingDetails?: {
+    scheduledAt?: string;
+    location?: string;
+    notes?: string;
+  };
+  escrow?: EscrowTransaction;
 }
 
 export interface Notification {
@@ -210,6 +350,8 @@ export interface WorkshopComment {
     author: User;
     text: string;
     timestamp: number;
+    status?: 'VISIBLE' | 'HIDDEN';
+    reportCount?: number;
 }
 export interface WorkshopPost {
     id: string;
@@ -219,6 +361,9 @@ export interface WorkshopPost {
     timestamp: number;
     likedBy: string[];
     comments: WorkshopComment[];
+    status?: 'PUBLISHED' | 'FLAGGED' | 'HIDDEN';
+    reportCount?: number;
+    commentsLocked?: boolean;
 }
 
 export interface FeedItem {
@@ -232,6 +377,7 @@ export interface ForumPost {
     author: User;
     content: string;
     createdAt: number;
+    isHidden?: boolean;
 }
 export interface ForumThread {
     id: string;
@@ -241,6 +387,9 @@ export interface ForumThread {
     replyCount: number;
     lastReplyAt: number;
     isPinned?: boolean;
+    status?: 'OPEN' | 'LOCKED';
+    tags?: string[];
+    viewCount?: number;
 }
 
 export interface TimeSeriesDataPoint {
@@ -322,12 +471,46 @@ export interface DisputeMessage {
     imageUrl?: string;
 }
 
+export type DisputePriority = 'LOW' | 'NORMAL' | 'URGENT';
+export type DisputeTier = 'LEVEL1' | 'LEVEL2' | 'SUPERVISOR';
+export type DisputeAutoAction = 'NONE' | 'AUTO_RELEASE' | 'AUTO_REFUND' | 'AUTO_ESCALATE';
+
+export interface DisputeResolutionTemplate {
+    id: string;
+    title: string;
+    body: string;
+    action: 'REFUND_BUYER' | 'RELEASE_FUNDS' | 'PARTIAL_REFUND';
+}
+
+export interface DisputeAutomationLogEntry {
+    id: string;
+    type: 'SLA_BREACH' | 'AUTO_RELEASE' | 'AUTO_REFUND' | 'AUTO_ESCALATE';
+    message: string;
+    createdAt: string;
+}
+
+export interface DisputeInternalNote {
+    id: string;
+    authorId: string;
+    authorName: string;
+    note: string;
+    createdAt: string;
+}
+
 export interface Dispute {
     id: string; // Same as orderId
     order: Order;
     messages: DisputeMessage[];
     status: 'OPEN' | 'UNDER_REVIEW' | 'RESOLVED_BUYER' | 'RESOLVED_SELLER';
-    // FIX: Add createdAt to match backend entity for admin panel compatibility.
+    priority?: DisputePriority;
+    assignedTier?: DisputeTier;
+    responseSlaDueAt?: string;
+    pendingAutoAction?: DisputeAutoAction;
+    pendingAutoActionAt?: string;
+    automationLog?: DisputeAutomationLogEntry[];
+    resolutionTemplates?: DisputeResolutionTemplate[];
+    internalNotes?: DisputeInternalNote[];
+    slaBreachCount?: number;
     createdAt?: number;
 }
 
@@ -344,6 +527,10 @@ export interface LiveStream {
     likes?: number;
     viewerCount?: number;
     isPromoted?: boolean;
+    peakViewers?: number;
+    totalViewerMinutes?: number;
+    recordingUrl?: string;
+    abuseStrikes?: number;
 }
 
 export interface TrackingEvent {
@@ -401,11 +588,12 @@ export interface VerificationAnalysis {
 }
 
 export interface ImportItem {
-    id: string;
-    url: string;
-    status: 'pending' | 'scraping' | 'parsing' | 'enriching' | 'success' | 'publishing' | 'published' | 'error' | 'publish_error';
-    listing?: ImportedListingData;
-    errorMessage?: string;
+  id: string;
+  url: string;
+  status: 'pending' | 'scraping' | 'parsing' | 'enriching' | 'success' | 'publishing' | 'published' | 'error' | 'publish_error';
+  listing?: ImportedListingData;
+  errorMessage?: string;
+  aiMeta?: AiResponseMeta;
 }
 
 export type ImportedListingData = GeneratedListing & {

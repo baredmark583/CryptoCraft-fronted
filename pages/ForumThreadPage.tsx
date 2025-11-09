@@ -68,6 +68,19 @@ const ForumThreadPage: React.FC = () => {
     return <div className="text-center text-2xl text-base-content/70 mt-16">Тема не найдена</div>;
   }
 
+  const handleReportPost = async (postId: string) => {
+      const reason = prompt('Опишите нарушение');
+      if (!reason?.trim()) return;
+      try {
+          await apiService.reportForumPost(postId, reason.trim());
+          alert('Жалоба отправлена модераторам.');
+      } catch (error) {
+          console.error("Failed to report post:", error);
+      }
+  };
+
+  const repliesLocked = thread.status === 'LOCKED';
+
   return (
     <div>
       <div className="mb-6">
@@ -90,6 +103,15 @@ const ForumThreadPage: React.FC = () => {
                <div className="text-base-content leading-relaxed whitespace-pre-wrap">
                    {post.content}
                </div>
+               <div className="text-right mt-2">
+                  <button
+                    type="button"
+                    onClick={() => handleReportPost(post.id)}
+                    className="text-xs text-base-content/60 hover:text-base-content underline"
+                  >
+                    Пожаловаться
+                  </button>
+               </div>
             </div>
           </div>
         ))}
@@ -98,6 +120,12 @@ const ForumThreadPage: React.FC = () => {
       
        <div className="mt-8 bg-base-100 p-6 rounded-lg">
           <h3 className="text-xl font-bold text-white mb-4">Ваш ответ</h3>
+          {repliesLocked && (
+            <p className="text-sm text-base-content/70 mb-4">
+              Обсуждение закрыто модератором. Новые ответы недоступны.
+            </p>
+          )}
+          {!repliesLocked && user && (
           <form onSubmit={handleReplySubmit}>
             <div className="flex items-start gap-4">
                 <img src={user.avatarUrl} alt={user.name} className="w-12 h-12 rounded-full flex-shrink-0" />
@@ -120,6 +148,10 @@ const ForumThreadPage: React.FC = () => {
                 </button>
             </div>
           </form>
+          )}
+          {!user && !repliesLocked && (
+            <p className="text-sm text-base-content/70">Войдите, чтобы принять участие в обсуждении.</p>
+          )}
       </div>
     </div>
   );

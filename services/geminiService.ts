@@ -1,11 +1,11 @@
 import { apiService } from './apiService';
 // FIX: Import VerificationAnalysis from types.ts.
-import type { GeneratedListing, StructuredSearchQuery, SellerAnalytics, AiInsight, PromoCode, SellerDashboardData, AiFocus, Product, ImportedListingData, VerificationAnalysis } from '../types';
+import type { GeneratedListing, StructuredSearchQuery, SellerAnalytics, AiInsight, PromoCode, SellerDashboardData, AiFocus, Product, ImportedListingData, VerificationAnalysis, AiResponse } from '../types';
 
 // This service now acts as a secure proxy to our backend's AI capabilities.
 // All logic is handled server-side to protect the API key.
 export const geminiService = {
-  generateListingDetails: async (imageBase64: string, userDescription: string): Promise<GeneratedListing> => {
+  generateListingDetails: async (imageBase64: string, userDescription: string): Promise<AiResponse<GeneratedListing>> => {
     try {
       return await apiService.generateListingWithAi(imageBase64, userDescription);
     } catch (error) {
@@ -14,7 +14,7 @@ export const geminiService = {
     }
   },
   
-  processImportedHtml: async (cleanHtml: string): Promise<ImportedListingData> => {
+  processImportedHtml: async (cleanHtml: string): Promise<AiResponse<ImportedListingData>> => {
     try {
       return await apiService.processHtmlWithAi(cleanHtml);
     } catch (error) {
@@ -23,10 +23,9 @@ export const geminiService = {
     }
   },
 
-  editImage: async (imageBase64: string, mimeType: string, prompt: string): Promise<string> => {
+  editImage: async (imageBase64: string, mimeType: string, prompt: string): Promise<AiResponse<{ base64Image: string }>> => {
     try {
-        const response = await apiService.editImageWithAi(imageBase64, mimeType, prompt);
-        return response.base64Image;
+        return await apiService.editImageWithAi(imageBase64, mimeType, prompt);
     } catch (error: any) {
         console.error("Error calling backend for image editing:", error);
          if (error.message?.includes('RATE_LIMIT')) {
@@ -49,7 +48,7 @@ export const geminiService = {
     }), 500));
   },
 
-  analyzeDocumentForVerification: async (imageBase64: string): Promise<VerificationAnalysis> => {
+  analyzeDocumentForVerification: async (imageBase64: string): Promise<AiResponse<VerificationAnalysis>> => {
     try {
         return await apiService.analyzeDocumentForVerificationWithAi(imageBase64);
     } catch (error) {
@@ -58,7 +57,7 @@ export const geminiService = {
     }
   },
 
-  getAnalyticsInsights: async (analyticsData: SellerAnalytics): Promise<AiInsight[]> => {
+  getAnalyticsInsights: async (analyticsData: SellerAnalytics): Promise<AiResponse<AiInsight[]>> => {
     try {
         return await apiService.getAnalyticsInsightsWithAi(analyticsData);
     } catch (error) {
@@ -81,7 +80,7 @@ export const geminiService = {
     };
   },
 
-  generateDashboardFocus: async (dashboardData: SellerDashboardData): Promise<AiFocus> => {
+  generateDashboardFocus: async (dashboardData: SellerDashboardData): Promise<AiResponse<AiFocus>> => {
     try {
         return await apiService.generateDashboardFocusWithAi(dashboardData);
     } catch (error) {
